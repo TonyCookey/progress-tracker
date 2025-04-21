@@ -1,1 +1,124 @@
-// Prisma schema (placeholder)
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  SUPERADMIN
+  GENERAL
+  COLONEL
+  VOLUNTEER
+}
+
+enum TeenRank {
+  LIEUTENANT
+  CAPTAIN
+}
+
+enum GroupType {
+  PLATOON
+  SQUAD
+}
+
+model Base {
+  id        String   @id @default(cuid())
+  name      String
+  users     User[]
+  teens     Teen[]
+  groups    Group[]
+  activities Activity[]
+}
+
+model User {
+  id        String   @id @default(cuid())
+  name      String
+  username      String
+  email     String   @unique
+  password  String
+  role      UserRole
+  baseId    String
+  base      Base     @relation(fields: [baseId], references: [id])
+  leadingGroups   Group[] @relation("GroupLeader")
+  supportingGroups GroupSupport[]
+  teacherParticipation TeacherParticipation[]
+}
+
+model Teen {
+  id        String   @id @default(cuid())
+  name      String
+  age       Int
+  gender    String
+  rank      TeenRank
+  baseId    String
+  base      Base     @relation(fields: [baseId], references: [id])
+  platoon   Group?   @relation("TeenPlatoon")
+  squadMemberships GroupMember[]
+  activityParticipation ActivityParticipation[]
+}
+
+model Group {
+  id        String   @id @default(cuid())
+  name      String
+  type      GroupType
+  baseId    String
+  base      Base     @relation(fields: [baseId], references: [id])
+  leaderId  String
+  leader    User     @relation("GroupLeader", fields: [leaderId], references: [id])
+  support   GroupSupport[]
+  members   GroupMember[]
+  teens     Teen[]   @relation("TeenPlatoon")
+  activities Activity[]
+}
+
+model GroupMember {
+  id      String @id @default(cuid())
+  teenId  String
+  groupId String
+  teen    Teen   @relation(fields: [teenId], references: [id])
+  group   Group  @relation(fields: [groupId], references: [id])
+}
+
+model GroupSupport {
+  id      String @id @default(cuid())
+  userId  String
+  groupId String
+  user    User   @relation(fields: [userId], references: [id])
+  group   Group  @relation(fields: [groupId], references: [id])
+}
+
+model Activity {
+  id        String   @id @default(cuid())
+  name      String
+  type      String
+  date      DateTime
+  isCrossBase Boolean @default(false)
+  baseId    String?
+  base      Base?    @relation(fields: [baseId], references: [id])
+  groups    Group[]
+  teenParticipation ActivityParticipation[]
+  teacherParticipation TeacherParticipation[]
+}
+
+model ActivityParticipation {
+  id         String   @id @default(cuid())
+  activityId String
+  teenId     String
+  attended   Boolean
+  notes      String?
+  activity   Activity @relation(fields: [activityId], references: [id])
+  teen       Teen     @relation(fields: [teenId], references: [id])
+}
+
+model TeacherParticipation {
+  id         String   @id @default(cuid())
+  activityId String
+  userId     String
+  attended   Boolean
+  notes      String?
+  activity   Activity @relation(fields: [activityId], references: [id])
+  user       User     @relation(fields: [userId], references: [id])
+}
