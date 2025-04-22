@@ -25,95 +25,96 @@ enum GroupType {
 }
 
 model Base {
-  id        String   @id @default(cuid())
-  name      String
-  users     User[]
-  teens     Teen[]
-  groups    Group[]
+  id         String     @id @default(cuid())
+  name       String
+  users      User[]
+  teens      Teen[]
+  groups     Group[]
   activities Activity[]
 }
 
 model User {
-  id        String   @id @default(cuid())
-  name      String
-  username      String
-  email     String   @unique
-  password  String
-  dateofBirth     DateTime
-  role      UserRole
-  baseId    String
-  base      Base     @relation(fields: [baseId], references: [id])
-  leadingGroups   Group[] @relation("GroupLeader")
-  supportingGroups GroupSupport[]
+  id                   String                 @id @default(cuid())
+  name                 String
+  username             String
+  email                String                 @unique
+  password             String
+  dateOfBirth          DateTime?
+  role                 UserRole
+  baseId               String
+  base                 Base                   @relation(fields: [baseId], references: [id])
+  leadingGroups        Group[]                @relation("GroupLeader")
+  supportingGroups     GroupSupport[]
   teacherParticipation TeacherParticipation[]
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  createdAt            DateTime               @default(now())
+  updatedAt            DateTime               @updatedAt
 }
 
 model Teen {
-  id        String   @id @default(cuid())
-  name      String
-  dateofBirth DateTime
-  gender    String
-  rank      TeenRank
-  baseId    String
-  base      Base     @relation(fields: [baseId], references: [id])
-  platoon   Group?   @relation("TeenPlatoon")
-  squadMemberships GroupMember[]
+  id                    String                  @id @default(cuid())
+  name                  String
+  dateOfBirth           DateTime?
+  gender                String
+  rank                  TeenRank
+  baseId                String
+  base                  Base                    @relation(fields: [baseId], references: [id])
+  platoon               Group?                  @relation("TeenPlatoon", fields: [groupId], references: [id])
+  squadMemberships      GroupMember[]
   activityParticipation ActivityParticipation[]
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  createdAt             DateTime                @default(now())
+  updatedAt             DateTime                @updatedAt
+  groupId               String?
 }
 
 model Group {
-  id        String   @id @default(cuid())
-  name      String
-  type      GroupType
-  baseId    String
-  base      Base     @relation(fields: [baseId], references: [id])
-  leaderId  String
-  leader    User     @relation("GroupLeader", fields: [leaderId], references: [id])
-  support   GroupSupport[]
-  members   GroupMember[]
-  teens     Teen[]   @relation("TeenPlatoon")
+  id         String         @id @default(cuid())
+  name       String
+  type       GroupType
+  baseId     String
+  base       Base           @relation(fields: [baseId], references: [id])
+  leaderId   String
+  leader     User           @relation("GroupLeader", fields: [leaderId], references: [id])
+  support    GroupSupport[]
+  members    GroupMember[]
+  teens      Teen[]         @relation("TeenPlatoon")
   activities Activity[]
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  createdAt  DateTime       @default(now())
+  updatedAt  DateTime       @updatedAt
 }
 
 model GroupMember {
-  id      String @id @default(cuid())
-  teenId  String
-  groupId String
-  teen    Teen   @relation(fields: [teenId], references: [id])
-  group   Group  @relation(fields: [groupId], references: [id])
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id        String   @id @default(cuid())
+  teenId    String
+  groupId   String
+  teen      Teen     @relation(fields: [teenId], references: [id])
+  group     Group    @relation(fields: [groupId], references: [id])
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model GroupSupport {
-  id      String @id @default(cuid())
-  userId  String
-  groupId String
-  user    User   @relation(fields: [userId], references: [id])
-  group   Group  @relation(fields: [groupId], references: [id])
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id        String   @id @default(cuid())
+  userId    String
+  groupId   String
+  user      User     @relation(fields: [userId], references: [id])
+  group     Group    @relation(fields: [groupId], references: [id])
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model Activity {
-  id        String   @id @default(cuid())
-  name      String
-  type      String
-  date      DateTime
-  isCrossBase Boolean @default(false)
-  baseId    String?
-  base      Base?    @relation(fields: [baseId], references: [id])
-  groups    Group[]
-  teenParticipation ActivityParticipation[]
+  id                   String                  @id @default(cuid())
+  name                 String
+  type                 String
+  date                 DateTime
+  isCrossBase          Boolean                 @default(false)
+  baseId               String?
+  base                 Base?                   @relation(fields: [baseId], references: [id])
+  groups               Group[]
+  teenParticipation    ActivityParticipation[]
   teacherParticipation TeacherParticipation[]
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  createdAt            DateTime                @default(now())
+  updatedAt            DateTime                @updatedAt
 }
 
 model ActivityParticipation {
@@ -124,8 +125,8 @@ model ActivityParticipation {
   notes      String?
   activity   Activity @relation(fields: [activityId], references: [id])
   teen       Teen     @relation(fields: [teenId], references: [id])
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
 }
 
 model TeacherParticipation {
@@ -136,6 +137,6 @@ model TeacherParticipation {
   notes      String?
   activity   Activity @relation(fields: [activityId], references: [id])
   user       User     @relation(fields: [userId], references: [id])
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
 }
