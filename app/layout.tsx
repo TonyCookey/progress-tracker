@@ -1,4 +1,4 @@
-import './styles/global.css'
+import './global.css'
 import { ReactNode } from 'react'
 import { Inter } from 'next/font/google'
 import { NextAuthProvider } from '@/components/auth/NextAuthProvider'
