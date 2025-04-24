@@ -6,13 +6,13 @@ import clsx from "clsx";
 
 const links = [
   { href: "/dashboard", label: "Dashboard" },
-  { href: "/squads", label: "Squads" },
-  { href: "/platoons", label: "Platoons" },
-  { href: "/lieutenants", label: "Lieutenants" },
-  { href: "/generals", label: "Generals" },
-  { href: "/activities", label: "Activities" },
-  { href: "/reports", label: "Reports" },
-  { href: "/settings", label: "Settings" },
+  { href: "/dashboard/squads", label: "Squads" },
+  { href: "/dashboard/platoons", label: "Platoons" },
+  { href: "/dashboard/lieutenants", label: "Lieutenants" },
+  { href: "/dashboard/generals", label: "Generals" },
+  { href: "/dashboard/activities", label: "Activities" },
+  { href: "/dashboard/reports", label: "Reports" },
+  { href: "/dashboard/settings", label: "Settings" },
 ];
 
 export default function Sidebar() {
