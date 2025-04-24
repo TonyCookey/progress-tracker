@@ -3,12 +3,12 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import clsx from "clsx";
-import { HomeIcon, UserGroupIcon, UsersIcon, CalendarIcon, ChartBarIcon, Cog6ToothIcon, ShieldCheckIcon } from "@heroicons/react/24/outline";
+import { HomeIcon, UserGroupIcon, UsersIcon, UserCircleIcon, CalendarIcon, ChartBarIcon, Cog6ToothIcon, ShieldCheckIcon } from "@heroicons/react/24/outline";
 
 const links = [
   { href: "/dashboard", label: "Dashboard", icon: <HomeIcon className="h-5 w-5" /> },
   { href: "/dashboard/lieutenants", label: "Lieutenants", icon: <UsersIcon className="h-5 w-5" /> },
-  { href: "/dashboard/generals", label: "Generals", icon: <UsersIcon className="h-5 w-5" /> },
+  { href: "/dashboard/generals", label: "Generals", icon: <UserCircleIcon className="h-5 w-5" /> },
   { href: "/dashboard/squads", label: "Squads", icon: <UserGroupIcon className="h-5 w-5" /> },
   { href: "/dashboard/platoons", label: "Platoons", icon: <ShieldCheckIcon className="h-5 w-5" /> },
   { href: "/dashboard/activities", label: "Activities", icon: <CalendarIcon className="h-5 w-5" /> },
