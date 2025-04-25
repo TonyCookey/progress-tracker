@@ -41,6 +41,7 @@ const handler = NextAuth({
         const user = await prisma.user.findUnique({ where: { id: token.sub } });
         if (user) {
           session.user.id = user.id;
+          session.user.username = user.username;
           session.user.role = user.role;
           session.user.baseId = user.baseId;
         }
