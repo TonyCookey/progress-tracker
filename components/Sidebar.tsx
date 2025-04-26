@@ -3,7 +3,17 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import clsx from "clsx";
-import { HomeIcon, UserGroupIcon, UsersIcon, UserCircleIcon, CalendarIcon, ChartBarIcon, Cog6ToothIcon, ShieldCheckIcon } from "@heroicons/react/24/outline";
+import {
+  HomeIcon,
+  UserGroupIcon,
+  UsersIcon,
+  UserCircleIcon,
+  ChartPieIcon,
+  Cog6ToothIcon,
+  ShieldCheckIcon,
+  CakeIcon,
+  CalendarDaysIcon,
+} from "@heroicons/react/24/outline";
 
 const links = [
   { href: "/dashboard", label: "Dashboard", icon: <HomeIcon className="h-5 w-5" /> },
@@ -11,10 +21,10 @@ const links = [
   { href: "/dashboard/generals", label: "Generals", icon: <UserCircleIcon className="h-5 w-5" /> },
   { href: "/dashboard/squads", label: "Squads", icon: <UserGroupIcon className="h-5 w-5" /> },
   { href: "/dashboard/platoons", label: "Platoons", icon: <ShieldCheckIcon className="h-5 w-5" /> },
-  { href: "/dashboard/activities", label: "Activities", icon: <CalendarIcon className="h-5 w-5" /> },
-  { href: "/dashboard/reports", label: "Reports", icon: <ChartBarIcon className="h-5 w-5" /> },
+  { href: "/dashboard/activities", label: "Activities", icon: <CalendarDaysIcon className="h-5 w-5" /> },
+  { href: "/dashboard/birthdays", label: "Birthdays", icon: <CakeIcon className="h-5 w-5" /> },
+  { href: "/dashboard/reports", label: "Reports", icon: <ChartPieIcon className="h-5 w-5" /> },
   { href: "/dashboard/settings", label: "Settings", icon: <Cog6ToothIcon className="h-5 w-5" /> },
-  { href: "/dashboard/birthdays", label: "Birthdays", icon: <CalendarIcon className="h-5 w-5" /> },
 ];
 
 export default function Sidebar() {
