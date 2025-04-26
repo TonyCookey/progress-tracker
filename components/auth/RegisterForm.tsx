@@ -57,7 +57,7 @@ export default function RegisterForm() {
   };
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="max-w-md mx-auto p-3 space-y-5 bg-white rounded shadow">
+    <form onSubmit={handleSubmit(onSubmit)} className="space-y-5 text-sm">
       {successMessage && <p className="text-green-600">{successMessage}</p>}
       {errorMessage && <p className="text-red-600">{errorMessage}</p>}
 

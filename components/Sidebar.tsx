@@ -14,6 +14,7 @@ const links = [
   { href: "/dashboard/activities", label: "Activities", icon: <CalendarIcon className="h-5 w-5" /> },
   { href: "/dashboard/reports", label: "Reports", icon: <ChartBarIcon className="h-5 w-5" /> },
   { href: "/dashboard/settings", label: "Settings", icon: <Cog6ToothIcon className="h-5 w-5" /> },
+  { href: "/dashboard/birthdays", label: "Birthdays", icon: <CalendarIcon className="h-5 w-5" /> },
 ];
 
 export default function Sidebar() {

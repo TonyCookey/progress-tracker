@@ -30,10 +30,10 @@ export default function LoginPage() {
   return (
     <GuestOnly>
       <div className="min-h-screen flex items-center justify-center bg-gray-100 px-4">
-        <form onSubmit={handleLogin} className="w-full max-w-sm bg-white p-6 rounded shadow">
+        <form onSubmit={handleLogin} className="w-full max-w-md bg-white p-6 rounded shadow">
           <h2 className="text-2xl font-bold mb-4 text-center">Login</h2>
 
-          {error && <p className="text-red-500 text-sm mb-3">{error}</p>}
+          {error && <p className="text-red-500 text-md mb-3">{error}</p>}
 
           <div className="mb-4">
             <label className="block mb-1">Email</label>
