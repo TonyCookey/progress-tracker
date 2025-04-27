@@ -1,5 +1,6 @@
 "use client";
 
+import LoadingSpinner from "@/components/common/LoadingSpinner";
 import { useSession } from "next-auth/react";
 
 export default function ProfilePage() {
@@ -27,7 +28,7 @@ export default function ProfilePage() {
           {/* Optional: Add other things... */}
         </div>
       ) : (
-        <p>Loading...</p>
+        <LoadingSpinner />
       )}
     </div>
   );
