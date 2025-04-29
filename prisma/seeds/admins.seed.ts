@@ -4,14 +4,15 @@ const bcrypt = require("bcrypt");
 const prisma = new PrismaClient();
 
 async function main() {
-  // --- Create Bases ---
-  const alpha = await prisma.base.create({ data: { name: "Alpha" } });
-  const bravo = await prisma.base.create({ data: { name: "Bravo" } });
+  // --- Find Bases ---
 
-  // --- Create Users ---
-  const password = await bcrypt.hash("password123", 10);
+  // const alpha = await prisma.base.findFirst({ where: { name: "Alpha" } });
+  const bravo = await prisma.base.findFirst({ where: { name: "Bravo" } });
 
-  const generalRuth = await prisma.user.create({
+  // --- Create Admins ---
+  const password = await bcrypt.hash(process.env.ADMIN_PASSWORD, 10);
+
+  await prisma.user.create({
     data: {
       name: "General Ruth",
       email: "gr@davidsarmy.com.ng",
@@ -23,7 +24,7 @@ async function main() {
     },
   });
 
-  const colonelTony = await prisma.user.create({
+  await prisma.user.create({
     data: {
       name: "Colonel Tony",
       email: "ct@davidsarmy.com.ng",
@@ -34,7 +35,7 @@ async function main() {
       baseId: bravo.id,
     },
   });
-  console.log("✅ Seeding Generals complete!");
+  console.log("✅ Seeding Admins complete!");
 }
 
 main()
