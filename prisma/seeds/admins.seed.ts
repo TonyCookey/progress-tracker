@@ -6,7 +6,7 @@ const prisma = new PrismaClient();
 async function main() {
   // --- Find Bases ---
 
-  // const alpha = await prisma.base.findFirst({ where: { name: "Alpha" } });
+  const alpha = await prisma.base.findFirst({ where: { name: "Alpha" } });
   const bravo = await prisma.base.findFirst({ where: { name: "Bravo" } });
 
   // --- Create Admins ---
@@ -14,13 +14,13 @@ async function main() {
 
   await prisma.user.create({
     data: {
-      name: "General Ruth",
-      email: "gr@davidsarmy.com.ng",
-      username: "GR",
+      name: "General Serrano",
+      email: "gs@davidsarmy.com.ng",
+      username: "GS",
       password,
-      dateOfBirth: new Date("1994-01-26"),
+      dateOfBirth: new Date("1990-01-01"),
       role: "SUPERADMIN",
-      baseId: bravo.id,
+      baseId: alpha.id,
     },
   });
 
