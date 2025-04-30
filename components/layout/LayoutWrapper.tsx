@@ -1,13 +1,13 @@
-'use client';
+"use client";
 
-import { ReactNode } from 'react';
-import { usePathname } from 'next/navigation';
-import Sidebar from '@/components/Sidebar';
-import Topbar from '@/components/Topbar';
+import { ReactNode } from "react";
+import { usePathname } from "next/navigation";
+import Sidebar from "@/components/navigation/Sidebar";
+import Topbar from "@/components/navigation/Topbar";
 
 export default function LayoutWrapper({ children }: { children: ReactNode }) {
   const pathname = usePathname();
-  const hideLayout = pathname === '/auth/login' || pathname === '/register' || pathname === '/';
+  const hideLayout = pathname === "/auth/login" || pathname === "/register" || pathname === "/";
 
   if (hideLayout) return <>{children}</>;
 
