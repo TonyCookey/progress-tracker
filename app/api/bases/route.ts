@@ -4,11 +4,9 @@ import { prisma } from "@/lib/prisma";
 
 export async function GET() {
   try {
-    console.log("[BASES_GET]");
     const bases = await prisma.base.findMany({});
-    console.log("[BASES_GET_SUCCESS]", bases);
 
-    return NextResponse.json({ bases });
+    return NextResponse.json(bases);
   } catch (error) {
     console.log("[BASES_GET_ERROR]", error);
     return NextResponse.json({ error: "Failed to fetch bases" }, { status: 500 });

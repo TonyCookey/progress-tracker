@@ -9,7 +9,7 @@ type FormValues = {
   leaderId: string;
 };
 
-export default function CreateSquadForm({ bases, leaders, onClose }: { bases: any[]; leaders: any[]; onClose: () => void }) {
+export default function CreateGroupForm({ bases, leaders, type, onClose }: { bases: any[]; leaders: any[]; type: string; onClose: () => void }) {
   const { register, handleSubmit } = useForm<FormValues>();
   const [loading, setLoading] = useState(false);
 
@@ -19,13 +19,13 @@ export default function CreateSquadForm({ bases, leaders, onClose }: { bases: an
       const res = await fetch("/api/groups", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...data, type: "SQUAD" }),
+        body: JSON.stringify({ ...data, type }),
       });
 
       if (res.ok) {
         onClose();
       } else {
-        alert("Failed to create squad");
+        alert("Failed to Create");
       }
     } finally {
       setLoading(false);
@@ -35,8 +35,16 @@ export default function CreateSquadForm({ bases, leaders, onClose }: { bases: an
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
       <div>
-        <label className="block text-sm font-medium">Squad Name</label>
+        <label className="block text-sm font-medium"> Name</label>
         <input {...register("name", { required: true })} className="w-full border p-2 rounded" />
+      </div>
+
+      <div>
+        <label className="block text-sm font-medium">Description</label>
+        <textarea
+          // {...register("description", { required: false })}
+          className="w-full border p-2 rounded"
+        />
       </div>
 
       <div>
@@ -51,8 +59,21 @@ export default function CreateSquadForm({ bases, leaders, onClose }: { bases: an
       </div>
 
       <div>
-        <label className="block text-sm font-medium">Leader</label>
+        <label className="block text-sm font-medium">General In Charge</label>
         <select {...register("leaderId", { required: true })} className="w-full border p-2 rounded">
+          {leaders.map((user) => (
+            <option key={user.id} value={user.id}>
+              {user.name}
+            </option>
+          ))}
+        </select>
+      </div>
+      <div>
+        <label className="block text-sm font-medium">Supporting Members</label>
+        <select
+          // {...register("leaderId", { required: true })}
+          className="w-full border p-2 rounded"
+        >
           {leaders.map((user) => (
             <option key={user.id} value={user.id}>
               {user.name}
@@ -62,7 +83,7 @@ export default function CreateSquadForm({ bases, leaders, onClose }: { bases: an
       </div>
 
       <button disabled={loading} className="bg-blue-600 text-white px-4 py-2 rounded">
-        {loading ? "Creating..." : "Create Squad"}
+        {loading ? "Creating..." : "Create"}
       </button>
     </form>
   );

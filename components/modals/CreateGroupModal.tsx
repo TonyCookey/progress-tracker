@@ -2,9 +2,9 @@
 
 import { Dialog, Transition } from "@headlessui/react";
 import { Fragment, useState } from "react";
-import CreateSquadForm from "../squads/CreateSquadForm";
+import CreateGroupForm from "../squads/CreateGroupForm";
 
-export default function CreateSquadModal({ bases, leaders }: { bases: any[]; leaders: any[] }) {
+export default function CreateSquadModal({ bases, leaders, type }: { bases: any[]; leaders: any[]; type: string }) {
   const [isOpen, setIsOpen] = useState(false);
 
   function closeModal() {
@@ -18,7 +18,7 @@ export default function CreateSquadModal({ bases, leaders }: { bases: any[]; lea
   return (
     <>
       <button onClick={openModal} className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
-        + Create Squad
+        + Create {type === "PLATOON" ? "Platoon" : "Squad"}
       </button>
 
       <Transition appear show={isOpen} as={Fragment}>
@@ -47,8 +47,8 @@ export default function CreateSquadModal({ bases, leaders }: { bases: any[]; lea
                 leaveTo="opacity-0 scale-95"
               >
                 <Dialog.Panel className="w-full max-w-xl transform overflow-hidden rounded bg-white p-6 shadow-xl transition-all">
-                  <Dialog.Title className="text-lg font-medium text-gray-900 mb-4">Create New Squad</Dialog.Title>
-                  <CreateSquadForm bases={bases} leaders={leaders} onClose={closeModal} />
+                  <Dialog.Title className="text-lg font-medium text-gray-900 mb-4">Create New {type === "PLATOON" ? "Platoon" : "Squad"}</Dialog.Title>
+                  <CreateGroupForm bases={bases} leaders={leaders} type={type} onClose={closeModal} />
                 </Dialog.Panel>
               </Transition.Child>
             </div>

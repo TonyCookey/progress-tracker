@@ -1,3 +1,4 @@
+import RequireAuth from "@/components/auth/RequireAuth";
 import BirthdayTabs from "@/components/birthdays/BirthdaysTabs";
 
 async function getBirthdays() {
@@ -10,9 +11,11 @@ export default async function BirthdaysPage() {
   const { generals, teens } = await getBirthdays();
 
   return (
-    <div className="p-6">
-      <h1 className="text-2xl font-bold mb-6">Upcoming Birthdays 🎉</h1>
-      <BirthdayTabs generals={generals} teens={teens} />
-    </div>
+    <RequireAuth>
+      <div className="p-6">
+        <h1 className="text-2xl font-bold mb-6">Upcoming Birthdays 🎉</h1>
+        <BirthdayTabs generals={generals} teens={teens} />
+      </div>
+    </RequireAuth>
   );
 }
