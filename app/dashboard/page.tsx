@@ -9,6 +9,7 @@ export default async function DashboardPage() {
     headers: {
       "Content-Type": "application/json",
     },
+    cache: "no-store",
   });
   const cards = await res.json();
   if (!res.ok) {
