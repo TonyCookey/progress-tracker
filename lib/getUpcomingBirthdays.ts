@@ -6,6 +6,8 @@ export async function getUpcomingBirthdays() {
       t.id, 
       t.name, 
       t."dateOfBirth",
+      t."gender",
+      t."rank",
       b.name AS "baseName",
       EXTRACT(DAY FROM (t."dateOfBirth" - CURRENT_DATE)) AS "daysToBirthday",
       CASE
