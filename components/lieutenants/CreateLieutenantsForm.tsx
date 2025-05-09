@@ -1,26 +1,32 @@
 "use client";
 
-import { useForm } from "react-hook-form";
+import { useForm, Controller } from "react-hook-form";
 import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import Select from "react-select";
 
 type FormData = {
   name: string;
   gender: string;
   dateOfBirth: string;
   baseId: string;
+  groupId: string;
+  squadIds: string[];
 };
 type Base = {
   id: string;
   name: string;
 };
+type SquadOption = {
+  value: string;
+  label: string;
+};
 
 export default function CreateLieutenantForm({ onSuccess }: { onSuccess: () => void }) {
-  const router = useRouter();
-
-  const { register, handleSubmit, reset } = useForm<FormData>();
+  const { register, handleSubmit, reset, control } = useForm<FormData>();
   const [loading, setLoading] = useState(false);
   const [bases, setBases] = useState<Base[]>([]);
+  const [squads, setSquads] = useState<Base[]>([]);
+  const [platoons, setPlatoons] = useState<Base[]>([]);
 
   useEffect(() => {
     const fetchBases = async () => {
@@ -28,8 +34,20 @@ export default function CreateLieutenantForm({ onSuccess }: { onSuccess: () => v
       const data = await res.json();
       setBases(data);
     };
+    const fetchSquads = async () => {
+      const res = await fetch("/api/groups?type=SQUAD");
+      const data = await res.json();
+      setSquads(data);
+    };
+    const fetchPlatoons = async () => {
+      const res = await fetch("/api/groups?type=PLATOON");
+      const data = await res.json();
+      setPlatoons(data);
+    };
 
     fetchBases();
+    fetchSquads();
+    fetchPlatoons();
   }, []);
 
   const onSubmit = async (data: FormData) => {
@@ -50,9 +68,9 @@ export default function CreateLieutenantForm({ onSuccess }: { onSuccess: () => v
       console.error("Failed to create lieutenant", err);
     } finally {
       setLoading(false);
-      router.refresh();
     }
   };
+  const squadOptions: SquadOption[] = squads.map((s) => ({ value: s.id, label: s.name }));
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 mt-4">
@@ -84,6 +102,36 @@ export default function CreateLieutenantForm({ onSuccess }: { onSuccess: () => v
             </option>
           ))}
         </select>
+      </div>
+      <div>
+        <label className="block text-sm mb-1">Platoon</label>
+        <select {...register("groupId", { required: true })} className="w-full border px-3 py-2 rounded">
+          <option value="">Select a Platoon</option>
+          {platoons.map((platoon) => (
+            <option key={platoon.id} value={platoon.id}>
+              {platoon.name}
+            </option>
+          ))}
+        </select>
+      </div>
+      <div>
+        <label className="block font-medium mb-1">Squads</label>
+        <Controller
+          name="squadIds"
+          control={control}
+          render={({ field }) => (
+            <Select<SquadOption, true>
+              {...field}
+              isMulti
+              options={squadOptions}
+              className="react-select-container"
+              classNamePrefix="react-select"
+              value={squadOptions.filter((opt) => field.value?.includes(opt.value))}
+              onChange={(selected) => field.onChange(selected.map((opt) => opt.value))}
+              onBlur={field.onBlur}
+            />
+          )}
+        />
       </div>
 
       <button type="submit" className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 w-full" disabled={loading}>

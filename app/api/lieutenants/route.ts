@@ -4,9 +4,8 @@ import { prisma } from "@/lib/prisma";
 
 export async function POST(req: Request) {
   const body = await req.json();
-  console.log("[POST_TEEN]", body);
 
-  const { name, gender, dateOfBirth, baseId, rank } = body;
+  const { name, gender, dateOfBirth, baseId, rank, groupId, squadIds } = body;
 
   const teen = await prisma.teen.create({
     data: {
@@ -15,6 +14,12 @@ export async function POST(req: Request) {
       baseId,
       rank,
       dateOfBirth: new Date(dateOfBirth),
+      groupId,
+      squadMemberships: {
+        create: squadIds.map((id: string) => ({
+          group: { connect: { id } },
+        })),
+      },
     },
   });
 
