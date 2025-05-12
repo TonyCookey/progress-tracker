@@ -31,6 +31,7 @@ export async function GET(req: Request) {
   const page = parseInt(searchParams.get("page") ?? "1");
   const limit = parseInt(searchParams.get("limit") ?? "10");
   const search = searchParams.get("search")?.toLowerCase() ?? "";
+  const baseId = searchParams.get("baseId") ?? "";
 
   const skip = (page - 1) * limit;
 
@@ -38,6 +39,7 @@ export async function GET(req: Request) {
     prisma.teen.findMany({
       where: {
         rank: "LIEUTENANT",
+        baseId,
         name: {
           contains: search,
           mode: "insensitive",

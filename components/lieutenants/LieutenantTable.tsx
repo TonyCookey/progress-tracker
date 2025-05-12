@@ -1,25 +1,46 @@
 "use client";
 import { useEffect, useState } from "react";
+import { useSession } from "next-auth/react";
 import { PencilIcon, TrashIcon, EyeIcon } from "@heroicons/react/24/outline";
 import { calculateAge } from "@/lib/calculateAge";
+import Select from "react-select";
+import { set } from "date-fns";
+
 export default function LieutenantTable() {
+  const { data: session } = useSession();
+  const user = session?.user;
+  const isSuperAdmin = user?.role === "SUPERADMIN";
   const [lieutenants, setLieutenants] = useState([]);
   const [page, setPage] = useState(1);
   const [total, setTotal] = useState(0);
   const [search, setSearch] = useState("");
+  const [baseId, setBaseId] = useState(user?.baseId);
+  const [bases, setBases] = useState([]);
+
+  useEffect(() => {
+    if (isSuperAdmin) {
+      fetch("/api/bases")
+        .then((res) => res.json())
+        .then(setBases);
+
+      setBaseId(user?.baseId);
+    }
+  }, [isSuperAdmin, user?.baseId]);
 
   const limit = 10;
 
   useEffect(() => {
     const fetchData = async () => {
-      const res = await fetch(`/api/lieutenants?page=${page}&limit=${limit}&search=${search}`);
+      const res = await fetch(`/api/lieutenants?page=${page}&limit=${limit}&search=${search}&baseId=${baseId}`);
       const { data, total } = await res.json();
       setLieutenants(data);
       setTotal(total);
     };
 
-    fetchData();
-  }, [page, search]);
+    if (baseId) {
+      fetchData();
+    }
+  }, [page, search, baseId]);
   const handleView = (id: string) => {
     console.log("View Lieutenant", id);
   };
@@ -36,7 +57,16 @@ export default function LieutenantTable() {
 
   return (
     <div>
-      <div className="flex justify-end mb-4">
+      <div className="flex justify-between mb-4">
+        {isSuperAdmin && (
+          <Select
+            options={bases.map((base: any) => ({ label: base.name, value: base.id }))}
+            onChange={(option) => setBaseId(option?.value)}
+            value={bases.map((base: any) => ({ label: base.name, value: base.id })).find((option) => option.value === baseId)}
+            placeholder="Select Base"
+            className="w-64"
+          />
+        )}
         <input
           type="text"
           placeholder="Search by name..."
