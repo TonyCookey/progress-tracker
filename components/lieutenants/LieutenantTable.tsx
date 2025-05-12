@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
-import { PencilIcon, TrashIcon, EyeIcon } from "@heroicons/react/24/outline";
+import { PencilIcon, TrashIcon, EyeIcon, ArrowPathIcon } from "@heroicons/react/24/outline";
 import { calculateAge } from "@/lib/calculateAge";
 import Select from "react-select";
 import { set } from "date-fns";
@@ -31,7 +31,8 @@ export default function LieutenantTable() {
 
   useEffect(() => {
     const fetchData = async () => {
-      const res = await fetch(`/api/lieutenants?page=${page}&limit=${limit}&search=${search}&baseId=${baseId}`);
+      console.log("Fetching data with:", { page, search, baseId });
+      const res = await fetch(`/api/lieutenants?page=${page}&limit=${limit}&search=${search}&baseId=${baseId}`, { cache: "no-store" });
       const { data, total } = await res.json();
       setLieutenants(data);
       setTotal(total);
@@ -67,16 +68,29 @@ export default function LieutenantTable() {
             className="w-64"
           />
         )}
-        <input
-          type="text"
-          placeholder="Search by name..."
-          value={search}
-          onChange={(e) => {
-            setSearch(e.target.value);
-            setPage(1);
-          }}
-          className="border px-3 py-2 rounded w-64"
-        />
+        <div className="flex items-center">
+          <input
+            type="text"
+            placeholder="Search by name..."
+            value={search}
+            onChange={(e) => {
+              setSearch(e.target.value);
+              setPage(1);
+            }}
+            className="border px-3 py-2 rounded w-64"
+          />
+          <button
+            onClick={() => {
+              setPage(1);
+              setSearch("");
+              setBaseId(user?.baseId ?? "");
+            }}
+            className="flex items-center px-4 py-2 bg-green-500 text-white rounded mx-2 hover:bg-green-600"
+          >
+            <ArrowPathIcon className="w-5 h-5 mr-2" />
+            Refresh
+          </button>
+        </div>
       </div>
 
       <div className="overflow-x-auto border rounded">

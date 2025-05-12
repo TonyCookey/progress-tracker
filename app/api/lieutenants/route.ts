@@ -53,6 +53,7 @@ export async function GET(req: Request) {
     prisma.teen.count({
       where: {
         rank: "LIEUTENANT",
+        baseId,
         name: {
           contains: search,
           mode: "insensitive",
