@@ -28,18 +28,17 @@ export default function LieutenantTable() {
   }, [isSuperAdmin, user?.baseId]);
 
   const limit = 10;
+  const fetchData = async (page: number, search: string, baseId: any) => {
+    console.log("Fetching data with:", { page, search, baseId });
+    const res = await fetch(`/api/lieutenants?page=${page}&limit=${limit}&search=${search}&baseId=${baseId}`, { cache: "no-store" });
+    const { data, total } = await res.json();
+    setLieutenants(data);
+    setTotal(total);
+  };
 
   useEffect(() => {
-    const fetchData = async () => {
-      console.log("Fetching data with:", { page, search, baseId });
-      const res = await fetch(`/api/lieutenants?page=${page}&limit=${limit}&search=${search}&baseId=${baseId}`, { cache: "no-store" });
-      const { data, total } = await res.json();
-      setLieutenants(data);
-      setTotal(total);
-    };
-
     if (baseId) {
-      fetchData();
+      fetchData(page, search, baseId);
     }
   }, [page, search, baseId]);
   const handleView = (id: string) => {
@@ -83,7 +82,7 @@ export default function LieutenantTable() {
             onClick={() => {
               setPage(1);
               setSearch("");
-              setBaseId(user?.baseId ?? "");
+              fetchData(1, search, baseId);
             }}
             className="flex items-center px-4 py-2 bg-green-500 text-white rounded mx-2 hover:bg-green-600"
           >

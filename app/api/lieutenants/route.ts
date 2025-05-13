@@ -64,34 +64,3 @@ export async function GET(req: Request) {
 
   return NextResponse.json({ data, total });
 }
-
-export async function DELETE(req: Request) {
-  const body = await req.json();
-  const { id } = body;
-
-  try {
-    await prisma.teen.delete({
-      where: { id },
-    });
-
-    return NextResponse.json({ message: "Deleted" });
-  } catch (err) {
-    console.error("[DELETE_TEEN_ERROR]", err);
-    return NextResponse.json({ error: "Failed to delete" }, { status: 500 });
-  }
-}
-export async function PUT(req: Request) {
-  const body = await req.json();
-  const { id, name } = body;
-  try {
-    const updatedTeen = await prisma.teen.update({
-      where: { id },
-      data: { name },
-    });
-
-    return NextResponse.json(updatedTeen);
-  } catch (err) {
-    console.error("[UPDATE_TEEN_ERROR]", err);
-    return NextResponse.json({ error: "Failed to update" }, { status: 500 });
-  }
-}
