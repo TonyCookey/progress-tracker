@@ -1,12 +1,13 @@
 "use client";
 import { useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
-import { PencilIcon, TrashIcon, EyeIcon, ArrowPathIcon } from "@heroicons/react/24/outline";
+import { EyeIcon, ArrowPathIcon } from "@heroicons/react/24/outline";
 import { calculateAge } from "@/lib/calculateAge";
 import Select from "react-select";
-import { set } from "date-fns";
+import { useRouter } from "next/navigation";
 
 export default function LieutenantTable() {
+  const router = useRouter();
   const { data: session } = useSession();
   const user = session?.user;
   const isSuperAdmin = user?.role === "SUPERADMIN";
@@ -43,14 +44,8 @@ export default function LieutenantTable() {
   }, [page, search, baseId]);
   const handleView = (id: string) => {
     console.log("View Lieutenant", id);
-  };
-
-  const handleEdit = (id: string) => {
-    console.log("Edit Lieutenant", id);
-  };
-
-  const handleDelete = async (id: string) => {
-    if (!confirm("Are you sure you want to delete this Lieutenant?")) return;
+    // Redirect to the lieutenant detail page
+    router.push(`/dashboard/lieutenants/${id}`);
   };
 
   const totalPages = Math.ceil(total / limit);
@@ -110,15 +105,9 @@ export default function LieutenantTable() {
                 <td className="px-4 py-2">{lt.gender}</td>
                 <td className="px-4 py-2">{calculateAge(lt.dateOfBirth)} years</td>
                 <td className="px-4 py-2">{lt.base?.name ?? "-"}</td>
-                <td className="px-4 py-2 space-x-2">
+                <td className="px-4 py-2 flex space-x-2">
                   <button onClick={() => handleView(lt.id)} title="View">
                     <EyeIcon className="w-5 h-5 text-blue-600" />
-                  </button>
-                  <button onClick={() => handleEdit(lt.id)} title="Edit">
-                    <PencilIcon className="w-5 h-5 text-yellow-600" />
-                  </button>
-                  <button onClick={() => handleDelete(lt.id)} title="Delete">
-                    <TrashIcon className="w-5 h-5 text-red-600" />
                   </button>
                 </td>
               </tr>

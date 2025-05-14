@@ -24,7 +24,7 @@ export default function TeenDetailsPage() {
 
   useEffect(() => {
     async function fetchTeen() {
-      const res = await fetch(`/api/teens/${id}`, { cache: "no-store" });
+      const res = await fetch(`/api/lieutenants/${id}`, { cache: "no-store" });
       if (!res.ok) {
         console.error("Failed to fetch teen data");
         return;
@@ -42,7 +42,7 @@ export default function TeenDetailsPage() {
   const handleDelete = async (teenId: string) => {
     if (!confirm("Are you sure you want to delete this lieutenant?")) return;
 
-    const res = await fetch(`/api/teens/${teenId}`, {
+    const res = await fetch(`/api/lieutenants/${teenId}`, {
       method: "DELETE",
     });
 
@@ -50,7 +50,6 @@ export default function TeenDetailsPage() {
       console.error("Failed to delete lieutenant");
       return;
     }
-
     alert("Lieutenant deleted successfully");
     window.location.href = "/dashboard/lieutenants";
   };
@@ -60,7 +59,7 @@ export default function TeenDetailsPage() {
     <div className="p-6">
       <h2 className="text-2xl font-semibold mb-4">{teen.name}'s Profile</h2>
 
-      <div className="space-y-2 text-sm">
+      <div className="space-y-2 text-lg">
         <p>
           <strong>Rank:</strong> {teen.rank}
         </p>
