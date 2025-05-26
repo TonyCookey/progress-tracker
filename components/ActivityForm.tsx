@@ -1,1 +1,0 @@
-// Activity form component (placeholder)
