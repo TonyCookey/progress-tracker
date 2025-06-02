@@ -34,3 +34,28 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ message: "Failed to create activity" }, { status: 500 });
   }
 }
+
+export async function GET(req: NextRequest) {
+  try {
+    const { searchParams } = new URL(req.url);
+    const baseId = searchParams.get("baseId");
+
+    const activities = await prisma.activity.findMany({
+      where: baseId ? { baseId } : {},
+      include: {
+        base: true,
+        groups: true,
+        teenParticipation: true,
+        teacherParticipation: true,
+      },
+      orderBy: {
+        date: "desc",
+      },
+    });
+
+    return NextResponse.json(activities);
+  } catch (error) {
+    console.error("Error fetching activities:", error);
+    return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
+  }
+}
