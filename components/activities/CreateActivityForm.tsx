@@ -5,13 +5,12 @@ import Select from "react-select";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
-type Option = { value: string; label: string };
-
-type Props = {
-  onSuccess: () => void;
+type Option = { id: string; name: string };
+type SquadOption = {
+  value: string;
+  label: string;
 };
-
-export default function CreateActivityForm({ onSuccess }: Props) {
+export default function CreateActivityForm() {
   const {
     register,
     handleSubmit,
@@ -29,6 +28,7 @@ export default function CreateActivityForm({ onSuccess }: Props) {
     const fetchBases = async () => {
       const res = await fetch("/api/bases");
       const data = await res.json();
+      console.log(data, "Fetched bases data");
       setBases(data);
     };
     const fetchSquads = async () => {
@@ -52,83 +52,100 @@ export default function CreateActivityForm({ onSuccess }: Props) {
       const res = await fetch("/api/activities", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...data, squadIds: data.squadIds?.map((s: Option) => s.value) }),
+        body: JSON.stringify({ ...data, squadIds: data.squadIds?.map((s: Option) => s.id) }),
       });
       if (!res.ok) {
         console.error("Failed to create lieutenant", res.statusText);
         alert("Failed to create lieutenant");
       }
       reset();
-      router.refresh();
-      onSuccess();
+      router.push("/dashboard/activities");
     } catch (error) {
       console.error("Failed to create activity:", error);
     }
   };
+  const squadOptions: SquadOption[] = squads.map((s) => ({ value: s.id, label: s.name }));
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+    <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 px-10 bg-white rounded shadow-md">
+      <h1 className="text-xl font-semibold">Create Activity</h1>
       <div>
-        <label className="block text-sm font-medium">Title</label>
-        <input {...register("title", { required: true })} className="w-full border rounded px-3 py-2 mt-1" />
+        <label htmlFor="title" className="block text-sm font-medium">
+          Title
+        </label>
+        <input id="title" {...register("name", { required: true })} className="w-full border rounded px-3 py-2 mt-1" />
       </div>
 
       <div>
-        <label className="block text-sm font-medium">Description</label>
-        <textarea {...register("description")} className="w-full border rounded px-3 py-2 mt-1" rows={3} />
+        <label htmlFor="description" className="block text-sm font-medium">
+          Description
+        </label>
+        <textarea id="description" {...register("description")} className="w-full border rounded px-3 py-2 mt-1" rows={3} />
       </div>
 
       <div>
-        <label className="block text-sm font-medium">Date</label>
-        <input type="date" {...register("date", { required: true })} className="w-full border rounded px-3 py-2 mt-1" />
+        <label htmlFor="date" className="block text-sm font-medium">
+          Date
+        </label>
+        <input type="date" id="date" {...register("date", { required: true })} className="w-full border rounded px-3 py-2 mt-1" />
       </div>
 
       <div>
-        <label className="block text-sm font-medium">Type</label>
-        <select {...register("type")} className="w-full border rounded px-3 py-2 mt-1">
+        <label htmlFor="type" className="block text-sm font-medium">
+          Type
+        </label>
+        <select id="type" {...register("type")} className="w-full border rounded px-3 py-2 mt-1">
           <option value="Outreach">Outreach</option>
           <option value="Worship">Worship</option>
           <option value="Bible Study">Bible Study</option>
-          <option value="Recreation">Recreation</option>
+          <option value="Recreation">Hangouts</option>
         </select>
       </div>
 
       <div>
-        <label className="block text-sm font-medium">Base</label>
-        <select {...register("baseId")} className="w-full border rounded px-3 py-2 mt-1">
+        <label htmlFor="baseId" className="block text-sm font-medium">
+          Base
+        </label>
+        <select id="baseId" {...register("baseId")} className="w-full border rounded px-3 py-2 mt-1">
           {bases.map((b) => (
-            <option key={b.value} value={b.value}>
-              {b.label}
+            <option key={b.id} value={b.id}>
+              {b.name}
             </option>
           ))}
         </select>
       </div>
 
       <div>
-        <label className="block text-sm font-medium">Platoon (optional)</label>
-        <select {...register("platoonId")} className="w-full border rounded px-3 py-2 mt-1">
+        <label htmlFor="platoonId" className="block text-sm font-medium">
+          Platoon (optional)
+        </label>
+        <select id="platoonId" {...register("platoonId")} className="w-full border rounded px-3 py-2 mt-1">
           <option value="">None</option>
           {platoons.map((p) => (
-            <option key={p.value} value={p.value}>
-              {p.label}
+            <option key={p.id} value={p.id}>
+              {p.name}
             </option>
           ))}
         </select>
       </div>
 
       <div>
-        <label className="block text-sm font-medium mb-1">Squads (optional)</label>
+        <label htmlFor="squadIds" className="block font-medium mb-1">
+          Squads
+        </label>
         <Controller
           name="squadIds"
           control={control}
           render={({ field }) => (
-            <Select
+            <Select<SquadOption, true>
               {...field}
               isMulti
-              options={squads}
+              options={squadOptions}
               className="react-select-container"
               classNamePrefix="react-select"
-              onChange={(selected) => field.onChange(selected)}
+              value={squadOptions.filter((opt) => field.value?.includes(opt.value))}
+              onChange={(selected) => field.onChange(selected.map((opt) => opt.value))}
+              onBlur={field.onBlur}
             />
           )}
         />

@@ -12,7 +12,7 @@ type FormData = {
   groupId: string;
   squadIds: string[];
 };
-type Base = {
+type Option = {
   id: string;
   name: string;
 };
@@ -24,9 +24,9 @@ type SquadOption = {
 export default function CreateLieutenantForm({ onSuccess }: { onSuccess: () => void }) {
   const { register, handleSubmit, reset, control } = useForm<FormData>();
   const [loading, setLoading] = useState(false);
-  const [bases, setBases] = useState<Base[]>([]);
-  const [squads, setSquads] = useState<Base[]>([]);
-  const [platoons, setPlatoons] = useState<Base[]>([]);
+  const [bases, setBases] = useState<Option[]>([]);
+  const [squads, setSquads] = useState<Option[]>([]);
+  const [platoons, setPlatoons] = useState<Option[]>([]);
 
   useEffect(() => {
     const fetchBases = async () => {
