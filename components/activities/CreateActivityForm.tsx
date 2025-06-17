@@ -49,6 +49,10 @@ export default function CreateActivityForm() {
 
   const onSubmit = async (data: any) => {
     try {
+      if (data.baseId === "cross-base") {
+        data.baseId = null;
+        data.isCrossBase = true;
+      }
       const res = await fetch("/api/activities", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -107,6 +111,8 @@ export default function CreateActivityForm() {
           Base
         </label>
         <select id="baseId" {...register("baseId")} className="w-full border rounded px-3 py-2 mt-1">
+          <option value="">Select a Base</option>
+          <option value="cross-base">Cross Base</option>
           {bases.map((b) => (
             <option key={b.id} value={b.id}>
               {b.name}

@@ -44,9 +44,9 @@ export async function GET(req: NextRequest) {
       where: baseId ? { baseId } : {},
       include: {
         base: true,
-        groups: true,
-        teenParticipation: true,
-        teacherParticipation: true,
+        // groups: true,
+        // teenParticipation: true,
+        // teacherParticipation: true,
       },
       orderBy: {
         date: "desc",

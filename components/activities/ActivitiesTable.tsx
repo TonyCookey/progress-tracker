@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { format } from "date-fns";
 import LoadingSpinner from "../common/LoadingSpinner";
+import { EyeIcon } from "@heroicons/react/24/outline";
 
 type Activity = {
   id: string;
@@ -37,11 +38,10 @@ export default function ActivitiesTable() {
         <thead className="bg-gray-100 text-sm text-gray-700">
           <tr>
             <th className="px-4 py-2 text-left">Name</th>
-            <th className="px-4 py-2">Type</th>
-            <th className="px-4 py-2">Date</th>
-            <th className="px-4 py-2">Cross-base?</th>
-            <th className="px-4 py-2">Groups</th>
-            <th className="px-4 py-2">Actions</th>
+            <th className="px-4 py-2 text-left">Type</th>
+            <th className="px-4 py-2 text-left">Date</th>
+            <th className="px-4 py-2 text-left">Cross-base?</th>
+            <th className="px-4 py-2 text-left">Actions</th>
           </tr>
         </thead>
         <tbody className="divide-y divide-gray-100 text-sm">
@@ -50,12 +50,12 @@ export default function ActivitiesTable() {
               <td className="px-4 py-2">{activity.name}</td>
               <td className="px-4 py-2">{activity.type}</td>
               <td className="px-4 py-2">{format(new Date(activity.date), "do MMM yyyy")}</td>
-              <td className="px-4 py-2 text-center">{activity.isCrossBase ? "Yes" : "No"}</td>
-              <td className="px-4 py-2">{activity.groups.map((g) => g.name).join(", ")}</td>
+              <td className="px-4 py-2">{activity.isCrossBase ? "Yes" : "No"}</td>
+              {/* <td className="px-4 py-2">{activity.groups.map((g) => g.name).join(", ")}</td> */}
               <td className="px-4 py-2 space-x-2">
-                <button className="text-blue-600 hover:underline">View</button>
-                <button className="text-yellow-600 hover:underline">Edit</button>
-                <button className="text-red-600 hover:underline">Delete</button>
+                <EyeIcon className="w-5 h-5 text-blue-600" />
+                {/* <button className="text-yellow-600 hover:underline">Edit</button> */}
+                {/* <button className="text-red-600 hover:underline">Delete</button> */}
               </td>
             </tr>
           ))}
