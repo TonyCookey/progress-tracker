@@ -1,3 +1,4 @@
+import Link from "next/link";
 import RequireAuth from "@/components/auth/RequireAuth";
 import CreateGroupModal from "@/components/modals/CreateGroupModal";
 
@@ -24,10 +25,14 @@ export default async function PlatoonsPage() {
 
         <ul className="space-y-2">
           {platoons.map((squad: any) => (
-            <li key={squad.id} className="border rounded p-6 shadow-sm">
-              <h2 className="text-lg font-bold mb-1">{squad.name}</h2>
-              <p className="text-sm text-gray-600">Leader: {squad.leader?.name ?? "N/A"}</p>
-            </li>
+            <Link href={`/dashboard/platoons/${squad.id}`} key={squad.id} className="block">
+              <li key={squad.id} className="border rounded p-6 shadow-sm">
+                <h2 className="text-lg font-bold mb-1">{squad.name}</h2>
+                <p className="text-sm text-gray-600">
+                  Led by {squad.leader?.name ?? ""} - {squad.base?.name ?? ""} Base
+                </p>
+              </li>
+            </Link>
           ))}
         </ul>
       </div>
