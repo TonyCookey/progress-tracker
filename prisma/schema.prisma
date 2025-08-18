@@ -144,3 +144,13 @@ model TeacherParticipation {
 }
 
 
+model Offering {
+  id          String    @id @default(cuid())
+  amount      Int
+  isCrossBase Boolean   @default(false)
+  baseId      String?
+  date        DateTime
+  service     String
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+}
