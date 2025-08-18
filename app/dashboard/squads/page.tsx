@@ -1,5 +1,6 @@
 import RequireAuth from "@/components/auth/RequireAuth";
 import CreateGroupModal from "@/components/modals/CreateGroupModal";
+import Link from "next/link";
 
 export default async function SquadsPage() {
   const [squadsRes, basesRes, leadersRes] = await Promise.all([
@@ -24,10 +25,14 @@ export default async function SquadsPage() {
 
         <ul className="space-y-2">
           {squads.map((squad: any) => (
-            <li key={squad.id} className="border rounded p-6 shadow-sm">
-              <h2 className="text-lg font-bold mb-1">{squad.name}</h2>
-              <p className="text-sm text-gray-600">Leader: {squad.leader?.name ?? "N/A"}</p>
-            </li>
+            <Link href={`/dashboard/squads/${squad.id}`} key={squad.id} className="block">
+              <li key={squad.id} className="border rounded p-6 shadow-sm">
+                <h2 className="text-lg font-bold mb-1">{squad.name}</h2>
+                <p className="text-sm text-gray-600">
+                  Led by {squad.leader?.name ?? ""} - {squad.base?.name ?? ""} Base
+                </p>
+              </li>
+            </Link>
           ))}
         </ul>
       </div>
