@@ -31,7 +31,7 @@ export default function CreateActivityModal() {
               <Dialog.Panel className="w-full max-w-lg transform overflow-hidden rounded bg-white p-6 shadow transition-all">
                 <Dialog.Title className="text-lg font-semibold mb-4">Create Activity</Dialog.Title>
 
-                <CreateActivityForm onSuccess={() => setIsOpen(false)} />
+                <CreateActivityForm />
               </Dialog.Panel>
             </div>
           </div>
