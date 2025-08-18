@@ -4,7 +4,7 @@ import { prisma } from "@/lib/prisma";
 export async function GET(req: Request, { params }: { params: { id: string } }) {
   const general = await prisma.user.findUnique({
     where: { id: params.id },
-    include: { base: true },
+    include: { base: true, leadingGroups: true, supportingGroups: true },
   });
 
   if (!general) {
