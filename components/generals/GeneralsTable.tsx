@@ -37,9 +37,6 @@ export default function GeneralsTable() {
   useEffect(() => {
     fetchGenerals(page);
   }, [page]);
-
-  const handleView = (id: string) => {};
-
   return (
     <div className="overflow-x-auto bg-white shadow rounded p-4">
       <h2 className="text-lg font-semibold mb-4">Generals, Colonels & Volunteers</h2>
