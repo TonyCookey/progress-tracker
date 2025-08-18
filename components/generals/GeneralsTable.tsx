@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { PencilIcon, TrashIcon, EyeIcon } from "@heroicons/react/24/outline";
 import LoadingSpinner from "../common/LoadingSpinner";
+import Link from "next/link";
 
 interface General {
   id: string;
@@ -37,24 +38,7 @@ export default function GeneralsTable() {
     fetchGenerals(page);
   }, [page]);
 
-  const handleView = (id: string) => {
-    console.log("View general", id);
-    // Optionally route to /dashboard/generals/[id]
-  };
-
-  const handleEdit = (id: string) => {
-    console.log("Edit general", id);
-  };
-
-  const handleDelete = async (id: string) => {
-    if (!confirm("Are you sure you want to delete this general?")) return;
-    try {
-      await fetch(`/api/generals/${id}`, { method: "DELETE" });
-      fetchGenerals(page); // Refresh after delete
-    } catch (error) {
-      console.error("Failed to delete general:", error);
-    }
-  };
+  const handleView = (id: string) => {};
 
   return (
     <div className="overflow-x-auto bg-white shadow rounded p-4">
@@ -79,15 +63,9 @@ export default function GeneralsTable() {
                   <td className="px-4 py-2">{general.email}</td>
                   <td className="px-4 py-2">{general.base?.name}</td>
                   <td className="px-4 py-2 flex justify-end space-x-2">
-                    <button onClick={() => handleView(general.id)} title="View">
-                      <EyeIcon className="w-5 h-5 text-blue-600" />
-                    </button>
-                    <button onClick={() => handleEdit(general.id)} title="Edit">
-                      <PencilIcon className="w-5 h-5 text-yellow-600" />
-                    </button>
-                    <button onClick={() => handleDelete(general.id)} title="Delete">
-                      <TrashIcon className="w-5 h-5 text-red-600" />
-                    </button>
+                    <Link href={`/dashboard/generals/${general.id}`}>
+                      <EyeIcon className="w-5 h-5 text-blue-600 cursor-pointer" />
+                    </Link>
                   </td>
                 </tr>
               ))}
