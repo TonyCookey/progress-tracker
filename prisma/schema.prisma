@@ -105,8 +105,10 @@ model GroupSupport {
 model Activity {
   id                   String                  @id @default(cuid())
   name                 String
+  description          String
   type                 String
   date                 DateTime
+  number               Int
   isCrossBase          Boolean                 @default(false)
   baseId               String?
   base                 Base?                   @relation(fields: [baseId], references: [id])
@@ -140,3 +142,5 @@ model TeacherParticipation {
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
 }
+
+
