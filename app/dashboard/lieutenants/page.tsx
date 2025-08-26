@@ -12,4 +12,3 @@ export default function LieutenantsPage() {
     </div>
   );
 }
-// This page fetches and displays a list of lieutenants, along with a modal to create new lieutenants.

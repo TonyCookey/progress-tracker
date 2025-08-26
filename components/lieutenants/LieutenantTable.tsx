@@ -87,26 +87,32 @@ export default function LieutenantTable() {
         </div>
       </div>
 
-      <div className="overflow-x-auto border rounded">
-        <table className="min-w-full divide-y divide-gray-200">
-          <thead className="bg-gray-100">
+      <div className="overflow-x-auto border rounded shadow-sm bg-white">
+        <table className="w-full divide-y divide-gray-200 text-sm">
+          <thead className="bg-blue-50">
             <tr>
-              <th className="text-left px-4 py-2">Name</th>
-              <th className="text-left px-4 py-2">Gender</th>
-              <th className="text-left px-4 py-2">Age</th>
-              <th className="text-left px-4 py-2">Base</th>
-              <th className="text-left px-4 py-2">Actions</th>
+              <th className="text-left px-4 py-3 font-semibold text-gray-700">Name</th>
+              <th className="text-left px-4 py-3 font-semibold text-gray-700">Gender</th>
+              <th className="text-left px-4 py-3 font-semibold text-gray-700">Age</th>
+              <th className="text-left px-4 py-3 font-semibold text-gray-700">Base</th>
+              <th className="text-left px-4 py-3 font-semibold text-gray-700">Actions</th>
             </tr>
           </thead>
           <tbody>
-            {lieutenants.map((lt: any) => (
-              <tr key={lt.id} className="border-t">
-                <td className="px-4 py-2">{lt.name}</td>
-                <td className="px-4 py-2">{lt.gender}</td>
-                <td className="px-4 py-2">{calculateAge(lt.dateOfBirth)} years</td>
-                <td className="px-4 py-2">{lt.base?.name ?? "-"}</td>
-                <td className="px-4 py-2 flex space-x-2">
-                  <button onClick={() => handleView(lt.id)} title="View">
+            {lieutenants.map((lt: any, idx: number) => (
+              <tr key={lt.id} className={`border-t transition-colors hover:bg-blue-50 ${idx % 2 === 0 ? "bg-gray-50" : "bg-white"}`}>
+                <td className="px-4 pb-2 flex items-center gap-3">
+                  {/* Avatar with initials */}
+                  <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-00 font-bold text-sm">
+                    {lt.name?.charAt(0) ?? "L"}
+                  </div>
+                  <span className="font-medium">{lt.name}</span>
+                </td>
+                <td className="px-4 pb-2">{lt.gender}</td>
+                <td className="px-4 pb-2">{calculateAge(lt.dateOfBirth)} yrs</td>
+                <td className="px-4 pb-2">{lt.base?.name ?? "-"}</td>
+                <td className="px-4 pb-2 flex space-x-2">
+                  <button onClick={() => handleView(lt.id)} title="View" className="p-2 rounded hover:bg-blue-100 transition">
                     <EyeIcon className="w-5 h-5 text-blue-600" />
                   </button>
                 </td>
@@ -117,16 +123,20 @@ export default function LieutenantTable() {
       </div>
 
       <div className="flex justify-end mt-4 space-x-2">
-        <button onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={page === 1} className="px-3 py-1 bg-gray-200 rounded disabled:opacity-50">
+        <button
+          onClick={() => setPage((p) => Math.max(1, p - 1))}
+          disabled={page === 1}
+          className="px-4 py-2 bg-blue-100 text-blue-700 rounded hover:bg-blue-200 disabled:opacity-50 transition"
+        >
           Previous
         </button>
-        <span className="px-2 py-1">
+        <span className="px-2 py-1 font-medium text-gray-700">
           Page {page} of {totalPages}
         </span>
         <button
           onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
           disabled={page === totalPages}
-          className="px-3 py-1 bg-gray-200 rounded disabled:opacity-50"
+          className="px-4 py-2 bg-blue-100 text-blue-700 rounded hover:bg-blue-200 disabled:opacity-50 transition"
         >
           Next
         </button>

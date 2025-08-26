@@ -79,45 +79,49 @@ export default function TeenDetailsPage() {
   const color = getColorClasses(teen.gender);
 
   return (
-    <div className="max-w-2xl mx-auto p-8">
-      <div className={`${color.gradient} rounded-xl shadow-lg p-8 mb-8 flex items-center gap-6`}>
-        <div className={`w-24 h-24 rounded-full ${color.avatar} flex items-center justify-center text-4xl font-bold text-white shadow`}>
-          {teen.name?.[0] ?? "?"}
+    <div className="max-w-5xl mx-auto p-6">
+      <div className="flex flex-col md:flex-row gap-8 mb-8">
+        {/* Profile Card */}
+        <div className={`flex-1 ${color.gradient} rounded-xl shadow-lg p-8 flex items-center gap-6`}>
+          <div className={`w-24 h-24 rounded-full ${color.avatar} flex items-center justify-center text-4xl font-bold text-white shadow`}>
+            {teen.name?.[0] ?? "?"}
+          </div>
+          <div>
+            <h2 className={`text-3xl font-bold mb-2 ${color.name}`}>{teen.name}</h2>
+            <span className={`inline-block ${color.badge} text-white px-3 py-1 rounded-full text-sm font-semibold mb-2`}>{teen.rank}</span>
+            <p className="text-gray-700 mb-1">
+              <strong>Gender:</strong> {teen.gender}
+            </p>
+            <p className="text-gray-700 mb-1">
+              <strong>Date of Birth:</strong> {formatDate(teen.dateOfBirth)} ({calculateAge(teen.dateOfBirth)} yrs)
+            </p>
+          </div>
         </div>
-        <div>
-          <h2 className={`text-3xl font-bold mb-2 ${color.name}`}>{teen.name}</h2>
-          <span className={`inline-block ${color.badge} text-white px-3 py-1 rounded-full text-sm font-semibold mb-2`}>{teen.rank}</span>
-          <p className="text-gray-700 mb-1">
-            <strong>Gender:</strong> {teen.gender}
-          </p>
-          <p className="text-gray-700 mb-1">
-            <strong>Date of Birth:</strong> {formatDate(teen.dateOfBirth)} ({calculateAge(teen.dateOfBirth)} yrs)
-          </p>
-        </div>
-      </div>
 
-      <div className="bg-white rounded-lg shadow p-6 mb-8">
-        <h3 className={`text-xl font-semibold mb-4 ${color.header}`}>Assignments</h3>
-        <div className="space-y-2 text-lg">
-          <p>
-            <strong>Base:</strong> <span className={color.assignment}>{teen.base.name}</span>
-          </p>
-          <p>
-            <strong>Platoon:</strong> <span className={color.assignment}>{teen.platoon?.name || "N/A"}</span>
-          </p>
-          <p>
-            <strong>Squads:</strong>{" "}
-            {teen.squads.length ? (
-              <span className={color.assignment}>{teen.squads.map((s) => s.name).join(", ")}</span>
-            ) : (
-              <span className="text-gray-500">None</span>
-            )}
-          </p>
+        {/* Assignments Card */}
+        <div className="flex-1 bg-white rounded-lg shadow p-8">
+          <h3 className={`text-xl font-semibold mb-4 ${color.header}`}>Assignments</h3>
+          <div className="space-y-2 text-lg">
+            <p>
+              <strong>Base:</strong> <span className={color.assignment}>{teen.base.name}</span>
+            </p>
+            <p>
+              <strong>Platoon:</strong> <span className={color.assignment}>{teen.platoon?.name || "N/A"}</span>
+            </p>
+            <p>
+              <strong>Squads:</strong>{" "}
+              {teen.squads.length ? (
+                <span className={color.assignment}>{teen.squads.map((s) => s.name).join(", ")}</span>
+              ) : (
+                <span className="text-gray-500">None</span>
+              )}
+            </p>
+          </div>
         </div>
       </div>
 
       <div className="flex gap-4 justify-end">
-        <button className=" bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 rounded-lg font-semibold shadow">Edit</button>
+        <button className="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 rounded-lg font-semibold shadow">Edit</button>
         <button onClick={() => handleDelete(teen.id)} className="bg-red-600 hover:bg-red-700 text-white px-5 py-2 rounded-lg font-semibold shadow">
           Delete
         </button>

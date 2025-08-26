@@ -56,40 +56,44 @@ export default function GeneralDetailsPage() {
   if (!general) return <LoadingSpinner />;
 
   return (
-    <div className="max-w-2xl mx-auto p-8">
-      <div className="bg-gradient-to-r from-green-50 to-green-100 rounded-xl shadow-lg p-8 mb-8 flex items-center gap-6">
-        <div className="w-24 h-24 rounded-full bg-green-300 flex items-center justify-center text-4xl font-bold text-white shadow">
-          {general.name?.[0] ?? "?"}
+    <div className="max-w-5xl mx-auto p-6">
+      <div className="flex flex-col md:flex-row gap-8 mb-8">
+        {/* Profile Card */}
+        <div className="flex-1 bg-gradient-to-r from-green-50 to-green-100 rounded-xl shadow-lg p-8 flex items-center gap-6">
+          <div className="w-24 h-24 rounded-full bg-green-300 flex items-center justify-center text-4xl font-bold text-white shadow">
+            {general.name?.[0] ?? "?"}
+          </div>
+          <div>
+            <h2 className="text-3xl font-bold mb-2 text-green-900">{general.name}</h2>
+            <span className="inline-block bg-green-600 text-white px-3 py-1 rounded-full text-sm font-semibold mb-2">{general.role}</span>
+            <p className="text-gray-700 mb-1">
+              <strong>Gender:</strong> {general.gender}
+            </p>
+            <p className="text-gray-700 mb-1">
+              <strong>Date of Birth:</strong> {formatDate(general.dateOfBirth)}
+            </p>
+          </div>
         </div>
-        <div>
-          <h2 className="text-3xl font-bold mb-2 text-green-900">{general.name}</h2>
-          <span className="inline-block bg-green-600 text-white px-3 py-1 rounded-full text-sm font-semibold mb-2">{general.role}</span>
-          <p className="text-gray-700 mb-1">
-            <strong>Gender:</strong> {general.gender}
-          </p>
-          <p className="text-gray-700 mb-1">
-            <strong>Date of Birth:</strong> {formatDate(general.dateOfBirth)}
-          </p>
-        </div>
-      </div>
 
-      <div className="bg-white rounded-lg shadow p-6 mb-8">
-        <h3 className="text-xl font-semibold mb-4 text-green-800">Assignments</h3>
-        <div className="space-y-2 text-lg">
-          <p>
-            <strong>Base:</strong> <span className="text-green-700">{general.base.name}</span>
-          </p>
-          <p>
-            <strong>Leading Groups:</strong> <span className="text-green-700">{general.leadingGroups?.map((g) => g.name).join(", ") || "N/A"}</span>
-          </p>
-          <p>
-            <strong>Supporting Groups:</strong>{" "}
-            {general.supportingGroups?.length ? (
-              <span className="text-green-700">{general.supportingGroups.map((s) => s.name).join(", ")}</span>
-            ) : (
-              <span className="text-gray-500">None</span>
-            )}
-          </p>
+        {/* Assignments Card */}
+        <div className="flex-1 bg-white rounded-lg shadow p-8">
+          <h3 className="text-xl font-semibold mb-4 text-green-800">Assignments</h3>
+          <div className="space-y-2 text-lg">
+            <p>
+              <strong>Base:</strong> <span className="text-green-700">{general.base.name}</span>
+            </p>
+            <p>
+              <strong>Leading Groups:</strong> <span className="text-green-700">{general.leadingGroups?.map((g) => g.name).join(", ") || "N/A"}</span>
+            </p>
+            <p>
+              <strong>Supporting Groups:</strong>{" "}
+              {general.supportingGroups?.length ? (
+                <span className="text-green-700">{general.supportingGroups.map((s) => s.name).join(", ")}</span>
+              ) : (
+                <span className="text-gray-500">None</span>
+              )}
+            </p>
+          </div>
         </div>
       </div>
 

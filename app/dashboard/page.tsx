@@ -21,10 +21,13 @@ export default async function DashboardPage() {
       <div className="p-6">
         <h1 className="text-2xl font-semibold mb-6">Dashboard</h1>
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
-          {cards.map((card: DashboardCard) => (
-            <div key={card.label} className="bg-white rounded-lg shadow p-5 border border-gray-100">
-              <p className="text-sm text-gray-500">{card.label}</p>
-              <p className="text-3xl font-bold mt-1">{card.value}</p>
+          {cards.map((card: DashboardCard, idx: number) => (
+            <div
+              key={card.label}
+              className="bg-gradient-to-br from-blue-50 to-white rounded-xl shadow-lg p-6 border border-gray-100 flex flex-col items-start hover:shadow-xl transition-shadow"
+            >
+              <p className="text-base text-gray-600 font-medium">{card.label}</p>
+              <p className="text-4xl font-extrabold mt-2 text-blue-700">{card.value}</p>
             </div>
           ))}
         </div>

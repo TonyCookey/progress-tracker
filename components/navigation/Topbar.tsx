@@ -10,7 +10,6 @@ export default function Topbar() {
   const [open, setOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
-  // Click outside handler
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
       if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
@@ -21,15 +20,15 @@ export default function Topbar() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  const avatarUrl = `https://ui-avatars.com/api/?name=${encodeURIComponent(userName)}&background=4f46e5&color=fff`;
-
   return (
     <div className="fixed top-0 left-64 right-0 h-16 bg-white shadow px-6 flex items-center justify-between z-10">
       <h1 className="text-lg font-semibold">DA Progress Tracker</h1>
 
       <div className="relative" ref={dropdownRef}>
-        <button onClick={() => setOpen(!open)} className="flex items-center space-x-2 focus:outline-none">
-          <img src={avatarUrl} alt="User Avatar" className="w-8 h-8 rounded-full border border-gray-300" />
+        <button onClick={() => setOpen(!open)} className="flex items-center space-x-2 focus:outline-none hover:bg-blue-50 px-2 py-1 rounded transition">
+          <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-700 font-bold text-sm border-2 border-indigo-400">
+            {userName.charAt(0).toUpperCase()}
+          </div>
           <span className="text-sm font-medium text-gray-700">{userName}</span>
           <ChevronDownIcon className="w-4 h-4 text-gray-500" />
         </button>

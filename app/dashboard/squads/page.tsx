@@ -23,14 +23,21 @@ export default async function SquadsPage() {
           <CreateGroupModal bases={bases} leaders={leaders} type="SQUAD" />
         </div>
 
-        <ul className="space-y-2">
+        <ul className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {squads.map((squad: any) => (
-            <Link href={`/dashboard/squads/${squad.id}`} key={squad.id} className="block">
-              <li key={squad.id} className="border rounded p-6 shadow-sm">
-                <h2 className="text-lg font-bold mb-1">{squad.name}</h2>
-                <p className="text-sm text-gray-600">
-                  Led by {squad.leader?.name ?? ""} - {squad.base?.name ?? ""} Base
-                </p>
+            <Link href={`/dashboard/squads/${squad.id}`} key={squad.id} className="block transition-transform hover:scale-[1.02] hover:shadow-lg">
+              <li className="border rounded-xl p-6 shadow-sm bg-white flex flex-col gap-2">
+                <div className="flex items-center gap-3 mb-2">
+                  {/* Avatar or icon */}
+                  <div className="w-10 h-10 rounded-full bg-purple-100 flex items-center justify-center text-purple-600 font-bold text-lg">
+                    {squad.name?.charAt(0) ?? "S"}
+                  </div>
+                  <h2 className="text-lg font-bold">{squad.name}</h2>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="inline-block bg-green-100 text-green-800 text-xs px-2 py-1 rounded">{squad.leader?.name ?? "No Leader"}</span>
+                  <span className="inline-block bg-gray-100 text-gray-800 text-xs px-2 py-1 rounded">{squad.base?.name ?? "No Base"} Base</span>
+                </div>
               </li>
             </Link>
           ))}
