@@ -12,10 +12,10 @@ export default function BirthdayTabs({ generals, teens }: { generals: any[]; tee
   return (
     <div className="space-y-6">
       <div className="flex space-x-4">
-        <button className={`px-4 py-2 rounded ${activeTab === "generals" ? "bg-blue-600 text-white" : "bg-gray-200"}`} onClick={() => setActiveTab("generals")}>
+        <button className={`px-4 py-2 rounded ${activeTab === "generals" ? "bg-cyan-600 text-white" : "bg-gray-200"}`} onClick={() => setActiveTab("generals")}>
           Generals
         </button>
-        <button className={`px-4 py-2 rounded ${activeTab === "teens" ? "bg-blue-600 text-white" : "bg-gray-200"}`} onClick={() => setActiveTab("teens")}>
+        <button className={`px-4 py-2 rounded ${activeTab === "teens" ? "bg-cyan-600 text-white" : "bg-gray-200"}`} onClick={() => setActiveTab("teens")}>
           Teens
         </button>
       </div>

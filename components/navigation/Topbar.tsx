@@ -26,7 +26,7 @@ export default function Topbar() {
 
       <div className="relative" ref={dropdownRef}>
         <button onClick={() => setOpen(!open)} className="flex items-center space-x-2 focus:outline-none hover:bg-blue-50 px-2 py-1 rounded transition">
-          <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-700 font-bold text-sm border-2 border-indigo-400">
+          <div className="w-8 h-8 rounded-full bg-cyan-50 flex items-center justify-center text-blue-700 font-bold text-sm border-2 border-cyan-400">
             {userName.charAt(0).toUpperCase()}
           </div>
           <span className="text-sm font-medium text-gray-700">{userName}</span>

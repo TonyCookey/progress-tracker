@@ -29,14 +29,14 @@ export default async function SquadsPage() {
               <li className="border rounded-xl p-6 shadow-sm bg-white flex flex-col gap-2">
                 <div className="flex items-center gap-3 mb-2">
                   {/* Avatar or icon */}
-                  <div className="w-10 h-10 rounded-full bg-purple-100 flex items-center justify-center text-purple-600 font-bold text-lg">
+                  <div className="w-10 h-10 rounded-full bg-cyan-100 flex items-center justify-center text-600 font-bold text-lg">
                     {squad.name?.charAt(0) ?? "S"}
                   </div>
                   <h2 className="text-lg font-bold">{squad.name}</h2>
                 </div>
                 <div className="flex items-center gap-2">
-                  <span className="inline-block bg-green-100 text-green-800 text-xs px-2 py-1 rounded">{squad.leader?.name ?? "No Leader"}</span>
-                  <span className="inline-block bg-gray-100 text-gray-800 text-xs px-2 py-1 rounded">{squad.base?.name ?? "No Base"} Base</span>
+                  <span className="inline-block bg-green-100 text-green-800 text-xs px-2 py-1 rounded">{squad.leader?.name ?? ""}</span>
+                  <span className="inline-block bg-gray-100 text-gray-800 text-xs px-2 py-1 rounded">{squad.base?.name ?? ""} Base</span>
                 </div>
               </li>
             </Link>
@@ -46,4 +46,3 @@ export default async function SquadsPage() {
     </RequireAuth>
   );
 }
-// This page fetches and displays a list of squads, along with a modal to create new squads.

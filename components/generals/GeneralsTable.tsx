@@ -57,7 +57,7 @@ export default function GeneralsTable() {
                 <tr key={general.id} className={`border-t transition-colors hover:bg-blue-50 ${idx % 2 === 0 ? "bg-gray-50" : "bg-white"}`}>
                   <td className="px-4 py-3 flex items-center gap-3">
                     {/* Avatar with initials */}
-                    <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-700 font-bold text-sm">
+                    <div className="w-8 h-8 rounded-full bg-cyan-50 flex items-center justify-center text-blue-700 font-bold text-sm">
                       {general.name?.charAt(0) ?? "G"}
                     </div>
                     <span className="font-medium">{general.name}</span>

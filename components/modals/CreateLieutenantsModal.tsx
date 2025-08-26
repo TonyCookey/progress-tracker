@@ -9,7 +9,7 @@ export default function CreateLieutenantModal() {
 
   return (
     <>
-      <button onClick={() => setIsOpen(true)} className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
+      <button onClick={() => setIsOpen(true)} className="bg-cyan-600 text-white px-4 py-2 rounded hover:bg-cyan-700">
         Add Lieutenant
       </button>
 

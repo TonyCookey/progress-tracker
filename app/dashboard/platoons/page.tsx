@@ -29,7 +29,7 @@ export default async function PlatoonsPage() {
               <li className="border rounded-xl p-6 shadow-sm bg-white flex flex-col gap-2">
                 <div className="flex items-center gap-3 mb-2">
                   {/* Avatar or icon */}
-                  <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-bold text-lg">
+                  <div className="w-10 h-10 rounded-full bg-cyan-100 flex items-center justify-center text-600 font-bold text-lg">
                     {squad.name?.charAt(0) ?? "P"}
                   </div>
                   <h2 className="text-lg font-bold">{squad.name}</h2>

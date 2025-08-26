@@ -79,7 +79,7 @@ export default function LieutenantTable() {
               setSearch("");
               fetchData(1, search, baseId);
             }}
-            className="flex items-center px-4 py-2 bg-green-500 text-white rounded mx-2 hover:bg-green-600"
+            className="flex items-center px-4 py-2 bg-green-100 text-green-600 rounded mx-2 hover:bg-green-200"
           >
             <ArrowPathIcon className="w-5 h-5 mr-2" />
             Refresh
@@ -103,7 +103,7 @@ export default function LieutenantTable() {
               <tr key={lt.id} className={`border-t transition-colors hover:bg-blue-50 ${idx % 2 === 0 ? "bg-gray-50" : "bg-white"}`}>
                 <td className="px-4 pb-2 flex items-center gap-3">
                   {/* Avatar with initials */}
-                  <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-00 font-bold text-sm">
+                  <div className="w-8 h-8 rounded-full bg-cyan-50 flex items-center justify-center text-blue-700 font-bold text-sm">
                     {lt.name?.charAt(0) ?? "L"}
                   </div>
                   <span className="font-medium">{lt.name}</span>
