@@ -105,10 +105,10 @@ model GroupSupport {
 model Activity {
   id                   String                  @id @default(cuid())
   name                 String
-  description          String
+  description          String                  @default("")
   type                 String
   date                 DateTime
-  number               Int
+  number               Int                     @default(0)
   isCrossBase          Boolean                 @default(false)
   baseId               String?
   base                 Base?                   @relation(fields: [baseId], references: [id])
@@ -146,7 +146,7 @@ model TeacherParticipation {
 
 model Offering {
   id          String    @id @default(cuid())
-  amount      Int
+  amount      Int       @default(0)
   isCrossBase Boolean   @default(false)
   baseId      String?
   date        DateTime
