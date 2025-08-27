@@ -22,7 +22,7 @@ export default function Topbar() {
 
   return (
     <div className="fixed top-0 left-64 right-0 h-16 bg-white shadow px-6 flex items-center justify-between z-10">
-      <h1 className="text-lg font-semibold">DA Progress Tracker</h1>
+      <h1 className="text-lg font-semibold text-cyan-900">DA Church Tracker</h1>
 
       <div className="relative" ref={dropdownRef}>
         <button onClick={() => setOpen(!open)} className="flex items-center space-x-2 focus:outline-none hover:bg-blue-50 px-2 py-1 rounded transition">

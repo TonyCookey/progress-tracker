@@ -44,7 +44,7 @@ export default function Sidebar() {
 
   return (
     <aside className="w-64 h-screen bg-gradient-to-b from-cyan-900 via-cyan-800 to-cyan-700 text-white fixed top-0 left-0 shadow-lg">
-      <div className="px-6 py-6 text-xl font-extrabold text-400">DA Progress Tracker</div>
+      <div className="px-6 py-6 text-xl font-extrabold text-400">DA Church Tracker</div>
       <div className="border-t border-cyan-700 mx-6 mb-2" />
       <nav className="mt-2">
         {visibleLinks.map(({ href, label, icon }) => (
@@ -52,7 +52,7 @@ export default function Sidebar() {
             key={href}
             href={href}
             className={clsx(
-              "flex items-center space-x-4 px-6 py-3 rounded-lg transition-all duration-150 cursor-pointer",
+              "flex items-center space-x-4 px-6 py-3 rounded-lg transition-all duration-150 cursor-pointer ",
               "hover:bg-cyan-600 hover:text-white",
               pathname === href ? "bg-cyan-700 text-white border-l-4 border-cyan-400 font-semibold shadow" : "text-cyan-200"
             )}
