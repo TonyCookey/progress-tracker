@@ -1,26 +1,28 @@
 import { NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
 import { GroupType } from "@prisma/client";
+import { prisma } from "@/lib/prisma";
 
 export async function GET(req: Request) {
   try {
     const url = new URL(req.url);
     const type: GroupType = url.searchParams.get("type") as GroupType;
 
-    const groups = await prisma.group.findMany({
+    const squads = await prisma.group.findMany({
       where: { type: type ?? "SQUAD" },
       include: { leader: true, base: true },
     });
-    return NextResponse.json(groups);
+    return NextResponse.json(squads);
   } catch (error) {
-    console.error("[GROUPS_ERROR]", error);
-    return NextResponse.json({ error: "Failed to fetch groups" }, { status: 500 });
+    console.error("[SQUADS_ERROR]", error);
+    return NextResponse.json({ error: "Failed to fetch squads" }, { status: 500 });
   }
 }
 
 export async function POST(req: Request) {
   try {
     const { name, baseId, type, leaderId } = await req.json();
+
+    console.log("[CREATE_SQUAD]", { name, baseId, type, leaderId });
 
     const squad = await prisma.group.create({
       data: {
@@ -33,7 +35,7 @@ export async function POST(req: Request) {
 
     return NextResponse.json(squad);
   } catch (error) {
-    console.error("[CREATE_GROUP_ERROR]", error);
-    return NextResponse.json({ error: "Failed to create group" }, { status: 500 });
+    console.error("[CREATE_SQUAD_ERROR]", error);
+    return NextResponse.json({ error: "Failed to create squad" }, { status: 500 });
   }
 }
