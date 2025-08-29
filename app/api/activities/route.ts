@@ -4,7 +4,7 @@ import { prisma } from "@/lib/prisma";
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { name, type, date, baseId, platoonId, squadIds = [], isCrossBase = false } = body;
+    const { name, description, type, date, baseId, platoonId, squadIds = [], isCrossBase = false } = body;
 
     // Collect all group IDs
     const groupIds: string[] = [];
@@ -15,6 +15,7 @@ export async function POST(req: NextRequest) {
     const activity = await prisma.activity.create({
       data: {
         name,
+        description,
         type,
         date: new Date(date),
         baseId,
@@ -44,9 +45,6 @@ export async function GET(req: NextRequest) {
       where: baseId ? { baseId } : {},
       include: {
         base: true,
-        // groups: true,
-        // teenParticipation: true,
-        // teacherParticipation: true,
       },
       orderBy: {
         date: "desc",

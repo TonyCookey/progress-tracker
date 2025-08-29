@@ -71,7 +71,7 @@ export default function CreateActivityForm() {
   const squadOptions: SquadOption[] = squads.map((s) => ({ value: s.id, label: s.name }));
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 px-10 bg-white rounded shadow-md">
+    <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 p-10 bg-white rounded shadow-md">
       <h1 className="text-xl font-semibold">Create Activity</h1>
       <div>
         <label htmlFor="title" className="block text-sm font-medium">
@@ -136,7 +136,7 @@ export default function CreateActivityForm() {
       </div>
 
       <div>
-        <label htmlFor="squadIds" className="block font-medium mb-1">
+        <label htmlFor="squadIds" className="block text-sm font-medium mb-1">
           Squads
         </label>
         <Controller
@@ -158,7 +158,7 @@ export default function CreateActivityForm() {
       </div>
 
       <div className="flex justify-end pt-2">
-        <button type="submit" disabled={isSubmitting} className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
+        <button type="submit" disabled={isSubmitting} className="bg-cyan-600 text-white px-4 py-2 rounded hover:bg-cyan-700">
           {isSubmitting ? "Creating..." : "Create Activity"}
         </button>
       </div>

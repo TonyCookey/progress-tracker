@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { format } from "date-fns";
 import LoadingSpinner from "../common/LoadingSpinner";
 import { EyeIcon } from "@heroicons/react/24/outline";
+import Link from "next/link";
 
 type Activity = {
   id: string;
@@ -60,9 +61,9 @@ export default function ActivitiesTable() {
                 )}
               </td>
               <td className="px-4 py-3 flex items-center space-x-2">
-                <button className="p-2 rounded hover:bg-blue-100 transition" title="View">
+                <Link href={`/dashboard/activities/${activity.id}`}>
                   <EyeIcon className="w-5 h-5 text-blue-600" />
-                </button>
+                </Link>
               </td>
             </tr>
           ))}
