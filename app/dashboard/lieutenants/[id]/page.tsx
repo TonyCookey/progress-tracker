@@ -4,6 +4,7 @@ import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import LoadingSpinner from "@/components/common/LoadingSpinner";
 import { calculateAge } from "@/lib/calculateAge";
+import { formatDate } from "@/lib/formatDate";
 
 type Teen = {
   id: string;
@@ -128,9 +129,4 @@ export default function TeenDetailsPage() {
       </div>
     </div>
   );
-}
-
-function formatDate(dateStr: string) {
-  const date = new Date(dateStr);
-  return date.toLocaleDateString(undefined, { day: "numeric", month: "long", year: "numeric" });
 }
