@@ -101,8 +101,11 @@ export default function CreateActivityForm() {
         <select id="type" {...register("type")} className="w-full border rounded px-3 py-2 mt-1">
           <option value="Outreach">Outreach</option>
           <option value="Worship">Worship</option>
+          <option value="Sunday Service">Sunday Service</option>
           <option value="Bible Study">Bible Study</option>
-          <option value="Recreation">Hangouts</option>
+          <option value="Hangouts">Hangouts</option>
+          <option value="Rehearsals">Rehearsals</option>
+          <option value="Other">Other</option>
         </select>
       </div>
 

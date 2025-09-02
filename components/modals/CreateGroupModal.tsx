@@ -17,7 +17,7 @@ export default function CreateSquadModal({ bases, leaders, type }: { bases: any[
 
   return (
     <>
-      <button onClick={openModal} className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
+      <button onClick={openModal} className="bg-cyan-600 text-white px-4 py-2 rounded hover:bg-cyan-700">
         + Create {type === "PLATOON" ? "Platoon" : "Squad"}
       </button>
 

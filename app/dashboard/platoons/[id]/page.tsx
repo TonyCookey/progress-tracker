@@ -1,5 +1,6 @@
 "use client";
 import LoadingSpinner from "@/components/common/LoadingSpinner";
+import { formatDate } from "@/lib/formatDate";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -7,6 +8,7 @@ import { useEffect, useState } from "react";
 type Platoon = {
   id: string;
   name: string;
+  description: string | null;
   base: { id: string; name: string } | null;
   leader: { id: string; name: string; email: string } | null;
   activities: { id: string; title: string; date: string }[] | null;
@@ -43,6 +45,7 @@ export default function PlatoonDetailsPage() {
       {/* Platoon Info Card */}
       <div className="bg-white rounded-xl shadow-lg p-8 mb-8">
         <h1 className="text-3xl font-extrabold mb-2 text-900">{platoon.name}</h1>
+        <p className="text-gray-600 mb-4">{platoon.description}</p>
         <p className="text-gray-600 mb-4">
           <span className="inline-block bg-blue-100 text-blue-700 px-2 py-1 rounded-full text-sm font-semibold">{platoon.base?.name ?? "N/A"}</span>
         </p>
@@ -105,8 +108,8 @@ export default function PlatoonDetailsPage() {
                 <Link href={`/dashboard/activities/${activity.id}`} key={activity.id} className="block hover:bg-blue-50 rounded-lg px-1">
                   <li key={activity.id} className="py-3">
                     <div className="flex flex-col">
-                      <span className="font-semibold text-cyan-900">{activity.title}</span>
-                      <span className="text-xs text-gray-500">{activity.date}</span>
+                      <span className="font-semibold text-cyan-900">{activity.name}</span>
+                      <span className="text-xs text-gray-500">{formatDate(activity.date)}</span>
                     </div>
                   </li>
                 </Link>

@@ -48,11 +48,11 @@ export default function ActivitiesTable() {
         <tbody>
           {activities.map((activity, idx) => (
             <tr key={activity.id} className={`transition-colors hover:bg-blue-50 ${idx % 2 === 0 ? "bg-gray-50" : "bg-white"}`}>
-              <td className="px-4 py-3 font-medium">{activity.name}</td>
+              <td className="px-4 py-3 font-medium text-sm">{activity.name}</td>
               <td className="px-4 py-3">
-                <span className="inline-block bg-cyan-100 text-cyan-700 px-2 py-1 rounded-full text-xs font-semibold">{activity.type}</span>
+                <span className="inline-block bg-cyan-100 text-cyan-900 px-2 py-1 rounded-full text-xs font-semibold">{activity.type}</span>
               </td>
-              <td className="px-4 py-3">{format(new Date(activity.date), "do MMM yyyy")}</td>
+              <td className="px-4 py-3 text-sm">{format(new Date(activity.date), "do MMM yyyy")}</td>
               <td className="px-4 py-3">
                 {activity.isCrossBase ? (
                   <span className="inline-block bg-green-100 text-green-700 px-2 py-1 rounded-full text-xs font-semibold">Yes</span>

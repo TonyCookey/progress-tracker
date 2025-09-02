@@ -67,19 +67,20 @@ model Teen {
 }
 
 model Group {
-  id         String         @id @default(cuid())
-  name       String
-  type       GroupType
-  baseId     String
-  base       Base           @relation(fields: [baseId], references: [id])
-  leaderId   String
-  leader     User           @relation("GroupLeader", fields: [leaderId], references: [id])
-  support    GroupSupport[]
-  members    GroupMember[]
-  teens      Teen[]         @relation("TeenPlatoon")
-  activities Activity[]
-  createdAt  DateTime       @default(now())
-  updatedAt  DateTime       @updatedAt
+  id          String         @id @default(cuid())
+  name        String
+  description String                  @default("")
+  type        GroupType
+  baseId      String
+  base        Base           @relation(fields: [baseId], references: [id])
+  leaderId    String
+  leader      User           @relation("GroupLeader", fields: [leaderId], references: [id])
+  support     GroupSupport[]
+  members     GroupMember[]
+  teens       Teen[]         @relation("TeenPlatoon")
+  activities  Activity[]
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
 }
 
 model GroupMember {

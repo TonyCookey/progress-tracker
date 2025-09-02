@@ -7,6 +7,7 @@ import { useEffect, useState } from "react";
 type Squad = {
   id: string;
   name: string;
+  description: string | null;
   base: { id: string; name: string } | null;
   leader: { id: string; name: string } | null;
   activities: { id: string; title: string; date: string }[] | null;
@@ -43,6 +44,7 @@ export default function SquadDetailsPage() {
       {/* Squad Info Card */}
       <div className="bg-white rounded-xl shadow-lg p-8 mb-8">
         <h1 className="text-3xl font-extrabold mb-2 text-900">{squad.name}</h1>
+        <p className="text-gray-600 mb-4">{squad.description}</p>
         <p className="text-gray-600 mb-4">
           <span className="inline-block bg-blue-100 text-blue-700 px-2 py-1 rounded-full text-sm font-semibold">{squad.base?.name ?? "N/A"}</span>
         </p>
@@ -74,7 +76,7 @@ export default function SquadDetailsPage() {
           {squad.members?.length ? (
             <ul className="divide-y divide-gray-200">
               {squad.members.map((teen: any) => (
-                <Link href={`/dashboard/lieutenants/${teen.id}`} key={teen.id} className="block hover:bg-blue-50 rounded-lg px-1">
+                <Link href={`/dashboard/lieutenants/${teen.teenId}`} key={teen.teenId} className="block hover:bg-blue-50 rounded-lg px-1">
                   <li className="flex items-center gap-4 py-3">
                     <div className="w-8 h-8 rounded-full bg-cyan-50 flex items-center justify-center text-sm font-bold text-blue-700 shadow">
                       {teen.teen.name?.[0] ?? "?"}

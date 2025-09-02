@@ -20,11 +20,12 @@ export async function GET(req: Request) {
 
 export async function POST(req: Request) {
   try {
-    const { name, baseId, type, leaderId } = await req.json();
+    const { name, description, baseId, type, leaderId } = await req.json();
 
     const squad = await prisma.group.create({
       data: {
         name,
+        description,
         type,
         baseId,
         leaderId,
