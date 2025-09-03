@@ -1,5 +1,5 @@
 import LieutenantTable from "@/components/lieutenants/LieutenantTable";
-import CreateLieutenantModal from "@/components/modals/CreateLieutenantsModal";
+import CreateLieutenantModal from "@/components/lieutenants/CreateLieutenantsModal";
 
 export default function LieutenantsPage() {
   return (

@@ -1,5 +1,5 @@
 import RequireAuth from "@/components/auth/RequireAuth";
-import CreateGroupModal from "@/components/modals/CreateGroupModal";
+import CreateGroupModal from "@/components/groups/CreateGroupModal";
 import Link from "next/link";
 
 export default async function SquadsPage() {

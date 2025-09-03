@@ -1,17 +1,17 @@
 "use client";
 import { useEffect, useState } from "react";
-import { useSession } from "next-auth/react";
 import { EyeIcon, ArrowPathIcon } from "@heroicons/react/24/outline";
-import { calculateAge } from "@/lib/calculateAge";
 import Select from "react-select";
+import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
+import { formatDate } from "@/lib/formatDate";
 
-export default function LieutenantTable() {
+export default function OfferingsTable() {
   const router = useRouter();
   const { data: session } = useSession();
   const user = session?.user;
   const isSuperAdmin = user?.role === "SUPERADMIN";
-  const [lieutenants, setLieutenants] = useState([]);
+  const [offerings, setOfferings] = useState([]);
   const [page, setPage] = useState(1);
   const [total, setTotal] = useState(0);
   const [search, setSearch] = useState("");
@@ -30,10 +30,9 @@ export default function LieutenantTable() {
 
   const limit = 10;
   const fetchData = async (page: number, search: string, baseId: any) => {
-    console.log("Fetching data with:", { page, search, baseId });
-    const res = await fetch(`/api/lieutenants?page=${page}&limit=${limit}&search=${search}&baseId=${baseId}`, { cache: "no-store" });
-    const { data, total } = await res.json();
-    setLieutenants(data);
+    const res = await fetch(`/api/offerings?page=${page}&limit=${limit}&search=${search}&baseId=${baseId}`, { cache: "no-store" });
+    const { offerings, total } = await res.json();
+    setOfferings(offerings);
     setTotal(total);
   };
 
@@ -42,10 +41,9 @@ export default function LieutenantTable() {
       fetchData(page, search, baseId);
     }
   }, [page, search, baseId]);
+
   const handleView = (id: string) => {
-    console.log("View Lieutenant", id);
-    // Redirect to the lieutenant detail page
-    router.push(`/dashboard/lieutenants/${id}`);
+    router.push(`/dashboard/offerings/${id}`);
   };
 
   const totalPages = Math.ceil(total / limit);
@@ -66,7 +64,7 @@ export default function LieutenantTable() {
         <div className="flex items-center">
           <input
             type="text"
-            placeholder="Search by name..."
+            placeholder="Search by service..."
             value={search}
             onChange={(e) => {
               setSearch(e.target.value);
@@ -92,28 +90,22 @@ export default function LieutenantTable() {
         <table className="w-full divide-y divide-gray-200 text-sm">
           <thead className="bg-blue-50">
             <tr>
-              <th className="text-left px-4 py-3 font-semibold text-gray-700">Name</th>
-              <th className="text-left px-4 py-3 font-semibold text-gray-700">Gender</th>
-              <th className="text-left px-4 py-3 font-semibold text-gray-700">Age</th>
+              <th className="text-left px-4 py-3 font-semibold text-gray-700">Service</th>
+              <th className="text-left px-4 py-3 font-semibold text-gray-700">Amount</th>
+              <th className="text-left px-4 py-3 font-semibold text-gray-700">Date</th>
               <th className="text-left px-4 py-3 font-semibold text-gray-700">Base</th>
               <th className="text-left px-4 py-3 font-semibold text-gray-700">Actions</th>
             </tr>
           </thead>
           <tbody>
-            {lieutenants.map((lt: any, idx: number) => (
-              <tr key={lt.id} className={`border-t transition-colors hover:bg-blue-50 ${idx % 2 === 0 ? "bg-gray-50" : "bg-white"}`}>
-                <td className="px-4 pb-2 flex items-center gap-3">
-                  {/* Avatar with initials */}
-                  <div className="w-8 h-8 rounded-full bg-cyan-50 flex items-center justify-center text-blue-700 font-bold text-sm">
-                    {lt.name?.charAt(0) ?? "L"}
-                  </div>
-                  <span className="font-medium">{lt.name}</span>
-                </td>
-                <td className="px-4 pb-2">{lt.gender}</td>
-                <td className="px-4 pb-2">{calculateAge(lt.dateOfBirth)} yrs</td>
-                <td className="px-4 pb-2">{lt.base?.name ?? "-"}</td>
+            {offerings.map((off: any, idx: number) => (
+              <tr key={off.id} className={`border-t transition-colors hover:bg-blue-50 ${idx % 2 === 0 ? "bg-gray-50" : "bg-white"}`}>
+                <td className="px-4 pb-2 font-medium">{off.service}</td>
+                <td className="px-4 pb-2 font-bold text-green-700">₦{off.amount.toLocaleString()}</td>
+                <td className="px-4 pb-2">{formatDate(off.date)}</td>
+                <td className="px-4 pb-2">{off.base?.name ?? "-"}</td>
                 <td className="px-4 pb-2 flex space-x-2">
-                  <button onClick={() => handleView(lt.id)} title="View" className="p-2 rounded hover:bg-blue-100 transition">
+                  <button onClick={() => handleView(off.id)} title="View" className="p-2 rounded hover:bg-blue-100 transition">
                     <EyeIcon className="w-5 h-5 text-blue-600" />
                   </button>
                 </td>

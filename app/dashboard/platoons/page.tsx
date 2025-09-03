@@ -1,6 +1,6 @@
 import Link from "next/link";
 import RequireAuth from "@/components/auth/RequireAuth";
-import CreateGroupModal from "@/components/modals/CreateGroupModal";
+import CreateGroupModal from "@/components/groups/CreateGroupModal";
 
 export default async function PlatoonsPage() {
   const [platoonsRes, basesRes, leadersRes] = await Promise.all([

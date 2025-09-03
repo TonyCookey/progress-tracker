@@ -40,7 +40,7 @@ export async function GET(req: Request) {
     prisma.teen.findMany({
       where: {
         rank: "LIEUTENANT",
-        baseId,
+        baseId: baseId ? baseId : undefined,
         name: {
           contains: search,
           mode: "insensitive",
@@ -54,7 +54,7 @@ export async function GET(req: Request) {
     prisma.teen.count({
       where: {
         rank: "LIEUTENANT",
-        baseId,
+        baseId: baseId ? baseId : undefined,
         name: {
           contains: search,
           mode: "insensitive",

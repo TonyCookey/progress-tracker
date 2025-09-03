@@ -31,6 +31,7 @@ model Base {
   teens      Teen[]
   groups     Group[]
   activities Activity[]
+  offerings  Offering[]
 }
 
 model User {
@@ -150,8 +151,11 @@ model Offering {
   amount      Int       @default(0)
   isCrossBase Boolean   @default(false)
   baseId      String?
+  base        Base?     @relation(fields: [baseId], references: [id])
   date        DateTime
   service     String
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+  notes       String?   
+  type        String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
 }
