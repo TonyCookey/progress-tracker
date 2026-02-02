@@ -65,6 +65,9 @@ model Teen {
   createdAt             DateTime                @default(now())
   updatedAt             DateTime                @updatedAt
   groupId               String?
+
+  @@index([baseId])
+  @@index([groupId])
 }
 
 model Group {
@@ -92,6 +95,10 @@ model GroupMember {
   group     Group    @relation(fields: [groupId], references: [id])
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  @@unique([teenId, groupId])
+  @@index([groupId])
+  @@index([teenId])
 }
 
 model GroupSupport {
@@ -119,6 +126,9 @@ model Activity {
   teacherParticipation TeacherParticipation[]
   createdAt            DateTime                @default(now())
   updatedAt            DateTime                @updatedAt
+
+  @@index([baseId])
+  @@index([date])
 }
 
 model ActivityParticipation {
@@ -131,24 +141,32 @@ model ActivityParticipation {
   teen       Teen     @relation(fields: [teenId], references: [id])
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
+
+  @@unique([activityId, teenId])  // prevent duplicate attendance records
+  @@index([activityId])
+  @@index([teenId])
 }
 
 model TeacherParticipation {
   id         String   @id @default(cuid())
   activityId String
   userId     String
-  attended   Boolean
+  attended   Boolean  @default(false)
+  role       String?
   notes      String?
   activity   Activity @relation(fields: [activityId], references: [id])
   user       User     @relation(fields: [userId], references: [id])
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
-}
 
+  @@unique([activityId, userId])
+  @@index([activityId])
+  @@index([userId])
+}
 
 model Offering {
   id          String    @id @default(cuid())
-  amount      Int       @default(0)
+  amount      Decimal   @db.Decimal(12,2) @default("0") // use Decimal for money (or keep Int cents)
   isCrossBase Boolean   @default(false)
   baseId      String?
   base        Base?     @relation(fields: [baseId], references: [id])
@@ -158,4 +176,8 @@ model Offering {
   type        String?
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
+
+  @@index([date])
+  @@index([baseId])
 }
+

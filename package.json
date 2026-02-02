@@ -8,8 +8,9 @@
     "start": "next start",
     "lint": "next lint",
     "prisma": "prisma",
+    "seed": "ts-node prisma/seed.ts",
     "seed:admins": "ts-node prisma/admins.seed.ts",
-    "seed:bases": "ts-node prisma/bases.seed.ts",
+    "seed:bases": "ts-node prisma/seeds/bases.seed.ts",
     "seed:squads": "ts-node prisma/squads.seed.ts"
   },
   "dependencies": {

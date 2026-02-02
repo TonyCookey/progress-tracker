@@ -4,6 +4,7 @@ const prisma = new PrismaClient();
 
 async function seedBases() {
   // --- Create Bases ---
+
   await prisma.base.create({ data: { name: "Alpha" } });
   await prisma.base.create({ data: { name: "Bravo" } });
 

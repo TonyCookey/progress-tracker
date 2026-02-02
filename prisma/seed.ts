@@ -11,19 +11,19 @@ async function main() {
   // --- Create Users ---
   const password = await bcrypt.hash("password123", 10);
 
-  const generalRuth = await prisma.user.create({
+  await prisma.user.create({
     data: {
-      name: "General Ruth",
-      email: "gr@davidsarmy.com.ng",
-      username: "GR",
+      name: "General Serrano",
+      email: "gs@davidsarmy.com.ng",
+      username: "GS",
       password,
-      dateOfBirth: new Date("1994-01-26"),
+      dateOfBirth: new Date("1990-11-26"),
       role: "SUPERADMIN",
-      baseId: bravo.id,
+      baseId: alpha.id,
     },
   });
 
-  const colonelTony = await prisma.user.create({
+  await prisma.user.create({
     data: {
       name: "Colonel Tony",
       email: "ct@davidsarmy.com.ng",
@@ -34,60 +34,6 @@ async function main() {
       baseId: bravo.id,
     },
   });
-
-  //   await prisma.user.create({
-  //     data: {
-  //       name: "Volunteer Semira",
-  //       email: "semira@davidsarmy.com.ng",
-  //       username: "SM",
-  //       password,
-  //       dateOfBirth: new Date("1990-04-23"),
-  //       role: "VOLUNTEER",
-  //       baseId: bravo.id,
-  //     },
-  //   });
-
-  // --- Create Teens ---
-  //   const teen1 = await prisma.teen.create({
-  //     data: {
-  //       name: "Lieutenant Favour",
-  //       dateOfBirth: new Date("2009-07-20"),
-  //       baseId: alpha.id,
-  //     },
-  //   });
-
-  //   await prisma.teen.create({
-  //     data: {
-  //       name: "Lieutenant Temisan",
-  //       dateOfBirth: new Date("2010-01-15"),
-  //       baseId: bravo.id,
-  //     },
-  //   });
-
-  // --- Create Groups (Platoon and Squad) ---
-  //   await prisma.group.create({
-  //     data: {
-  //       name: "GG Nation (Female 13–15)",
-  //       type: "PLATOON",
-  //       baseId: bravo.id,
-  //       leaderId: generalRuth.id,
-  //       //   teens: {
-  //       //     set: [teen1.id],
-  //       //   },
-  //     },
-  //   });
-
-  //   await prisma.group.create({
-  //     data: {
-  //       name: "BEYOND",
-  //       type: "SQUAD",
-  //       baseId: bravo.id,
-  //       leaderId: colonelTony.id,
-  //       //   teens: {
-  //       //     set: [teen1.id], // add Lara
-  //       //   },
-  //     },
-  //   });
 
   console.log("✅ Seed complete!");
 }
