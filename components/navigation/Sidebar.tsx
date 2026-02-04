@@ -16,6 +16,7 @@ import {
   CurrencyDollarIcon,
 } from "@heroicons/react/24/outline";
 import { useSession } from "next-auth/react";
+import { UploadCloud } from "lucide-react";
 
 const links = [
   { href: "/dashboard", label: "Dashboard", icon: <HomeIcon className="h-6 w-6" /> },
@@ -26,8 +27,9 @@ const links = [
   { href: "/dashboard/activities", label: "Activities", icon: <CalendarDaysIcon className="h-6 w-6" /> },
   { href: "/dashboard/offerings", label: "Offerings", icon: <CurrencyDollarIcon className="h-6 w-6" /> },
   { href: "/dashboard/birthdays", label: "Birthdays", icon: <CakeIcon className="h-6 w-6" /> },
-  { href: "/dashboard/reports", label: "Reports", icon: <ChartPieIcon className="h-6 w-6" />, role: "SUPERADMIN" },
-  { href: "/dashboard/settings", label: "Settings", icon: <Cog6ToothIcon className="h-6 w-6" />, role: "SUPERADMIN" },
+  { href: "/dashboard/lieutenants/bulk-upload", label: "Bulk Upload", icon: <UploadCloud className="h-6 w-6" />, role: "SUPERADMIN" },
+  // { href: "/dashboard/reports", label: "Reports", icon: <ChartPieIcon className="h-6 w-6" />, role: "SUPERADMIN" },
+  // { href: "/dashboard/settings", label: "Settings", icon: <Cog6ToothIcon className="h-6 w-6" />, role: "SUPERADMIN" },
 ];
 
 export default function Sidebar() {
@@ -54,7 +56,7 @@ export default function Sidebar() {
             className={clsx(
               "flex items-center space-x-4 px-6 py-3 rounded-lg transition-all duration-150 cursor-pointer ",
               "hover:bg-cyan-600 hover:text-white",
-              pathname === href ? "bg-cyan-700 text-white border-l-4 border-cyan-400 font-semibold shadow" : "text-cyan-200"
+              pathname === href ? "bg-cyan-700 text-white border-l-4 border-cyan-400 font-semibold shadow" : "text-cyan-200",
             )}
           >
             {icon}
