@@ -4,7 +4,7 @@ import { Dialog, Transition, TransitionChild, DialogPanel, DialogTitle } from "@
 import { Fragment, useState } from "react";
 import EditLieutenantForm from "./EditLieutenantsForm";
 
-export default function CreateLieutenantModal() {
+export default function EditLieutenantModal() {
   const [isOpen, setIsOpen] = useState(false);
 
   return (

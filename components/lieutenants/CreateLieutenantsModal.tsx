@@ -29,7 +29,7 @@ export default function CreateLieutenantModal() {
 
           <div className="fixed inset-0 overflow-y-auto">
             <div className="flex min-h-full items-center justify-center p-4">
-              <DialogPanel className="w-full max-w-md transform rounded bg-white p-6 shadow-xl transition-all">
+              <DialogPanel className="w-full max-w-3xl transform rounded-lg bg-white p-6 shadow-xl transition-all max-h-[80vh] overflow-y-auto">
                 <DialogTitle className="text-lg font-medium text-gray-900">Create New Lieutenant</DialogTitle>
                 <CreateLieutenantForm onSuccess={() => setIsOpen(false)} />
               </DialogPanel>

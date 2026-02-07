@@ -5,6 +5,7 @@ import { EyeIcon, ArrowPathIcon } from "@heroicons/react/24/outline";
 import { calculateAge } from "@/lib/calculateAge";
 import Select from "react-select";
 import { useRouter } from "next/navigation";
+import LieutenantAvatar from "./AvatarImage";
 
 export default function LieutenantTable() {
   const router = useRouter();
@@ -103,10 +104,14 @@ export default function LieutenantTable() {
             {lieutenants.map((lt: any, idx: number) => (
               <tr key={lt.id} className={`border-t transition-colors hover:bg-blue-50 ${idx % 2 === 0 ? "bg-gray-50" : "bg-white"}`}>
                 <td className="px-4 pb-2 flex items-center gap-3">
-                  {/* Avatar with initials */}
-                  <div className="w-8 h-8 rounded-full bg-cyan-50 flex items-center justify-center text-blue-700 font-bold text-sm">
-                    {lt.name?.charAt(0) ?? "L"}
-                  </div>
+                  {/* Avatar with initials or image */}
+                  {lt.imageKey ? (
+                    <LieutenantAvatar imageKey={lt.imageKey} alt={`${lt.name}'s profile`} size={32} />
+                  ) : (
+                    <div className="w-8 h-8 rounded-full bg-cyan-50 flex items-center justify-center text-blue-700 font-bold text-sm">
+                      {lt.name?.charAt(0) ?? "L"}
+                    </div>
+                  )}
                   <span className="font-medium">{lt.name}</span>
                 </td>
                 <td className="px-4 pb-2">{lt.gender}</td>

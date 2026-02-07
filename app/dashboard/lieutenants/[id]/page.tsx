@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 import LoadingSpinner from "@/components/common/LoadingSpinner";
 import { calculateAge } from "@/lib/calculateAge";
 import { formatDate } from "@/lib/formatDate";
+import LieutenantAvatar from "@/components/lieutenants/AvatarImage";
 
 type Teen = {
   id: string;
@@ -15,6 +16,7 @@ type Teen = {
   base: { id: string; name: string };
   platoon?: { id: string; name: string };
   squads: { id: string; name: string }[];
+  imageKey?: string;
 };
 
 function getColorClasses(gender: string) {
@@ -84,9 +86,13 @@ export default function TeenDetailsPage() {
       <div className="flex flex-col md:flex-row gap-8 mb-8">
         {/* Profile Card */}
         <div className={`flex-1 ${color.gradient} rounded-xl shadow-lg p-8 flex items-center gap-6`}>
-          <div className={`w-24 h-24 rounded-full ${color.avatar} flex items-center justify-center text-4xl font-bold text-white shadow`}>
-            {teen.name?.[0] ?? "?"}
-          </div>
+          {teen.imageKey ? (
+            <LieutenantAvatar imageKey={teen.imageKey} alt={`${teen.name}'s profile`} size={80} />
+          ) : (
+            <div className={`w-24 h-24 rounded-full ${color.avatar} flex items-center justify-center text-4xl font-bold text-white shadow`}>
+              {teen.name?.[0] ?? "?"}
+            </div>
+          )}
           <div>
             <h2 className={`text-3xl font-bold mb-2 ${color.name}`}>{teen.name}</h2>
             <span className={`inline-block ${color.badge} text-white px-3 py-1 rounded-full text-sm font-semibold mb-2`}>{teen.rank}</span>
@@ -122,10 +128,9 @@ export default function TeenDetailsPage() {
       </div>
 
       <div className="flex gap-4 justify-end">
-        <button className="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 rounded-lg font-semibold shadow">Edit</button>
-        <button onClick={() => handleDelete(teen.id)} className="bg-red-600 hover:bg-red-700 text-white px-5 py-2 rounded-lg font-semibold shadow">
+        {/* <button onClick={() => handleDelete(teen.id)} className="bg-red-600 hover:bg-red-700 text-white px-5 py-2 rounded-lg font-semibold shadow">
           Delete
-        </button>
+        </button> */}
       </div>
     </div>
   );

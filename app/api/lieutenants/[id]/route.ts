@@ -17,7 +17,7 @@ export async function GET(req: Request, { params }: { params: { id: string } }) 
     });
 
     if (!teen) {
-      return NextResponse.json({ error: "Teen not found" }, { status: 404 });
+      return NextResponse.json({ error: "Lieutenant not found" }, { status: 404 });
     }
 
     return NextResponse.json({
@@ -55,7 +55,7 @@ export async function PUT(req: Request, { params }: { params: { id: string } }) 
     return NextResponse.json(updatedTeen);
   } catch (error) {
     console.error(error);
-    return NextResponse.json({ error: "Failed to update teen" }, { status: 500 });
+    return NextResponse.json({ error: "Failed to update lieutenant" }, { status: 500 });
   }
 }
 
@@ -65,9 +65,9 @@ export async function DELETE(_req: Request, { params }: { params: { id: string }
       where: { id: params.id },
     });
 
-    return NextResponse.json({ message: "Teen deleted" });
+    return NextResponse.json({ message: "Lieutenant deleted" });
   } catch (error) {
     console.error(error);
-    return NextResponse.json({ error: "Failed to delete teen" }, { status: 500 });
+    return NextResponse.json({ error: "Failed to delete lieutenant" }, { status: 500 });
   }
 }
