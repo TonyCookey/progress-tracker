@@ -65,6 +65,7 @@ model Teen {
   createdAt             DateTime                @default(now())
   updatedAt             DateTime                @updatedAt
   groupId               String?
+  imageKey              String?
 
   @@index([baseId])
   @@index([groupId])
