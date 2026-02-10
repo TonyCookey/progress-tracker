@@ -28,8 +28,8 @@
         "name": "next"
       }
     ],
-    "ignoreDeprecations": "6.0",
-    "moduleResolution": "node"
+    "ignoreDeprecations": "5.0",
+    // "moduleResolution": "node"
   },
   "include": [
     "next-env.d.ts",
