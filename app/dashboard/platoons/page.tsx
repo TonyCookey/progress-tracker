@@ -15,8 +15,6 @@ export default async function PlatoonsPage() {
   const bases = await basesRes.json();
   const leaders = await leadersRes.json();
 
-  console.log("Leaders:", leaders);
-
   return (
     <RequireAuth>
       <div className="p-6">
