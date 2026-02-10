@@ -15,6 +15,8 @@ export default async function PlatoonsPage() {
   const bases = await basesRes.json();
   const leaders = await leadersRes.json();
 
+  console.log("Leaders:", leaders);
+
   return (
     <RequireAuth>
       <div className="p-6">
@@ -46,4 +48,3 @@ export default async function PlatoonsPage() {
     </RequireAuth>
   );
 }
-// This page fetches and displays a list of platoons, along with a modal to create new platoons.
