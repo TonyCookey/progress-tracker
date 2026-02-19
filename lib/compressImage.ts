@@ -5,6 +5,7 @@ export async function compressImage(file: File): Promise<File> {
   const options = {
     maxSizeMB: 0.7,
     maxWidthOrHeight: 800,
+    fileType: "image/jpeg",
     initialQuality: 0.8,
     useWebWorker: true,
   };
