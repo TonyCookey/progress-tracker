@@ -6,6 +6,7 @@ import LoadingSpinner from "@/components/common/LoadingSpinner";
 import { calculateAge } from "@/lib/calculateAge";
 import { formatDate } from "@/lib/formatDate";
 import LieutenantAvatar from "@/components/lieutenants/AvatarImage";
+import EditLieutenantModal from "@/components/lieutenants/EditLieutenantsModal";
 
 type Teen = {
   id: string;
@@ -128,6 +129,7 @@ export default function TeenDetailsPage() {
       </div>
 
       <div className="flex gap-4 justify-end">
+        <EditLieutenantModal/>
         {/* <button onClick={() => handleDelete(teen.id)} className="bg-red-600 hover:bg-red-700 text-white px-5 py-2 rounded-lg font-semibold shadow">
           Delete
         </button> */}
