@@ -4,6 +4,7 @@ import { useForm, Controller } from "react-hook-form";
 import { useState, useEffect } from "react";
 import Select from "react-select";
 import CreateImageField from "../input/CreateImageField";
+import { compressImage } from "@/lib/compressImage";
 
 type FormData = {
   name: string;
@@ -69,6 +70,11 @@ export default function CreateLieutenantForm({ onSuccess }: { onSuccess: () => v
       const { url, key } = await res.json();
       console.log("Got upload URL");
 
+      if (imageFile) {
+        const compressed = await compressImage(imageFile);
+        await uploadTeenImage(compressed, teen.id);
+      }
+
       // 2. upload directly to R2 (this can fail due to CORS or invalid signature)
       const uploadRes = await fetch(url, {
         method: "PUT",
@@ -119,8 +125,11 @@ export default function CreateLieutenantForm({ onSuccess }: { onSuccess: () => v
       const lieutenant = await res.json();
       console.log("Uploading image for lieutenant");
 
+      // Only attempt to upload if we have an image and a lieutenant ID
       if (imageFile && lieutenant.id) {
-        await uploadTeenImage(imageFile, lieutenant.id);
+        // Compress the image before uploading - 800KB Max
+        const compressed = await compressImage(imageFile);
+        await uploadTeenImage(compressed, lieutenant.id);
       }
       reset();
       onSuccess();
