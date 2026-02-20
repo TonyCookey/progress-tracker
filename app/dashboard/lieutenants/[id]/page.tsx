@@ -129,7 +129,7 @@ export default function TeenDetailsPage() {
       </div>
 
       <div className="flex gap-4 justify-end">
-        <EditLieutenantModal/>
+        {/* <EditLieutenantModal lieutenant={teen} /> */}
         {/* <button onClick={() => handleDelete(teen.id)} className="bg-red-600 hover:bg-red-700 text-white px-5 py-2 rounded-lg font-semibold shadow">
           Delete
         </button> */}

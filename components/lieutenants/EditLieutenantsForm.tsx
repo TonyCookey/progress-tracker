@@ -29,7 +29,7 @@ export default function EditLieutenantForm({ lieutenant, onSuccess }: { lieutena
     defaultValues: {
       name: lieutenant.name || "",
       gender: lieutenant.gender || "Male",
-      dateOfBirth: lieutenant.dateOfBirth || "",
+      dateOfBirth: lieutenant.dateOfBirth ? new Date(lieutenant.dateOfBirth).toISOString().slice(0, 10) : "",
       baseId: lieutenant.baseId || "",
       groupId: lieutenant.groupId || "",
       squadIds: lieutenant.squadIds || [],
@@ -46,7 +46,7 @@ export default function EditLieutenantForm({ lieutenant, onSuccess }: { lieutena
   useEffect(() => {
     setValue("name", lieutenant.name || "");
     setValue("gender", lieutenant.gender || "Male");
-    setValue("dateOfBirth", lieutenant.dateOfBirth || "");
+    setValue("dateOfBirth", lieutenant.dateOfBirth ? new Date(lieutenant.dateOfBirth).toISOString().slice(0, 10) : "");
     setValue("baseId", lieutenant.baseId || "");
     setValue("groupId", lieutenant.groupId || "");
     setValue("squadIds", lieutenant.squadIds || []);
@@ -172,7 +172,7 @@ export default function EditLieutenantForm({ lieutenant, onSuccess }: { lieutena
 
         <div>
           <label className="block text-sm font-medium mb-2">Base</label>
-          <select {...register("baseId", { required: true })} className="w-full border px-3 py-2 rounded">
+          <select {...register("baseId", { required: true })} className="w-full border px-3 py-2 rounded" defaultValue={lieutenant.baseId}>
             <option value="">Select a base</option>
             {bases.map((base) => (
               <option key={base.id} value={base.id}>

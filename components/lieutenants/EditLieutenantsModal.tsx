@@ -4,13 +4,13 @@ import { Dialog, Transition, TransitionChild, DialogPanel, DialogTitle } from "@
 import { Fragment, useState } from "react";
 import EditLieutenantForm from "./EditLieutenantsForm";
 
-export default function EditLieutenantModal() {
+export default function EditLieutenantModal({ lieutenant }: { lieutenant: any }) {
   const [isOpen, setIsOpen] = useState(false);
 
   return (
     <>
       <button onClick={() => setIsOpen(true)} className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
-        Update
+        Edit
       </button>
 
       <Transition appear show={isOpen} as={Fragment}>
@@ -30,8 +30,8 @@ export default function EditLieutenantModal() {
           <div className="fixed inset-0 overflow-y-auto">
             <div className="flex min-h-full items-center justify-center p-4">
               <DialogPanel className="w-full max-w-md transform rounded bg-white p-6 shadow-xl transition-all">
-                <DialogTitle className="text-lg font-medium text-gray-900">Update Lieutenant</DialogTitle>
-                <EditLieutenantForm onSuccess={() => setIsOpen(false)} />
+                <DialogTitle className="text-lg font-medium text-gray-900">Edit Lieutenant</DialogTitle>
+                <EditLieutenantForm lieutenant={lieutenant} onSuccess={() => setIsOpen(false)} />
               </DialogPanel>
             </div>
           </div>
