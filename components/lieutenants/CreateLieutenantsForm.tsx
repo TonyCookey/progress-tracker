@@ -72,7 +72,7 @@ export default function CreateLieutenantForm({ onSuccess }: { onSuccess: () => v
 
       if (imageFile) {
         const compressed = await compressImage(imageFile);
-        await uploadTeenImage(compressed, teen.id);
+        await uploadTeenImage(compressed, lieutenantId);
       }
 
       // 2. upload directly to R2 (this can fail due to CORS or invalid signature)
