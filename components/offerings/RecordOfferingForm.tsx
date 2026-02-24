@@ -44,7 +44,7 @@ export default function RecordOfferingForm() {
         body: JSON.stringify(data),
       });
       if (!res.ok) {
-        console.error("Failed to create offering", res.statusText);
+        console.error("Failed to create offering", res);
         alert("Failed to create offering");
       }
       reset();

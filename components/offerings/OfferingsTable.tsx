@@ -94,21 +94,21 @@ export default function OfferingsTable() {
               <th className="text-left px-4 py-3 font-semibold text-gray-700">Amount</th>
               <th className="text-left px-4 py-3 font-semibold text-gray-700">Date</th>
               <th className="text-left px-4 py-3 font-semibold text-gray-700">Base</th>
-              <th className="text-left px-4 py-3 font-semibold text-gray-700">Actions</th>
+              {/* <th className="text-left px-4 py-3 font-semibold text-gray-700">Actions</th> */}
             </tr>
           </thead>
           <tbody>
             {offerings.map((off: any, idx: number) => (
               <tr key={off.id} className={`border-t transition-colors hover:bg-blue-50 ${idx % 2 === 0 ? "bg-gray-50" : "bg-white"}`}>
-                <td className="px-4 pb-2 font-medium">{off.service}</td>
-                <td className="px-4 pb-2 font-bold text-green-700">₦{off.amount.toLocaleString()}</td>
-                <td className="px-4 pb-2">{formatDate(off.date)}</td>
-                <td className="px-4 pb-2">{off.base?.name ?? "-"}</td>
-                <td className="px-4 pb-2 flex space-x-2">
+                <td className="px-4 py-2 font-medium">{off.service}</td>
+                <td className="px-4 py-2 font-bold text-green-700">₦{off.amount.toLocaleString()}</td>
+                <td className="px-4 py-2">{formatDate(off.date)}</td>
+                <td className="px-4 py-2">{off.base?.name ?? "-"}</td>
+                {/* <td className="px-4 py-2 flex space-x-2">
                   <button onClick={() => handleView(off.id)} title="View" className="p-2 rounded hover:bg-blue-100 transition">
                     <EyeIcon className="w-5 h-5 text-blue-600" />
                   </button>
-                </td>
+                </td> */}
               </tr>
             ))}
           </tbody>

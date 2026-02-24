@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { prisma } from "@/lib/prisma";
 
 export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
@@ -18,6 +19,7 @@ export async function GET(req: Request) {
         },
         baseId: baseId ? baseId : undefined,
       },
+      include: { base: true },
       skip,
       take: limit,
       orderBy: { date: "desc" },
@@ -44,8 +46,8 @@ export async function POST(req: Request) {
       service,
       amount: parseFloat(amount),
       date: new Date(date),
-      //   notes,
-      //   type,
+      notes,
+      type,
       baseId,
     },
   });
