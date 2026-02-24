@@ -101,7 +101,7 @@ export default function OfferingsTable() {
             {offerings.map((off: any, idx: number) => (
               <tr key={off.id} className={`border-t transition-colors hover:bg-blue-50 ${idx % 2 === 0 ? "bg-gray-50" : "bg-white"}`}>
                 <td className="px-4 py-2 font-medium">{off.service}</td>
-                <td className="px-4 py-2 font-bold text-green-700">₦{off.amount.toLocaleString()}</td>
+                <td className="px-4 py-2 font-bold text-green-700">₦{Number(off.amount).toLocaleString()}</td>
                 <td className="px-4 py-2">{formatDate(off.date)}</td>
                 <td className="px-4 py-2">{off.base?.name ?? "-"}</td>
                 {/* <td className="px-4 py-2 flex space-x-2">
