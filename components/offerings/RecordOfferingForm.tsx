@@ -25,7 +25,6 @@ export default function RecordOfferingForm() {
     const fetchBases = async () => {
       const res = await fetch("/api/bases");
       const data = await res.json();
-      console.log(data, "Fetched bases data");
       setBases(data);
     };
 

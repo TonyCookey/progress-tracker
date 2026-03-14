@@ -1,3 +1,15 @@
+/* Tailwind base styles */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Custom global styles (optional) */
+body {
+  font-family: 'Inter', sans-serif;
+  background-color: #fafafa;
+  color: #333;
+}
+
 @layer utilities {
   .animate-slide-in {
     animation: slideInSidebar 0.25s cubic-bezier(0.4, 0, 0.2, 1);
@@ -13,17 +25,4 @@
     transform: translateX(0);
     opacity: 1;
   }
-}
-/* globals.css */
-
-/* Tailwind base styles */
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
-
-/* Custom global styles (optional) */
-body {
-  font-family: 'Inter', sans-serif;
-  background-color: #fafafa;
-  color: #333;
 }

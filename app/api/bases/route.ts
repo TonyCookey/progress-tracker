@@ -8,7 +8,7 @@ export async function GET() {
 
     return NextResponse.json(bases);
   } catch (error) {
-    console.log("[BASES_GET_ERROR]", error);
+    console.error("[BASES_GET_ERROR]", error);
     return NextResponse.json({ error: "Failed to fetch bases" }, { status: 500 });
   }
 }
@@ -19,7 +19,7 @@ export async function POST(req: Request) {
     const base = await prisma.base.create({ data });
     return NextResponse.json(base);
   } catch (error) {
-    console.log("[BASES_POST_ERROR]", error);
+    console.error("[BASES_POST_ERROR]", error);
     return NextResponse.json({ error: "Failed to create base" }, { status: 500 });
   }
 }

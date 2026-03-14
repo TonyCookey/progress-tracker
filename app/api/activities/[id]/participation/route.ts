@@ -13,7 +13,6 @@ export async function GET(req: Request, { params }: { params: { id: string } }) 
   if (!activity) {
     return NextResponse.json({ error: "Activity not found" }, { status: 404 });
   }
-  console.log(activity, "activity");
 
   let teenWhere: any = {};
 

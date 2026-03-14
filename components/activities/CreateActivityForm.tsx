@@ -28,7 +28,6 @@ export default function CreateActivityForm() {
     const fetchBases = async () => {
       const res = await fetch("/api/bases");
       const data = await res.json();
-      console.log(data, "Fetched bases data");
       setBases(data);
     };
     const fetchSquads = async () => {

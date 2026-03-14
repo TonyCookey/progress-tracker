@@ -50,9 +50,9 @@ export default function OfferingsTable() {
 
   return (
     <div>
-      <div className="flex justify-between mb-4">
+      <div className="flex flex-col gap-3 sm:flex-row sm:justify-between sm:items-center mb-4">
         {isSuperAdmin && (
-          <select id="baseId" className="border rounded px-3 py-2 mt-1" onChange={(e) => setBaseId(e.target.value)} value={baseId}>
+          <select id="baseId" className="border rounded px-3 py-2 mt-1 w-full sm:w-auto" onChange={(e) => setBaseId(e.target.value)} value={baseId}>
             <option value=" ">Cross Base</option>
             {bases.map((b: any) => (
               <option key={b.id} value={b.id}>
@@ -61,7 +61,7 @@ export default function OfferingsTable() {
             ))}
           </select>
         )}
-        <div className="flex items-center">
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center w-full sm:w-auto">
           <input
             type="text"
             placeholder="Search by service..."
@@ -70,7 +70,7 @@ export default function OfferingsTable() {
               setSearch(e.target.value);
               setPage(1);
             }}
-            className="border px-3 py-2 rounded w-64"
+            className="border px-3 py-2 rounded w-full sm:w-64"
           />
           <button
             onClick={() => {
@@ -78,7 +78,7 @@ export default function OfferingsTable() {
               setSearch("");
               fetchData(1, search, baseId);
             }}
-            className="flex items-center px-4 py-2 bg-green-100 text-green-600 rounded mx-2 hover:bg-green-200"
+            className="flex items-center px-4 py-2 bg-green-100 text-green-600 rounded sm:mx-2 hover:bg-green-200 w-full sm:w-auto justify-center"
           >
             <ArrowPathIcon className="w-5 h-5 mr-2" />
             Refresh
@@ -86,33 +86,50 @@ export default function OfferingsTable() {
         </div>
       </div>
 
-      <div className="overflow-x-auto border rounded shadow-sm bg-white">
-        <table className="w-full divide-y divide-gray-200 text-sm">
-          <thead className="bg-blue-50">
-            <tr>
-              <th className="text-left px-4 py-3 font-semibold text-gray-700">Service</th>
-              <th className="text-left px-4 py-3 font-semibold text-gray-700">Amount</th>
-              <th className="text-left px-4 py-3 font-semibold text-gray-700">Date</th>
-              <th className="text-left px-4 py-3 font-semibold text-gray-700">Base</th>
-              {/* <th className="text-left px-4 py-3 font-semibold text-gray-700">Actions</th> */}
-            </tr>
-          </thead>
-          <tbody>
-            {offerings.map((off: any, idx: number) => (
-              <tr key={off.id} className={`border-t transition-colors hover:bg-blue-50 ${idx % 2 === 0 ? "bg-gray-50" : "bg-white"}`}>
-                <td className="px-4 py-2 font-medium">{off.service}</td>
-                <td className="px-4 py-2 font-bold text-green-700">₦{Number(off.amount).toLocaleString()}</td>
-                <td className="px-4 py-2">{formatDate(off.date)}</td>
-                <td className="px-4 py-2">{off.base?.name ?? "-"}</td>
-                {/* <td className="px-4 py-2 flex space-x-2">
-                  <button onClick={() => handleView(off.id)} title="View" className="p-2 rounded hover:bg-blue-100 transition">
-                    <EyeIcon className="w-5 h-5 text-blue-600" />
-                  </button>
-                </td> */}
+      {/* Table for desktop, cards for mobile */}
+      <div>
+        {/* Desktop Table */}
+        <div className="hidden md:block overflow-x-auto border rounded shadow-sm bg-white">
+          <table className="w-full divide-y divide-gray-200 text-sm">
+            <thead className="bg-blue-50">
+              <tr>
+                <th className="text-left px-4 py-3 font-semibold text-gray-700">Service</th>
+                <th className="text-left px-4 py-3 font-semibold text-gray-700">Amount</th>
+                <th className="text-left px-4 py-3 font-semibold text-gray-700">Date</th>
+                <th className="text-left px-4 py-3 font-semibold text-gray-700">Base</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {offerings.map((off: any, idx: number) => (
+                <tr key={off.id} className={`border-t transition-colors hover:bg-blue-50 ${idx % 2 === 0 ? "bg-gray-50" : "bg-white"}`}>
+                  <td className="px-4 py-2 font-medium">{off.service}</td>
+                  <td className="px-4 py-2 font-bold text-green-700">₦{Number(off.amount).toLocaleString()}</td>
+                  <td className="px-4 py-2">{formatDate(off.date)}</td>
+                  <td className="px-4 py-2">{off.base?.name ?? "-"}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+        {/* Mobile Cards */}
+        <div className="md:hidden space-y-4">
+          {offerings.map((off: any) => (
+            <div key={off.id} className="border rounded shadow-sm bg-white p-4 flex flex-col gap-2">
+              <div className="mb-2">
+                <span className="block font-medium text-base break-words leading-snug mb-1">{off.service}</span>
+                <span className="block font-bold text-green-700 text-lg mb-1">₦{Number(off.amount).toLocaleString()}</span>
+              </div>
+              <div className="flex flex-wrap gap-4 text-sm mb-2">
+                <div>
+                  <span className="font-semibold">Date:</span> {formatDate(off.date)}
+                </div>
+                <div>
+                  <span className="font-semibold">Base:</span> {off.base?.name ?? "-"}
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
       </div>
 
       <div className="flex justify-end mt-4 space-x-2">

@@ -84,7 +84,7 @@ export default function BulkTeenUploadForm() {
         </div>
       )}
 
-      <button type="submit" disabled={loading} className="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700 disabled:opacity-50">
+      <button type="submit" disabled={loading} className="w-full bg-cyan-600 text-white py-2 rounded hover:bg-cyan-700 disabled:opacity-50">
         {loading ? "Uploading..." : "Upload CSV"}
       </button>
     </form>

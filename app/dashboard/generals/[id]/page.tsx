@@ -28,7 +28,6 @@ export default function GeneralDetailsPage() {
         return;
       }
       const data = await res.json();
-      console.log("Fetched general data:", data);
 
       if (!data) {
         console.error("No data found");

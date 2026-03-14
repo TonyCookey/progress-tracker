@@ -31,7 +31,6 @@ export default function PlatoonDetailsPage() {
         console.error("No data found");
         return;
       }
-      console.log("Fetched platoon data:", data);
 
       setPlatoon(data);
     }

@@ -30,7 +30,6 @@ export default function SquadDetailsPage() {
         console.error("No data found");
         return;
       }
-      console.log("Fetched squad data:", data);
 
       setSquad(data);
     }

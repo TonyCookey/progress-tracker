@@ -114,12 +114,23 @@ export default function TeenDetailsPage() {
               <strong>Base:</strong> <span className={color.assignment}>{teen.base.name}</span>
             </p>
             <p>
-              <strong>Platoon:</strong> <span className={color.assignment}>{teen.platoon?.name || "N/A"}</span>
+              <strong>Platoon:</strong>{" "}
+              <a
+                href={teen.platoon ? `/dashboard/platoons/${teen.platoon.id}` : "#"}
+                className={color.assignment + (teen.platoon ? " hover:underline" : " text-gray-500")}
+              >
+                <span className={color.assignment}>{teen.platoon?.name || "N/A"}</span>
+              </a>
             </p>
             <p>
               <strong>Squads:</strong>{" "}
               {teen.squads.length ? (
-                <span className={color.assignment}>{teen.squads.map((s) => s.name).join(", ")}</span>
+                <a
+                  href={teen.squads ? `/dashboard/squads/${teen.squads.map((s) => s.id).join(",")}` : "#"}
+                  className={color.assignment + (teen.squads ? " hover:underline" : " text-gray-500")}
+                >
+                  <span className={color.assignment}>{teen.squads.map((s) => s.name).join(", ")}</span>
+                </a>
               ) : (
                 <span className="text-gray-500">None</span>
               )}

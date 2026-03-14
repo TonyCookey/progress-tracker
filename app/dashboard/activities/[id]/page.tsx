@@ -83,8 +83,8 @@ export default function ActivityDetailsPage({ params }: { params: { id: string }
       </div>
 
       {/* Attendance Table Card */}
-      <div className="bg-white rounded-xl shadow-lg p-8">
-        <div className="flex items-center justify-between mb-4">
+      <div className="bg-white rounded-xl shadow-lg p-4 sm:p-8">
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between mb-4">
           <h3 className="text-xl font-semibold">Mark Attendance</h3>
           <input
             type="text"
@@ -94,43 +94,74 @@ export default function ActivityDetailsPage({ params }: { params: { id: string }
               setSearch(e.target.value);
               setPage(1);
             }}
-            className="border px-3 py-2 rounded w-64"
+            className="border px-3 py-2 rounded w-full sm:w-64"
           />
         </div>
-        <table className="min-w-full divide-y divide-gray-200 text-sm">
-          <thead className="bg-blue-50">
-            <tr>
-              <th className="px-4 py-3 text-left font-semibold">Name</th>
-              <th className="px-4 py-3 text-left font-semibold">Gender</th>
-              <th className="px-4 py-3 text-center font-semibold">Attendance</th>
-            </tr>
-          </thead>
-          <tbody>
-            {paginatedTeens.map((teen) => (
-              <tr key={teen.id} className="transition-colors hover:bg-blue-50">
-                <td className="px-4 py-3 flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-700 font-bold text-sm">
-                    {teen.name.charAt(0).toUpperCase()}
-                  </div>
-                  <span className="font-medium">{teen.name}</span>
-                </td>
-                <td className="px-4 py-3">{teen.gender}</td>
-                <td className="px-4 py-3 text-center">
-                  <button
-                    onClick={() => handleMarkAttendance(teen.id)}
-                    className={`px-4 py-2 rounded-full font-semibold transition ${
-                      attendance[teen.id] ? "bg-green-500 text-white" : "bg-gray-100 text-gray-700 hover:bg-blue-100"
-                    }`}
-                  >
-                    {attendance[teen.id] ? "Present" : "Mark Present"}
-                  </button>
-                </td>
+        {/* Desktop Table */}
+        <div className="hidden md:block">
+          <table className="min-w-full divide-y divide-gray-200 text-sm">
+            <thead className="bg-blue-50">
+              <tr>
+                <th className="px-4 py-3 text-left font-semibold">Name</th>
+                <th className="px-4 py-3 text-left font-semibold">Gender</th>
+                <th className="px-4 py-3 text-center font-semibold">Attendance</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {paginatedTeens.map((teen) => (
+                <tr key={teen.id} className="transition-colors hover:bg-blue-50">
+                  <td className="px-4 py-3 flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-700 font-bold text-sm">
+                      {teen.name.charAt(0).toUpperCase()}
+                    </div>
+                    <span className="font-medium">{teen.name}</span>
+                  </td>
+                  <td className="px-4 py-3">{teen.gender}</td>
+                  <td className="px-4 py-3 text-center">
+                    <button
+                      onClick={() => handleMarkAttendance(teen.id)}
+                      className={`px-4 py-2 rounded-full font-semibold transition ${
+                        attendance[teen.id] ? "bg-green-500 text-white" : "bg-gray-100 text-gray-700 hover:bg-blue-100"
+                      }`}
+                    >
+                      {attendance[teen.id] ? "Present" : "Mark Present"}
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+        {/* Mobile Cards */}
+        <div className="md:hidden space-y-4">
+          {paginatedTeens.map((teen) => (
+            <div key={teen.id} className="border rounded-xl shadow bg-white p-4 flex flex-col gap-2">
+              <div className="flex items-center gap-3 mb-2">
+                <div className="w-8 h-8 rounded-full bg-blue-100 flex items-center justify-center text-blue-700 font-bold text-sm">
+                  {teen.name.charAt(0).toUpperCase()}
+                </div>
+                <span className="font-medium text-base break-words leading-snug">{teen.name}</span>
+              </div>
+              <div className="flex flex-wrap gap-4 text-sm mb-2">
+                <div>
+                  <span className="font-semibold">Gender:</span> {teen.gender}
+                </div>
+              </div>
+              <div className="flex mt-2">
+                <button
+                  onClick={() => handleMarkAttendance(teen.id)}
+                  className={`w-full px-4 py-2 rounded-full font-semibold transition ${
+                    attendance[teen.id] ? "bg-green-500 text-white" : "bg-gray-100 text-gray-700 hover:bg-blue-100"
+                  }`}
+                >
+                  {attendance[teen.id] ? "Present" : "Mark Present"}
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
         {/* Pagination */}
-        <div className="flex justify-end mt-4 space-x-2">
+        <div className="flex flex-col sm:flex-row sm:justify-end mt-8 space-y-2 sm:space-y-0 sm:space-x-2">
           <button
             onClick={() => setPage((p) => Math.max(1, p - 1))}
             disabled={page === 1}
@@ -138,7 +169,7 @@ export default function ActivityDetailsPage({ params }: { params: { id: string }
           >
             Previous
           </button>
-          <span className="px-2 py-1 font-medium text-gray-700">
+          <span className="px-2 py-1 font-medium text-gray-700 self-center">
             Page {page} of {Math.ceil(filteredTeens.length / pageSize)}
           </span>
           <button

@@ -22,8 +22,6 @@ export async function POST(req: Request) {
   try {
     const { name, baseId, type, leaderId } = await req.json();
 
-    console.log("[CREATE_SQUAD]", { name, baseId, type, leaderId });
-
     const squad = await prisma.group.create({
       data: {
         name,
