@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { PencilIcon, TrashIcon, EyeIcon } from "@heroicons/react/24/outline";
+import { PencilIcon, TrashIcon, EyeIcon, ArrowRightIcon } from "@heroicons/react/24/outline";
 import LoadingSpinner from "../common/LoadingSpinner";
 import Link from "next/link";
 
@@ -38,43 +38,70 @@ export default function GeneralsTable() {
     fetchGenerals(page);
   }, [page]);
   return (
-    <div className="overflow-x-auto shadow rounded p-4">
+    <div className="shadow rounded p-2 sm:p-4">
       {loading ? (
         <LoadingSpinner />
       ) : (
         <>
-          <table className="w-full table-auto text-sm">
-            <thead>
-              <tr className="bg-gray-100 text-left">
-                <th className="px-4 py-2">Name</th>
-                <th className="px-4 py-2">Email</th>
-                <th className="px-4 py-2">Base</th>
-                <th className="px-4 py-2 text-right">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {generals.map((general, idx) => (
-                <tr key={general.id} className={`border-t transition-colors hover:bg-blue-50 ${idx % 2 === 0 ? "bg-gray-50" : "bg-white"}`}>
-                  <td className="px-4 py-3 flex items-center gap-3">
-                    {/* Avatar with initials */}
-                    <div className="w-8 h-8 rounded-full bg-cyan-50 flex items-center justify-center text-blue-700 font-bold text-sm">
-                      {general.name?.charAt(0) ?? "G"}
-                    </div>
-                    <span className="font-medium">{general.name}</span>
-                  </td>
-                  <td className="px-4 py-3">{general.email}</td>
-                  <td className="px-4 py-3">{general.base?.name ?? "-"}</td>
-                  <td className="px-4 py-3 flex justify-end space-x-2">
-                    <Link href={`/dashboard/generals/${general.id}`}>
-                      <EyeIcon className="w-5 h-5 text-blue-600 cursor-pointer" />
-                    </Link>
-                  </td>
+          {/* Desktop Table */}
+          <div className="hidden md:block overflow-x-auto">
+            <table className="w-full table-auto text-sm">
+              <thead>
+                <tr className="bg-gray-100 text-left">
+                  <th className="px-4 py-2">Name</th>
+                  <th className="px-4 py-2">Email</th>
+                  <th className="px-4 py-2">Base</th>
+                  <th className="px-4 py-2 text-right">Actions</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-
-          <div className="mt-4 flex justify-end items-center space-x-2">
+              </thead>
+              <tbody>
+                {generals.map((general, idx) => (
+                  <tr key={general.id} className={`border-t transition-colors hover:bg-blue-50 ${idx % 2 === 0 ? "bg-gray-50" : "bg-white"}`}>
+                    <td className="px-4 py-3 flex items-center gap-3">
+                      <div className="w-8 h-8 rounded-full bg-cyan-50 flex items-center justify-center text-blue-700 font-bold text-sm">
+                        {general.name?.charAt(0) ?? "G"}
+                      </div>
+                      <span className="font-medium">{general.name}</span>
+                    </td>
+                    <td className="px-4 py-3">{general.email}</td>
+                    <td className="px-4 py-3">{general.base?.name ?? "-"}</td>
+                    <td className="px-4 py-3 flex justify-end space-x-2">
+                      <Link href={`/dashboard/generals/${general.id}`}>
+                        <EyeIcon className="w-5 h-5 text-blue-600 cursor-pointer" />
+                      </Link>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          {/* Mobile Cards */}
+          <div className="md:hidden space-y-4">
+            {generals.map((general) => (
+              <div key={general.id} className="border rounded-xl shadow bg-white p-4 flex flex-col gap-2">
+                <div className="flex items-center gap-3 mb-2">
+                  <div className="w-8 h-8 rounded-full bg-cyan-50 flex items-center justify-center text-blue-700 font-bold text-sm">
+                    {general.name?.charAt(0) ?? "G"}
+                  </div>
+                  <span className="font-medium text-base break-words leading-snug">{general.name}</span>
+                </div>
+                <div className="flex flex-wrap gap-4 text-sm mb-2">
+                  <div>
+                    <span className="font-semibold">Email:</span> {general.email}
+                  </div>
+                  <div>
+                    <span className="font-semibold">Base:</span> {general.base?.name ?? "-"}
+                  </div>
+                </div>
+                <div className="flex justify-end mt-2">
+                  <Link href={`/dashboard/generals/${general.id}`} title="View" className="p-2 rounded hover:bg-blue-100 transition">
+                    <ArrowRightIcon className="w-5 h-5 text-blue-600" />
+                  </Link>
+                </div>
+              </div>
+            ))}
+          </div>
+          <div className="mt-4 flex flex-col sm:flex-row justify-end items-center space-y-2 sm:space-y-0 sm:space-x-2">
             <button
               onClick={() => setPage((p) => Math.max(p - 1, 1))}
               disabled={page === 1}
