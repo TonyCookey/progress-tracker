@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import clsx from "clsx";
+import { useState } from "react";
 import {
   HomeIcon,
   UserGroupIcon,
@@ -35,6 +36,7 @@ const links = [
 export default function Sidebar() {
   const pathname = usePathname();
   const { data: session } = useSession();
+  const [open, setOpen] = useState(false);
 
   const userRole = session?.user?.role;
 
@@ -44,15 +46,17 @@ export default function Sidebar() {
     return link.role === userRole;
   });
 
-  return (
-    <aside className="w-64 h-screen bg-gradient-to-b from-cyan-900 via-cyan-800 to-cyan-700 text-white fixed top-0 left-0 shadow-lg">
+  // Sidebar content
+  const sidebarContent = (
+    <div className="flex flex-col h-full">
       <div className="px-6 py-6 text-xl font-extrabold text-400">DA Church Tracker</div>
       <div className="border-t border-cyan-700 mx-6 mb-2" />
-      <nav className="mt-2">
+      <nav className="mt-2 flex-1">
         {visibleLinks.map(({ href, label, icon }) => (
           <Link
             key={href}
             href={href}
+            onClick={() => setOpen(false)}
             className={clsx(
               "flex items-center space-x-4 px-6 py-3 rounded-lg transition-all duration-150 cursor-pointer ",
               "hover:bg-cyan-600 hover:text-white",
@@ -64,6 +68,42 @@ export default function Sidebar() {
           </Link>
         ))}
       </nav>
-    </aside>
+    </div>
+  );
+
+  return (
+    <>
+      {/* Hamburger button for mobile */}
+      <button
+        className="md:hidden fixed top-4 left-4 z-40 bg-cyan-800 p-2 rounded text-white focus:outline-none shadow-lg"
+        onClick={() => setOpen(true)}
+        aria-label="Open sidebar"
+      >
+        <svg className="h-6 w-6" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+          <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" />
+        </svg>
+      </button>
+
+      {/* Sidebar for desktop */}
+      <aside className="hidden md:flex w-64 h-screen bg-gradient-to-b from-cyan-900 via-cyan-800 to-cyan-700 text-white fixed top-0 left-0 shadow-lg z-30">
+        {sidebarContent}
+      </aside>
+
+      {/* Sidebar drawer for mobile */}
+      {open && (
+        <>
+          {/* Overlay */}
+          <div className="fixed inset-0 bg-black bg-opacity-40 z-40 transition-opacity duration-200" onClick={() => setOpen(false)} />
+          <aside className="fixed top-0 left-0 w-64 h-full bg-gradient-to-b from-cyan-900 via-cyan-800 to-cyan-700 text-white shadow-lg z-50 animate-slide-in">
+            <button className="absolute top-4 right-3 text-white focus:outline-none" onClick={() => setOpen(false)} aria-label="Close sidebar">
+              <svg className="h-6 w-6" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+            {sidebarContent}
+          </aside>
+        </>
+      )}
+    </>
   );
 }
