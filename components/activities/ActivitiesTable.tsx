@@ -43,7 +43,7 @@ export default function ActivitiesTable() {
               <th className="px-4 py-3 text-left font-semibold">Name</th>
               <th className="px-4 py-3 text-left font-semibold">Type</th>
               <th className="px-4 py-3 text-left font-semibold">Date</th>
-              <th className="px-4 py-3 text-left font-semibold">Cross-base?</th>
+              <th className="px-4 py-3 text-left font-semibold">Base</th>
               <th className="px-4 py-3 text-left font-semibold">Actions</th>
             </tr>
           </thead>
@@ -85,8 +85,8 @@ export default function ActivitiesTable() {
                 <span className="font-semibold">Date:</span> {format(new Date(activity.date), "do MMM yyyy")}
               </div>
               <div>
-                <span className="font-semibold">Cross-base:</span>{" "}
-                {activity.isCrossBase ? (
+                <span className="font-semibold">Base:</span>{" "}
+                {activity.base?.name ? (
                   <span className="inline-block bg-green-100 text-green-700 px-2 py-1 rounded-full text-xs font-semibold ml-1">Yes</span>
                 ) : (
                   <span className="inline-block bg-orange-200 text-orange-700 px-2 py-1 rounded-full text-xs font-semibold ml-1">No</span>

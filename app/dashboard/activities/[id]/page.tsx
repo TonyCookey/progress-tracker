@@ -61,6 +61,7 @@ export default function ActivityDetailsPage({ params }: { params: { id: string }
           <h2 className="text-3xl font-bold mb-2 text-blue-700">{activity?.name}</h2>
           <p>{activity?.description}</p>
           <p>Date: {formatDate(activity?.date)}</p>
+          <p>Base: {activity?.base?.name || "N/A"}</p>
         </div>
         {/* Stats Card */}
         <div className="flex-1 bg-white rounded-xl shadow-lg p-8 h-fit">
