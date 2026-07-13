@@ -1,10 +1,20 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { requireSession, assertBaseAccess, handleApiError } from "@/lib/auth";
+import { createActivitySchema } from "@/lib/validation/activity";
+import { parseOrThrow } from "@/lib/validation/parse";
 
 export async function POST(req: NextRequest) {
   try {
-    const body = await req.json();
-    const { name, description, type, date, baseId, platoonId, squadIds = [], isCrossBase = false } = body;
+    const session = await requireSession();
+    const body = parseOrThrow(createActivitySchema, await req.json());
+    const { name, description, type, date, baseId, platoonId, squadIds, isCrossBase } = body;
+
+    if (!isCrossBase) {
+      assertBaseAccess(session, baseId);
+    } else if (session.user.role !== "SUPERADMIN") {
+      assertBaseAccess(session, null);
+    }
 
     // Collect all group IDs
     const groupIds: string[] = [];
@@ -15,9 +25,9 @@ export async function POST(req: NextRequest) {
     const activity = await prisma.activity.create({
       data: {
         name,
-        description,
+        description: description ?? undefined,
         type,
-        date: new Date(date),
+        date,
         baseId,
         isCrossBase,
         groups: {
@@ -31,13 +41,14 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json(activity, { status: 201 });
   } catch (error) {
-    console.error("Error creating activity:", error);
-    return NextResponse.json({ message: "Failed to create activity" }, { status: 500 });
+    return handleApiError(error);
   }
 }
 
 export async function GET(req: NextRequest) {
   try {
+    await requireSession();
+
     const { searchParams } = new URL(req.url);
     const baseId = searchParams.get("baseId");
 
@@ -53,7 +64,6 @@ export async function GET(req: NextRequest) {
 
     return NextResponse.json(activities);
   } catch (error) {
-    console.error("Error fetching activities:", error);
-    return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
+    return handleApiError(error);
   }
 }

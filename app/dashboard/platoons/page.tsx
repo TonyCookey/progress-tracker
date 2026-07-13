@@ -1,19 +1,14 @@
 import Link from "next/link";
 import RequireAuth from "@/components/auth/RequireAuth";
 import CreateGroupModal from "@/components/groups/CreateGroupModal";
+import { getGroups } from "@/lib/groups";
+import { getBases } from "@/lib/bases";
+import { getUsers } from "@/lib/users";
+
+export const dynamic = "force-dynamic";
 
 export default async function PlatoonsPage() {
-  const [platoonsRes, basesRes, leadersRes] = await Promise.all([
-    fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/api/groups?type=PLATOON`, { cache: "no-store" }),
-    fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/api/bases`, { cache: "no-store" }),
-    fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/api/users`, { cache: "no-store" }),
-  ]);
-  if (!platoonsRes.ok || !basesRes.ok || !leadersRes.ok) {
-    throw new Error("Failed to fetch data");
-  }
-  const platoons = await platoonsRes.json();
-  const bases = await basesRes.json();
-  const leaders = await leadersRes.json();
+  const [platoons, bases, leaders] = await Promise.all([getGroups("PLATOON"), getBases(), getUsers()]);
 
   return (
     <RequireAuth>

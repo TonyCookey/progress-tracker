@@ -3,9 +3,12 @@ import Papa from "papaparse";
 import { prisma } from "@/lib/prisma";
 import { normalizeGender } from "@/lib/normalizeGender";
 import { Prisma } from "@prisma/client";
+import { requireSession, assertBaseAccess, handleApiError } from "@/lib/auth";
 
 export async function POST(req: Request) {
   try {
+    const session = await requireSession();
+
     const formData = await req.formData();
     const file = formData.get("file") as File | null;
     const baseId = formData.get("baseId") as string | null;
@@ -13,6 +16,8 @@ export async function POST(req: Request) {
     if (!file || !baseId) {
       return NextResponse.json({ error: "file and baseId are required" }, { status: 400 });
     }
+
+    assertBaseAccess(session, baseId);
 
     const csvText = await file.text();
 
@@ -62,7 +67,6 @@ export async function POST(req: Request) {
       skipped,
     });
   } catch (error) {
-    console.error("Bulk teen upload error:", error);
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+    return handleApiError(error);
   }
 }

@@ -1,14 +1,13 @@
 import { NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
+import { getUsers } from "@/lib/users";
+import { requireSession, handleApiError } from "@/lib/auth";
 
 export async function GET() {
   try {
-    const users = await prisma.user.findMany({
-      include: { base: true },
-    });
+    await requireSession();
+    const users = await getUsers();
     return NextResponse.json(users);
   } catch (error) {
-    console.error("[USERS_ERROR]", error);
-    return NextResponse.json({ error: "Failed to fetch users" }, { status: 500 });
+    return handleApiError(error);
   }
 }

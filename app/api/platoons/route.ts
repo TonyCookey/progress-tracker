@@ -1,26 +1,30 @@
 import { NextResponse } from "next/server";
 import { GroupType } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
+import { getGroups } from "@/lib/groups";
+import { requireSession, assertBaseAccess, handleApiError } from "@/lib/auth";
+import { createGroupSchema } from "@/lib/validation/group";
+import { parseOrThrow } from "@/lib/validation/parse";
 
 export async function GET(req: Request) {
   try {
+    await requireSession();
+
     const url = new URL(req.url);
     const type: GroupType = url.searchParams.get("type") as GroupType;
 
-    const squads = await prisma.group.findMany({
-      where: { type: type ?? "SQUAD" },
-      include: { leader: true, base: true },
-    });
+    const squads = await getGroups(type);
     return NextResponse.json(squads);
   } catch (error) {
-    console.error("[SQUADS_ERROR]", error);
-    return NextResponse.json({ error: "Failed to fetch squads" }, { status: 500 });
+    return handleApiError(error);
   }
 }
 
 export async function POST(req: Request) {
   try {
-    const { name, baseId, type, leaderId } = await req.json();
+    const session = await requireSession();
+    const { name, baseId, type, leaderId } = parseOrThrow(createGroupSchema, await req.json());
+    assertBaseAccess(session, baseId);
 
     const squad = await prisma.group.create({
       data: {
@@ -33,7 +37,6 @@ export async function POST(req: Request) {
 
     return NextResponse.json(squad);
   } catch (error) {
-    console.error("[CREATE_SQUAD_ERROR]", error);
-    return NextResponse.json({ error: "Failed to create squad" }, { status: 500 });
+    return handleApiError(error);
   }
 }
