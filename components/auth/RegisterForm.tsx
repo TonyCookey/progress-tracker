@@ -11,6 +11,7 @@ type RegisterFormInputs = {
   password: string;
   confirmPassword: string;
   dateOfBirth?: string;
+  gender?: string;
   role: string;
   baseName: string;
 };
@@ -79,6 +80,15 @@ export default function RegisterForm() {
       <div>
         <label className="block font-medium">Date of Birth</label>
         <input type="date" {...register("dateOfBirth")} className="w-full px-4 py-2 border rounded" />
+      </div>
+
+      <div>
+        <label className="block font-medium">Gender</label>
+        <select {...register("gender")} className="w-full px-4 py-2 border rounded">
+          <option value="">Select Gender</option>
+          <option value="Male">Male</option>
+          <option value="Female">Female</option>
+        </select>
       </div>
 
       <div>

@@ -8,7 +8,10 @@ export async function POST(req: NextRequest) {
   try {
     const session = await requireSession();
     const body = parseOrThrow(createActivitySchema, await req.json());
-    const { name, description, type, date, baseId, platoonId, squadIds, isCrossBase } = body;
+    const { name, description, type, date, platoonId, squadIds } = body;
+
+    const isCrossBase = body.baseId === "cross-base" ? true : body.isCrossBase;
+    const baseId = isCrossBase ? null : body.baseId;
 
     if (!isCrossBase) {
       assertBaseAccess(session, baseId);
