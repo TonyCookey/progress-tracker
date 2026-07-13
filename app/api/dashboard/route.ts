@@ -8,6 +8,9 @@ export async function GET(req: Request) {
     const cards = await getDashboardCards();
     return NextResponse.json(cards);
   } catch (error) {
+    if (error instanceof Error && error.message === "Bases not found") {
+      return NextResponse.json({ error: "Bases not found" }, { status: 404 });
+    }
     return handleApiError(error);
   }
 }

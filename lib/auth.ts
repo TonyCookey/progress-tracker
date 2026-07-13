@@ -71,11 +71,16 @@ export class ApiError extends Error {
 
 export function handleApiError(error: unknown) {
   if (error instanceof ApiError) {
-    return NextResponse.json({ error: error.message, fieldErrors: error.fieldErrors }, { status: error.status });
+    // `message` is included alongside `error` for compatibility with existing
+    // client code that reads `data.message` from error responses.
+    return NextResponse.json(
+      { error: error.message, message: error.message, fieldErrors: error.fieldErrors },
+      { status: error.status },
+    );
   }
 
   console.error("[API_ERROR]", error);
-  return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
+  return NextResponse.json({ error: "Internal Server Error", message: "Internal Server Error" }, { status: 500 });
 }
 
 export async function requireSession(): Promise<Session> {

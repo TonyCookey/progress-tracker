@@ -36,6 +36,14 @@ export async function PUT(req: Request, { params }: { params: { id: string } }) 
   try {
     const session = await requireSession();
     const data = parseOrThrow(updateTeenSchema, await req.json());
+
+    const existingTeen = await prisma.teen.findUnique({ where: { id: params.id } });
+    if (!existingTeen) {
+      return NextResponse.json({ error: "Lieutenant not found" }, { status: 404 });
+    }
+    // Check both the teen's current base and the target base, so a leader can't
+    // edit another base's teen, and can't move a teen into a base they don't own.
+    assertBaseAccess(session, existingTeen.baseId);
     assertBaseAccess(session, data.baseId);
 
     const updatedTeen = await prisma.teen.update({
