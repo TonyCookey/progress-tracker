@@ -94,24 +94,37 @@ See `prisma/schema.prisma` for the source of truth. Key points:
 - **Base** 1─* User, Teen, Group, Activity, Offering.
 - **User** (General): `role` ∈ {SUPERADMIN, GENERAL, COLONEL, VOLUNTEER}, belongs to one Base,
   leads Groups (`leadingGroups`), supports Groups (`GroupSupport`), teaches at Activities
-  (`TeacherParticipation`). **Has no `gender` field** (gap — see §9).
+  (`TeacherParticipation`), soft-delete via `deletedAt`.
 - **Teen**: `rank` ∈ {LIEUTENANT, CAPTAIN}, `gender` (string "Male"/"Female"), belongs to one Base,
   one optional Platoon (`groupId` → Group), many Squads (`GroupMember`), attendance
-  (`ActivityParticipation`), optional `imageKey` (R2 object key).
-- **Group**: `type` ∈ {PLATOON, SQUAD}, one leader (`User`), supporters, members, teens, activities.
+  (`ActivityParticipation`), optional `imageKey` (R2 object key), soft-delete via `deletedAt`.
+  Pastoral/growth fields (added S2, all nullable): `phone`, `address`, `school`, `guardianName`,
+  `guardianPhone`, `dateJoined` (defaults to `createdAt` for pre-S2 rows, defaults to "now" on
+  create when omitted), `status` ∈ {ACTIVE, INACTIVE, LEFT} (default `ACTIVE`).
+- **Group**: `type` ∈ {PLATOON, SQUAD}, one leader (`User`), supporters (`GroupSupport`), members
+  (`GroupMember`, squads only — platoon membership is via `Teen.groupId`), teens, activities,
+  soft-delete via `deletedAt`. Deleting a group with active (non-deleted) teens is blocked (409).
 - **Activity**: `type` (free string), `date`, `isCrossBase`, optional Base, connected Groups,
-  teen attendance + teacher attendance.
+  teen attendance + teacher attendance, soft-delete via `deletedAt` (no edit/delete UI yet).
 - **ActivityParticipation**: unique `(activityId, teenId)`, `attended` bool, notes.
 - **TeacherParticipation**: unique `(activityId, userId)`, `attended`, role, notes.
-- **Offering**: `amount` Decimal(12,2), `date`, `service`, `type` ("Cash" | "Online"/Transfer),
-  `isCrossBase`, optional Base, notes.
+- **Offering**: `amount` Decimal(12,2), `date`, `service`, `type` (`"Cash"` | `"Online"`),
+  `isCrossBase`, optional Base, notes, soft-delete via `deletedAt`. **Canonical `type` values are
+  the literal strings `"Cash"` and `"Online"`** — `"Online"` is the transfer/online type (UI label
+  is "Transfer", but the stored value stays `"Online"` to avoid orphaning existing data).
+
+### Soft delete (added S2)
+Every model above with a `deletedAt DateTime?` field is soft-deleted: `DELETE` routes set
+`deletedAt = new Date()` instead of removing the row. `lib/softDelete.ts` exports
+`notDeleted(includeArchived: boolean)`, spread into `where` clauses to exclude archived rows by
+default; pass `?includeArchived=true` on list/detail GETs to include them. Historical/report data
+therefore survives a "delete".
 
 ### Not yet modeled (needed — see roadmap)
 - **NewConvert / first-timer** (critical for the monthly report).
 - **MonthlyReport** (narrative + manual finance inputs + snapshot archive) — see S3.
 - **Base label** (report location name: Alpha = Mainland, Bravo = Island).
 - **Household** (grouping teens by family/household).
-- Soft-delete / archive fields (all deletes are currently hard deletes).
 
 > **Deliberately NOT modeled:** expenses and account/bank balances are **not** tracked in-app — the
 > app is not the source of truth for them. In the monthly report the admin types opening balance,
@@ -242,13 +255,23 @@ same `lib/` functions, so there's one source of truth for each query.
   `.../birthdays/page.tsx`, `.../platoons/page.tsx`, `.../squads/page.tsx` are server components that
   `fetch` their own `/api/*` via `NEXT_PUBLIC_BASE_URL` without forwarding cookies. Prefer calling the
   data logic directly. Must be fixed alongside API auth (S0) or these pages 401.
-- **Offering `type` values** are the free strings `"Cash"` and `"Online"` ("Online" = online/transfer).
-  Don't rename stored values without a backfill.
-- **Groups can't be edited/deleted** (`/api/groups/[id]` is GET-only).
-- **Generals can't be edited** (`/api/generals/[id]` has GET/DELETE, no PUT).
-- **Offerings can't be edited/deleted**.
-- **All deletes are hard deletes** with no cascade handling → FK errors or orphaned rows.
+- **Offering `type` values** are the free strings `"Cash"` and `"Online"` ("Online" = online/transfer,
+  labeled "Transfer" in the UI). Don't rename stored values without a backfill.
 - **`DashboardChart.tsx` is built but never imported** — no charts render anywhere yet.
+- **Async `<select>` options + react-hook-form `setValue`/`defaultValues` (fixed S2, watch for
+  recurrence)**: when a select's `<option>` list is populated from an API call *after* mount, calling
+  `setValue`/setting `defaultValue` before that fetch resolves silently fails — the browser can't
+  select a value that has no matching `<option>` in the DOM yet, and React doesn't retroactively fix
+  it. Every edit form with an async-loaded select (`EditGeneralForm`, `EditGroupForm`,
+  `EditLieutenantsForm`, `RecordOfferingForm`) now re-applies `setValue` in a `useEffect` keyed off
+  the options array (`useEffect(() => { if (options.length) setValue(...) }, [options])`). Follow
+  this pattern for any new async-select edit form.
+- **Field-name mismatch silently wiped Teen platoon assignment (fixed S2)**: `EditLieutenantsForm`
+  registered the platoon field as `groupId`, but `updateTeenSchema`/the PUT route expect
+  `platoonId` — every prior edit sent `platoonId: undefined`, which the route coerced to
+  `groupId: null`, clearing the teen's platoon. Now fixed by renaming the form field to `platoonId`.
+  If you add more editable relations, double-check the client field name matches the zod schema key,
+  not just the Prisma column name.
 - **`/dashboard/events` and `/dashboard/settings` are empty stubs.** Events is redundant (events =
   activities) and should be removed/merged. **Reports & Settings sidebar links are commented out**
   in `components/navigation/Sidebar.tsx` — enable when those pages are built.

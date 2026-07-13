@@ -9,14 +9,37 @@ type SquadOption = {
   value: string;
   label: string;
 };
-export default function RecordOfferingForm() {
+
+type Offering = {
+  id: string;
+  service: string;
+  amount: number | string;
+  date: string;
+  notes?: string | null;
+  type?: string | null;
+  baseId?: string | null;
+  isCrossBase?: boolean;
+};
+
+export default function RecordOfferingForm({ offering }: { offering?: Offering }) {
+  const isEdit = !!offering;
   const {
     register,
     handleSubmit,
     control,
     reset,
+    setValue,
     formState: { isSubmitting },
-  } = useForm();
+  } = useForm({
+    defaultValues: {
+      service: offering?.service ?? "",
+      amount: offering?.amount ?? "",
+      date: offering?.date ? new Date(offering.date).toISOString().slice(0, 10) : "",
+      notes: offering?.notes ?? "",
+      type: offering?.type ?? "Cash",
+      baseId: offering?.isCrossBase ? "cross-base" : offering?.baseId ?? "",
+    },
+  });
   const router = useRouter();
 
   const [bases, setBases] = useState<Option[]>([]);
@@ -31,31 +54,39 @@ export default function RecordOfferingForm() {
     fetchBases();
   }, []);
 
+  // Bases load asynchronously; re-apply once the matching <option> elements
+  // actually exist in the DOM, or the browser can't select them.
+  useEffect(() => {
+    if (bases.length) setValue("baseId", offering?.isCrossBase ? "cross-base" : offering?.baseId ?? "");
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [bases]);
+
   const onSubmit = async (data: any) => {
     try {
       if (data.baseId === "cross-base") {
         data.baseId = null;
         data.isCrossBase = true;
       }
-      const res = await fetch("/api/offerings", {
-        method: "POST",
+      const res = await fetch(isEdit ? `/api/offerings/${offering!.id}` : "/api/offerings", {
+        method: isEdit ? "PUT" : "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
       });
       if (!res.ok) {
-        console.error("Failed to create offering", res);
-        alert("Failed to create offering");
+        console.error(`Failed to ${isEdit ? "update" : "create"} offering`, res);
+        alert(`Failed to ${isEdit ? "update" : "create"} offering`);
+        return;
       }
       reset();
       router.push("/dashboard/offerings");
     } catch (error) {
-      console.error("Failed to create offering:", error);
+      console.error(`Failed to ${isEdit ? "update" : "create"} offering:`, error);
     }
   };
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 p-10 bg-white rounded shadow-md">
-      <h1 className="text-xl font-semibold">Record Offering</h1>
+      <h1 className="text-xl font-semibold">{isEdit ? "Edit Offering" : "Record Offering"}</h1>
       <div>
         <label htmlFor="service" className="block text-sm font-medium">
           Service
@@ -89,7 +120,7 @@ export default function RecordOfferingForm() {
         </label>
         <select id="type" {...register("type")} className="w-full border rounded px-3 py-2 mt-1">
           <option value="Cash">Cash</option>
-          <option value="Online">Online/Transfer</option>
+          <option value="Online">Transfer</option>
         </select>
       </div>
 
@@ -110,7 +141,7 @@ export default function RecordOfferingForm() {
 
       <div className="flex justify-end pt-2">
         <button type="submit" disabled={isSubmitting} className="bg-cyan-600 text-white px-4 py-2 rounded hover:bg-cyan-700">
-          {isSubmitting ? "Recording..." : "Record Offering"}
+          {isSubmitting ? (isEdit ? "Updating..." : "Recording...") : isEdit ? "Update Offering" : "Record Offering"}
         </button>
       </div>
     </form>

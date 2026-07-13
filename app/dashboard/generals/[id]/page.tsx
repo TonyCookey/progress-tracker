@@ -4,13 +4,17 @@ import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import LoadingSpinner from "@/components/common/LoadingSpinner";
 import { formatDate } from "@/lib/formatDate";
+import EditGeneralModal from "@/components/generals/EditGeneralModal";
 
 type General = {
   id: string;
   name: string;
+  username: string;
+  email: string;
   role: string;
   gender: string;
   dateOfBirth: string;
+  baseId: string;
   base: { id: string; name: string };
   leadingGroups?: { id: string; name: string }[];
   supportingGroups?: { id: string; name: string }[];
@@ -20,21 +24,22 @@ export default function GeneralDetailsPage() {
   const { id } = useParams();
   const [general, setGeneral] = useState(null as General | null);
 
-  useEffect(() => {
-    async function fetchGeneral() {
-      const res = await fetch(`/api/generals/${id}`, { cache: "no-store" });
-      if (!res.ok) {
-        console.error("Failed to fetch general data");
-        return;
-      }
-      const data = await res.json();
-
-      if (!data) {
-        console.error("No data found");
-        return;
-      }
-      setGeneral(data);
+  async function fetchGeneral() {
+    const res = await fetch(`/api/generals/${id}`, { cache: "no-store" });
+    if (!res.ok) {
+      console.error("Failed to fetch general data");
+      return;
     }
+    const data = await res.json();
+
+    if (!data) {
+      console.error("No data found");
+      return;
+    }
+    setGeneral({ ...data, baseId: data.base?.id });
+  }
+
+  useEffect(() => {
     fetchGeneral();
   }, [id]);
 
@@ -98,7 +103,7 @@ export default function GeneralDetailsPage() {
       </div>
 
       <div className="flex gap-4 justify-end">
-        <button className="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 rounded-lg font-semibold shadow">Edit</button>
+        <EditGeneralModal general={general} onSuccess={fetchGeneral} />
         <button onClick={() => handleDelete(general.id)} className="bg-red-600 hover:bg-red-700 text-white px-5 py-2 rounded-lg font-semibold shadow">
           Delete
         </button>

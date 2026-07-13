@@ -15,9 +15,19 @@ type Teen = {
   gender: string;
   dateOfBirth: string;
   base: { id: string; name: string };
+  baseId?: string;
+  groupId?: string;
   platoon?: { id: string; name: string };
   squads: { id: string; name: string }[];
+  squadIds?: string[];
   imageKey?: string;
+  phone?: string | null;
+  address?: string | null;
+  school?: string | null;
+  guardianName?: string | null;
+  guardianPhone?: string | null;
+  dateJoined?: string | null;
+  status?: string;
 };
 
 function getColorClasses(gender: string) {
@@ -46,20 +56,26 @@ export default function TeenDetailsPage() {
   const { id } = useParams();
   const [teen, setTeen] = useState(null as Teen | null);
 
-  useEffect(() => {
-    async function fetchTeen() {
-      const res = await fetch(`/api/lieutenants/${id}`, { cache: "no-store" });
-      if (!res.ok) {
-        console.error("Failed to fetch teen data");
-        return;
-      }
-      const data = await res.json();
-      if (!data) {
-        console.error("No data found");
-        return;
-      }
-      setTeen(data);
+  async function fetchTeen() {
+    const res = await fetch(`/api/lieutenants/${id}`, { cache: "no-store" });
+    if (!res.ok) {
+      console.error("Failed to fetch teen data");
+      return;
     }
+    const data = await res.json();
+    if (!data) {
+      console.error("No data found");
+      return;
+    }
+    setTeen({
+      ...data,
+      baseId: data.base?.id,
+      groupId: data.platoon?.id,
+      squadIds: data.squads?.map((s: any) => s.id) ?? [],
+    });
+  }
+
+  useEffect(() => {
     fetchTeen();
   }, [id]);
 
@@ -139,11 +155,45 @@ export default function TeenDetailsPage() {
         </div>
       </div>
 
+      {/* Pastoral Info Card */}
+      <div className="bg-white rounded-lg shadow p-8 mb-8">
+        <div className="flex items-center justify-between mb-4">
+          <h3 className={`text-xl font-semibold ${color.header}`}>Pastoral Info</h3>
+          <span
+            className={`inline-block px-3 py-1 rounded-full text-sm font-semibold ${
+              teen.status === "LEFT" ? "bg-gray-500 text-white" : teen.status === "INACTIVE" ? "bg-yellow-500 text-white" : "bg-green-600 text-white"
+            }`}
+          >
+            {teen.status ?? "ACTIVE"}
+          </span>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-y-1">
+          <p className="text-gray-700 mb-1">
+            <strong>Phone:</strong> {teen.phone || "N/A"}
+          </p>
+          <p className="text-gray-700 mb-1">
+            <strong>Address:</strong> {teen.address || "N/A"}
+          </p>
+          <p className="text-gray-700 mb-1">
+            <strong>School:</strong> {teen.school || "N/A"}
+          </p>
+          <p className="text-gray-700 mb-1">
+            <strong>Date Joined:</strong> {teen.dateJoined ? formatDate(teen.dateJoined) : "N/A"}
+          </p>
+          <p className="text-gray-700 mb-1">
+            <strong>Guardian Name:</strong> {teen.guardianName || "N/A"}
+          </p>
+          <p className="text-gray-700 mb-1">
+            <strong>Guardian Phone:</strong> {teen.guardianPhone || "N/A"}
+          </p>
+        </div>
+      </div>
+
       <div className="flex gap-4 justify-end">
-        {/* <EditLieutenantModal lieutenant={teen} /> */}
-        {/* <button onClick={() => handleDelete(teen.id)} className="bg-red-600 hover:bg-red-700 text-white px-5 py-2 rounded-lg font-semibold shadow">
+        <EditLieutenantModal lieutenant={teen} onSuccess={fetchTeen} />
+        <button onClick={() => handleDelete(teen.id)} className="bg-red-600 hover:bg-red-700 text-white px-5 py-2 rounded-lg font-semibold shadow">
           Delete
-        </button> */}
+        </button>
       </div>
     </div>
   );

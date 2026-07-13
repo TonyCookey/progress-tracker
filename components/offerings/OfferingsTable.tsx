@@ -4,6 +4,7 @@ import { EyeIcon, ArrowPathIcon } from "@heroicons/react/24/outline";
 import Select from "react-select";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { formatDate } from "@/lib/formatDate";
 
 export default function OfferingsTable() {
@@ -11,6 +12,7 @@ export default function OfferingsTable() {
   const { data: session } = useSession();
   const user = session?.user;
   const isSuperAdmin = user?.role === "SUPERADMIN";
+  const canEditOffering = user?.role === "SUPERADMIN" || user?.role === "GENERAL";
   const [offerings, setOfferings] = useState([]);
   const [page, setPage] = useState(1);
   const [total, setTotal] = useState(0);
@@ -44,6 +46,17 @@ export default function OfferingsTable() {
 
   const handleView = (id: string) => {
     router.push(`/dashboard/offerings/${id}`);
+  };
+
+  const handleDelete = async (id: string) => {
+    if (!confirm("Are you sure you want to delete this offering?")) return;
+    const res = await fetch(`/api/offerings/${id}`, { method: "DELETE" });
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}));
+      alert(data.error || "Failed to delete offering");
+      return;
+    }
+    fetchData(page, search, baseId);
   };
 
   const totalPages = Math.ceil(total / limit);
@@ -97,6 +110,8 @@ export default function OfferingsTable() {
                 <th className="text-left px-4 py-3 font-semibold text-gray-700">Amount</th>
                 <th className="text-left px-4 py-3 font-semibold text-gray-700">Date</th>
                 <th className="text-left px-4 py-3 font-semibold text-gray-700">Base</th>
+                <th className="text-left px-4 py-3 font-semibold text-gray-700">Type</th>
+                {canEditOffering && <th className="text-left px-4 py-3 font-semibold text-gray-700">Actions</th>}
               </tr>
             </thead>
             <tbody>
@@ -106,6 +121,17 @@ export default function OfferingsTable() {
                   <td className="px-4 py-2 font-bold text-green-700">₦{Number(off.amount).toLocaleString()}</td>
                   <td className="px-4 py-2">{formatDate(off.date)}</td>
                   <td className="px-4 py-2">{off.base?.name ?? "-"}</td>
+                  <td className="px-4 py-2">{off.type === "Online" ? "Transfer" : off.type ?? "-"}</td>
+                  {canEditOffering && (
+                    <td className="px-4 py-2 space-x-2">
+                      <Link href={`/dashboard/offerings/${off.id}/edit`} className="text-blue-600 hover:underline">
+                        Edit
+                      </Link>
+                      <button onClick={() => handleDelete(off.id)} className="text-red-600 hover:underline">
+                        Delete
+                      </button>
+                    </td>
+                  )}
                 </tr>
               ))}
             </tbody>
@@ -126,7 +152,20 @@ export default function OfferingsTable() {
                 <div>
                   <span className="font-semibold">Base:</span> {off.base?.name ?? "-"}
                 </div>
+                <div>
+                  <span className="font-semibold">Type:</span> {off.type === "Online" ? "Transfer" : off.type ?? "-"}
+                </div>
               </div>
+              {canEditOffering && (
+                <div className="flex gap-4 text-sm">
+                  <Link href={`/dashboard/offerings/${off.id}/edit`} className="text-blue-600 hover:underline">
+                    Edit
+                  </Link>
+                  <button onClick={() => handleDelete(off.id)} className="text-red-600 hover:underline">
+                    Delete
+                  </button>
+                </div>
+              )}
             </div>
           ))}
         </div>

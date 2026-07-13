@@ -13,6 +13,13 @@ type FormData = {
   baseId: string;
   groupId: string;
   squadIds: string[];
+  phone: string;
+  address: string;
+  school: string;
+  guardianName: string;
+  guardianPhone: string;
+  dateJoined: string;
+  status: string;
 };
 type Option = {
   id: string;
@@ -205,6 +212,45 @@ export default function CreateLieutenantForm({ onSuccess }: { onSuccess: () => v
               />
             )}
           />
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium mb-2">Phone</label>
+          <input {...register("phone")} className="w-full border px-3 py-2 rounded" />
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium mb-2">Address</label>
+          <input {...register("address")} className="w-full border px-3 py-2 rounded" />
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium mb-2">School</label>
+          <input {...register("school")} className="w-full border px-3 py-2 rounded" />
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium mb-2">Date Joined</label>
+          <input type="date" {...register("dateJoined")} className="w-full border px-3 py-2 rounded" />
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium mb-2">Guardian Name</label>
+          <input {...register("guardianName")} className="w-full border px-3 py-2 rounded" />
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium mb-2">Guardian Phone</label>
+          <input {...register("guardianPhone")} className="w-full border px-3 py-2 rounded" />
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium mb-2">Status</label>
+          <select {...register("status")} className="w-full border px-3 py-2 rounded" defaultValue="ACTIVE">
+            <option value="ACTIVE">Active</option>
+            <option value="INACTIVE">Inactive</option>
+            <option value="LEFT">Left</option>
+          </select>
         </div>
 
         <div className="md:col-span-2">

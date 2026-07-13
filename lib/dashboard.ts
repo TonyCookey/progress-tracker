@@ -15,20 +15,20 @@ export async function getDashboardCards() {
     baseSquadCounts,
     basePlatoonCounts,
   ] = await Promise.all([
-    prisma.teen.count(),
+    prisma.teen.count({ where: { deletedAt: null } }),
 
-    prisma.user.count({ where: { role: "GENERAL" } }),
-    prisma.user.count(),
-    prisma.user.count({ where: { role: "VOLUNTEER" } }),
+    prisma.user.count({ where: { role: "GENERAL", deletedAt: null } }),
+    prisma.user.count({ where: { deletedAt: null } }),
+    prisma.user.count({ where: { role: "VOLUNTEER", deletedAt: null } }),
 
-    prisma.activity.count(),
+    prisma.activity.count({ where: { deletedAt: null } }),
 
-    prisma.group.count({ where: { type: "SQUAD" } }),
-    prisma.group.count({ where: { type: "PLATOON" } }),
+    prisma.group.count({ where: { type: "SQUAD", deletedAt: null } }),
+    prisma.group.count({ where: { type: "PLATOON", deletedAt: null } }),
 
-    Promise.all(bases.map((base) => prisma.teen.count({ where: { baseId: base.id } }))),
-    Promise.all(bases.map((base) => prisma.group.count({ where: { type: "SQUAD", baseId: base.id } }))),
-    Promise.all(bases.map((base) => prisma.group.count({ where: { type: "PLATOON", baseId: base.id } }))),
+    Promise.all(bases.map((base) => prisma.teen.count({ where: { baseId: base.id, deletedAt: null } }))),
+    Promise.all(bases.map((base) => prisma.group.count({ where: { type: "SQUAD", baseId: base.id, deletedAt: null } }))),
+    Promise.all(bases.map((base) => prisma.group.count({ where: { type: "PLATOON", baseId: base.id, deletedAt: null } }))),
   ]);
 
   const baseCards = bases.flatMap((base, i) => [
