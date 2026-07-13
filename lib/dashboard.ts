@@ -1,62 +1,53 @@
 import { prisma } from "@/lib/prisma";
 
 export async function getDashboardCards() {
-  const alphaBase = await prisma.base.findFirst({ where: { name: "Alpha" } });
-  const bravoBase = await prisma.base.findFirst({ where: { name: "Bravo" } });
+  const bases = await prisma.base.findMany({ orderBy: { name: "asc" } });
 
-  if (!alphaBase || !bravoBase) {
-    throw new Error("Bases not found");
-  }
   const [
     teensCount,
-    alphaBaseTeensCount,
-    bravoBaseTeensCount,
     generalsCount,
+    leadersCount,
     volunteersCount,
     activitiesCount,
     squadsCount,
-    alphaBaseSquadsCount,
-    bravoBaseSquadsCount,
     platoonsCount,
-    alphaBasePlatoonsCount,
-    bravoBasePlatoonsCount,
+    baseTeenCounts,
+    baseSquadCounts,
+    basePlatoonCounts,
   ] = await Promise.all([
     prisma.teen.count(),
-    prisma.teen.count({ where: { baseId: alphaBase.id } }),
-    prisma.teen.count({ where: { baseId: bravoBase.id } }),
 
+    prisma.user.count({ where: { role: "GENERAL" } }),
     prisma.user.count(),
     prisma.user.count({ where: { role: "VOLUNTEER" } }),
 
     prisma.activity.count(),
-    prisma.activity.count({ where: { baseId: alphaBase.id } }),
-    prisma.activity.count({ where: { baseId: bravoBase.id } }),
 
     prisma.group.count({ where: { type: "SQUAD" } }),
-    prisma.group.count({ where: { type: "SQUAD", baseId: alphaBase.id } }),
-    prisma.group.count({ where: { type: "SQUAD", baseId: bravoBase.id } }),
-
     prisma.group.count({ where: { type: "PLATOON" } }),
-    prisma.group.count({ where: { type: "PLATOON", base: alphaBase } }),
-    prisma.group.count({ where: { type: "PLATOON", base: bravoBase } }),
+
+    Promise.all(bases.map((base) => prisma.teen.count({ where: { baseId: base.id } }))),
+    Promise.all(bases.map((base) => prisma.group.count({ where: { type: "SQUAD", baseId: base.id } }))),
+    Promise.all(bases.map((base) => prisma.group.count({ where: { type: "PLATOON", baseId: base.id } }))),
+  ]);
+
+  const baseCards = bases.flatMap((base, i) => [
+    { label: `Total ${base.name} Base Lieutenants`, value: baseTeenCounts[i] },
+    { label: `Total ${base.name} Squads`, value: baseSquadCounts[i] },
+    { label: `Total ${base.name} Platoons`, value: basePlatoonCounts[i] },
   ]);
 
   return [
     { label: "Total Lieutenants", value: teensCount },
-    { label: "Total Alpha Base Lieutenants", value: alphaBaseTeensCount },
-    { label: "Total Bravo Base Lieutenants", value: bravoBaseTeensCount },
-
     { label: "Total Generals", value: generalsCount },
+    { label: "Total Leaders", value: leadersCount },
     { label: "Total Volunteers", value: volunteersCount },
 
     { label: "Total Activities", value: activitiesCount },
 
     { label: "Total Squads", value: squadsCount },
-    { label: "Total Alpha Squads", value: alphaBaseSquadsCount },
-    { label: "Total Bravo Squads", value: bravoBaseSquadsCount },
-
     { label: "Total Platoons", value: platoonsCount },
-    { label: "Total Alpha Platoons", value: alphaBasePlatoonsCount },
-    { label: "Total Bravo Platoons", value: bravoBasePlatoonsCount },
+
+    ...baseCards,
   ];
 }

@@ -236,24 +236,12 @@ same `lib/` functions, so there's one source of truth for each query.
 
 ## 9. Known bugs & gotchas (verified — do not reintroduce)
 
-- **Dashboard counts** (`app/api/dashboard/route.ts`):
-  - "Total Generals" uses `prisma.user.count()` = ALL users, not `role = GENERAL`.
-  - Alpha/Bravo **platoon** counts use `base: alphaBase` (whole object) instead of `baseId: alphaBase.id`.
-  - Base names are hardcoded `"Alpha"`/`"Bravo"`; a rename 404s the entire dashboard.
-- **Birthdays** (`lib/getUpcomingBirthdays.ts`): uses `EXTRACT(DOY)` + hardcoded `365`; drifts on leap
-  years and mishandles year-end wrap. `daysToBirthday` extracts the day component of an interval
-  (meaningless). Rewrite with proper next-birthday date math.
-- **Cross-base records**: both forms already convert the `"cross-base"` sentinel client-side to
-  `{ baseId: null, isCrossBase: true }`. **Activities POST persists `isCrossBase` correctly.**
-  **Only Offerings POST is broken** — it doesn't destructure/persist `isCrossBase`, so cross-base
-  offerings save with `isCrossBase = false`. Fixed in S1.
 - **Prisma singleton**: `app/api/lieutenants/[id]/route.ts` **and** `app/api/auth/register/route.ts`
   each do `new PrismaClient()` — WRONG. Always `import { prisma } from "@/lib/prisma"`.
 - **Server-component self-fetch (breaks under auth)**: `app/dashboard/page.tsx`,
   `.../birthdays/page.tsx`, `.../platoons/page.tsx`, `.../squads/page.tsx` are server components that
   `fetch` their own `/api/*` via `NEXT_PUBLIC_BASE_URL` without forwarding cookies. Prefer calling the
   data logic directly. Must be fixed alongside API auth (S0) or these pages 401.
-- **`User` has no `gender`** but UI (generals detail page) expects it. (Added in S1.)
 - **Offering `type` values** are the free strings `"Cash"` and `"Online"` ("Online" = online/transfer).
   Don't rename stored values without a backfill.
 - **Groups can't be edited/deleted** (`/api/groups/[id]` is GET-only).

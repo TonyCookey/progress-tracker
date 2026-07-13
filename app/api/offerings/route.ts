@@ -50,9 +50,13 @@ export async function POST(req: Request) {
   try {
     const session = await requireSession();
     const body = parseOrThrow(createOfferingSchema, await req.json());
-    assertBaseAccess(session, body.baseId);
 
-    const { service, amount, date, notes, type, baseId } = body;
+    const isCrossBase = body.baseId === "cross-base" ? true : (body.isCrossBase ?? false);
+    const baseId = isCrossBase ? null : body.baseId;
+
+    assertBaseAccess(session, isCrossBase ? null : baseId);
+
+    const { service, amount, date, notes, type } = body;
 
     const offering = await prisma.offering.create({
       data: {
@@ -62,6 +66,7 @@ export async function POST(req: Request) {
         notes,
         type,
         baseId,
+        isCrossBase,
       },
     });
 
