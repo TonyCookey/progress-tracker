@@ -177,31 +177,60 @@ R2_BUCKET=
 
 ---
 
-## 8. Auth & security model (IMPORTANT — currently under-enforced)
+## 8. Auth & security model
 
 - Login is **NextAuth Credentials** (email + bcrypt password), **JWT sessions**.
 - The session is augmented (`types/next-auth.d.ts`) with `id`, `username`, `role`, `baseId`.
-- `authOptions` is currently **defined inline** inside `app/api/auth/[...nextauth]/route.ts` and is
-  **not exported/shared**. To do server-side auth checks you must first **extract `authOptions`
-  into `lib/auth.ts`** and export it, then use `getServerSession(authOptions)`.
+- `authOptions` lives in **`lib/auth.ts`** (exported) and is imported by
+  `app/api/auth/[...nextauth]/route.ts`. Any server code can call `getServerSession(authOptions)`.
 
-### ⚠️ Current security gaps (treat as high priority)
-1. **`middleware.ts` only protects `/dashboard/*` pages — NOT `/api/*`.** Every API route is
-   publicly callable with no session and no role check.
-2. **No role enforcement anywhere.** The four `UserRole`s are decorative on the server. (The sidebar
-   `links` array does client-side `role` filtering, but that's cosmetic — not real enforcement.)
-3. **No input validation.** `zod` is installed but not used in route handlers; request bodies are trusted.
-4. **Registration trusts `role` from the request body** (`app/api/auth/register/route.ts`) — anyone
-   can self-register as SUPERADMIN. Privilege escalation. Fixed in S0.
-5. **Server components self-fetch internal APIs without forwarding the auth cookie** — enforcing auth
-   on those GETs will 401 the pages (see §9). Must be handled together with API auth.
+### `lib/auth.ts` helpers (implemented in S0)
+- `getSession()` → `getServerSession(authOptions)`.
+- `requireSession()` → returns the session or throws `ApiError(401)`.
+- `requireRole(roles: UserRole[])` → throws `ApiError(401)` if unauthenticated, `ApiError(403)` if
+  the role isn't in `roles`.
+- `assertBaseAccess(session, baseId)` → non-`SUPERADMIN` users may only mutate data whose `baseId`
+  equals their own `session.user.baseId`. A `null`/missing `baseId` (cross-base data) is
+  **SUPERADMIN-only** — a base-scoped leader cannot create/edit cross-base records.
+- `ApiError` + `handleApiError(e)` → routes `try { ... } catch (e) { return handleApiError(e); }`
+  and get a consistent `{ error, fieldErrors? }` JSON body with the right status.
+
+### Enforcement applied to every route under `app/api/*`
+- All `GET`s require a valid session (`requireSession()`).
+- All mutations (`POST`/`PUT`/`PATCH`/`DELETE`) require a session, plus `assertBaseAccess` where the
+  body/record carries a `baseId` (teens, groups, activities, offerings, bulk-upload, image save).
+- `SUPERADMIN`-only: creating a base (`POST /api/bases`), deleting a general
+  (`DELETE /api/generals/[id]`), deleting a teen (`DELETE /api/lieutenants/[id]`), and registering a
+  new leader (`POST /api/auth/register`).
+- `generals/[id]/change-password`: requires session AND (`session.user.id === params.id` OR
+  `SUPERADMIN`).
+- Request bodies are validated with `zod` schemas in `lib/validation/*.ts` (offerings, teens,
+  activities, groups, register) via `parseOrThrow()`, returning `400` with `fieldErrors` on failure.
+
+### Registration hardening (decision)
+Self-registration is now **SUPERADMIN-only** — `POST /api/auth/register` calls
+`requireRole(["SUPERADMIN"])` before touching the body, and `/auth/register` (the page) is gated by
+a `RequireRole` client component plus added to `middleware.ts`'s matcher (so it 302s to login before
+the form ever renders for an unauthenticated visitor). This was chosen over an env signup code
+because the seed scripts already provision `SUPERADMIN` accounts (`npm run seed:admins`) — there is
+always an existing admin to create subsequent leaders. The client still submits `role` in the body,
+but it's only trusted now because the caller is already an authenticated `SUPERADMIN`; the value is
+still validated against the `UserRole` enum via zod.
+
+### Self-fetching server components (fixed)
+`app/dashboard/page.tsx`, `.../birthdays/page.tsx`, `.../platoons/page.tsx`, `.../squads/page.tsx`
+no longer `fetch()` their own `/api/*` routes over HTTP (which doesn't forward the auth cookie and
+would 401 once GETs require a session). They call shared `lib/` functions directly instead:
+`lib/dashboard.ts` (`getDashboardCards`), `lib/bases.ts` (`getBases`), `lib/users.ts` (`getUsers`),
+`lib/groups.ts` (`getGroups`), `lib/getUpcomingBirthdays.ts`. The corresponding API routes call the
+same `lib/` functions, so there's one source of truth for each query.
 
 ### Conventions to adopt (when you touch auth)
-- Extract `authOptions` → `lib/auth.ts`.
-- Add a helper like `requireSession()` / `requireRole(roles[])` in `lib/auth.ts` and call it at the
-  top of every mutating API route.
-- Scope data by `session.user.baseId` where appropriate (a Bravo leader shouldn't edit Alpha data
-  unless SUPERADMIN).
+- Thin pattern at the top of a handler: `const session = await requireRole([...]);` (or
+  `requireSession()`), wrapped in `try { ... } catch (e) { return handleApiError(e); }`.
+- Scope data by `session.user.baseId` via `assertBaseAccess` where appropriate.
+- New self-fetching server components should call a `lib/` function directly, not `fetch()` their
+  own API route.
 
 ---
 

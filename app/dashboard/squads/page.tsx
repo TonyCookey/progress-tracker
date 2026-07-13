@@ -1,19 +1,14 @@
 import RequireAuth from "@/components/auth/RequireAuth";
 import CreateGroupModal from "@/components/groups/CreateGroupModal";
 import Link from "next/link";
+import { getGroups } from "@/lib/groups";
+import { getBases } from "@/lib/bases";
+import { getUsers } from "@/lib/users";
+
+export const dynamic = "force-dynamic";
 
 export default async function SquadsPage() {
-  const [squadsRes, basesRes, leadersRes] = await Promise.all([
-    fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/api/groups?type=SQUAD`, { cache: "no-store" }),
-    fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/api/bases`, { cache: "no-store" }),
-    fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/api/users`, { cache: "no-store" }),
-  ]);
-  if (!squadsRes.ok || !basesRes.ok || !leadersRes.ok) {
-    throw new Error("Failed to fetch data");
-  }
-  const squads = await squadsRes.json();
-  const bases = await basesRes.json();
-  const leaders = await leadersRes.json();
+  const [squads, bases, leaders] = await Promise.all([getGroups("SQUAD"), getBases(), getUsers()]);
 
   return (
     <RequireAuth>

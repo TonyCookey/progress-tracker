@@ -1,25 +1,28 @@
 // app/api/bases/route.ts
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { getBases } from "@/lib/bases";
+import { requireSession, requireRole, handleApiError } from "@/lib/auth";
 
 export async function GET() {
   try {
-    const bases = await prisma.base.findMany({});
+    await requireSession();
+    const bases = await getBases();
 
     return NextResponse.json(bases);
   } catch (error) {
-    console.error("[BASES_GET_ERROR]", error);
-    return NextResponse.json({ error: "Failed to fetch bases" }, { status: 500 });
+    return handleApiError(error);
   }
 }
 
 export async function POST(req: Request) {
   try {
+    await requireRole(["SUPERADMIN"]);
+
     const data = await req.json();
     const base = await prisma.base.create({ data });
     return NextResponse.json(base);
   } catch (error) {
-    console.error("[BASES_POST_ERROR]", error);
-    return NextResponse.json({ error: "Failed to create base" }, { status: 500 });
+    return handleApiError(error);
   }
 }

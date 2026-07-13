@@ -1,9 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import bcrypt from "bcrypt";
+import { requireSession, ApiError, handleApiError } from "@/lib/auth";
 
 export async function POST(req: NextRequest, { params }: { params: { id: string } }) {
   try {
+    const session = await requireSession();
+    if (session.user.id !== params.id && session.user.role !== "SUPERADMIN") {
+      throw new ApiError(403, "Forbidden");
+    }
+
     const { oldPassword, newPassword } = await req.json();
     if (!oldPassword || !newPassword) {
       return NextResponse.json({ message: "Missing fields" }, { status: 400 });
@@ -19,8 +25,7 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
     const hashed = await bcrypt.hash(newPassword, 10);
     await prisma.user.update({ where: { id: params.id }, data: { password: hashed } });
     return NextResponse.json({ success: true });
-  } catch (err) {
-    console.error("[CHANGE_PASSWORD_ERROR]", err);
-    return NextResponse.json({ message: "Failed to update password" }, { status: 500 });
+  } catch (error) {
+    return handleApiError(error);
   }
 }

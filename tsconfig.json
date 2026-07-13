@@ -29,6 +29,7 @@
       }
     ],
     "ignoreDeprecations": "5.0",
+    "moduleResolution": "node"
     // "moduleResolution": "node"
   },
   "include": [

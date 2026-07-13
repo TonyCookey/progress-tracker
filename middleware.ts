@@ -21,5 +21,6 @@ export const config = {
     "/squads/:path*", // squad management
     "/events/:path*", // tracking events
     "/reports/:path*", // analytics
+    "/auth/register", // leader registration (SUPERADMIN-only, enforced client + server side)
   ],
 };

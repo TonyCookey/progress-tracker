@@ -1,13 +1,20 @@
 import { prisma } from "@/lib/prisma";
 import { NextResponse } from "next/server";
+import { requireSession, handleApiError } from "@/lib/auth";
 
 export async function GET(req: Request, { params }: { params: { id: string } }) {
-  const group = await prisma.group.findUnique({
-    where: { id: params.id },
-    include: { teens: true, base: true, activities: true, leader: true, members: { include: { teen: true } } },
-  });
+  try {
+    await requireSession();
 
-  if (!group) return NextResponse.json("Group not found", { status: 404 });
+    const group = await prisma.group.findUnique({
+      where: { id: params.id },
+      include: { teens: true, base: true, activities: true, leader: true, members: { include: { teen: true } } },
+    });
 
-  return NextResponse.json(group);
+    if (!group) return NextResponse.json("Group not found", { status: 404 });
+
+    return NextResponse.json(group);
+  } catch (error) {
+    return handleApiError(error);
+  }
 }

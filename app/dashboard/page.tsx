@@ -1,20 +1,15 @@
 import RequireAuth from "@/components/auth/RequireAuth";
+import { getDashboardCards } from "@/lib/dashboard";
+
+export const dynamic = "force-dynamic";
+
 type DashboardCard = {
   label: string;
   value: number;
 };
+
 export default async function DashboardPage() {
-  const res = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/api/dashboard`, {
-    method: "GET",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    cache: "no-store",
-  });
-  const cards = await res.json();
-  if (!res.ok) {
-    console.error("[DASHBOARD_ERROR]", cards.error);
-  }
+  const cards = await getDashboardCards();
 
   return (
     <RequireAuth>
