@@ -2,14 +2,14 @@
 
 import { Dialog, Transition, TransitionChild, DialogPanel, DialogTitle } from "@headlessui/react";
 import { Fragment, useState } from "react";
-import EditLieutenantForm from "./EditLieutenantsForm";
+import EditGeneralForm from "./EditGeneralForm";
 
-export default function EditLieutenantModal({ lieutenant, onSuccess }: { lieutenant: any; onSuccess?: () => void }) {
+export default function EditGeneralModal({ general, onSuccess }: { general: any; onSuccess: () => void }) {
   const [isOpen, setIsOpen] = useState(false);
 
   return (
     <>
-      <button onClick={() => setIsOpen(true)} className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
+      <button onClick={() => setIsOpen(true)} className="bg-blue-600 hover:bg-blue-700 text-white px-5 py-2 rounded-lg font-semibold shadow">
         Edit
       </button>
 
@@ -30,12 +30,12 @@ export default function EditLieutenantModal({ lieutenant, onSuccess }: { lieuten
           <div className="fixed inset-0 overflow-y-auto">
             <div className="flex min-h-full items-center justify-center p-4">
               <DialogPanel className="w-full max-w-md transform rounded bg-white p-6 shadow-xl transition-all">
-                <DialogTitle className="text-lg font-medium text-gray-900">Edit Lieutenant</DialogTitle>
-                <EditLieutenantForm
-                  lieutenant={lieutenant}
+                <DialogTitle className="text-lg font-medium text-gray-900">Edit General</DialogTitle>
+                <EditGeneralForm
+                  general={general}
                   onSuccess={() => {
                     setIsOpen(false);
-                    onSuccess?.();
+                    onSuccess();
                   }}
                 />
               </DialogPanel>

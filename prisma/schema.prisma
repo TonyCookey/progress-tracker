@@ -24,6 +24,12 @@ enum GroupType {
   SQUAD
 }
 
+enum TeenStatus {
+  ACTIVE
+  INACTIVE
+  LEFT
+}
+
 model Base {
   id         String     @id @default(cuid())
   name       String
@@ -50,6 +56,7 @@ model User {
   teacherParticipation TeacherParticipation[]
   createdAt            DateTime               @default(now())
   updatedAt            DateTime               @updatedAt
+  deletedAt            DateTime?
 }
 
 model Teen {
@@ -67,6 +74,14 @@ model Teen {
   updatedAt             DateTime                @updatedAt
   groupId               String?
   imageKey              String?
+  deletedAt             DateTime?
+  phone                 String?
+  address               String?
+  school                String?
+  guardianName          String?
+  guardianPhone         String?
+  dateJoined            DateTime?
+  status                TeenStatus              @default(ACTIVE)
 
   @@index([baseId])
   @@index([groupId])
@@ -87,6 +102,7 @@ model Group {
   activities  Activity[]
   createdAt   DateTime       @default(now())
   updatedAt   DateTime       @updatedAt
+  deletedAt   DateTime?
 }
 
 model GroupMember {
@@ -128,6 +144,7 @@ model Activity {
   teacherParticipation TeacherParticipation[]
   createdAt            DateTime                @default(now())
   updatedAt            DateTime                @updatedAt
+  deletedAt            DateTime?
 
   @@index([baseId])
   @@index([date])
@@ -178,6 +195,7 @@ model Offering {
   type        String?
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
+  deletedAt   DateTime?
 
   @@index([date])
   @@index([baseId])

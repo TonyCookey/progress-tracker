@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { requireSession, assertBaseAccess, handleApiError } from "@/lib/auth";
 import { createTeenSchema } from "@/lib/validation/teen";
 import { parseOrThrow } from "@/lib/validation/parse";
+import { notDeleted } from "@/lib/softDelete";
 
 export async function POST(req: Request) {
   try {
@@ -21,6 +22,13 @@ export async function POST(req: Request) {
         rank,
         dateOfBirth,
         groupId,
+        phone: body.phone,
+        address: body.address,
+        school: body.school,
+        guardianName: body.guardianName,
+        guardianPhone: body.guardianPhone,
+        dateJoined: body.dateJoined ?? new Date(),
+        status: body.status,
         squadMemberships: {
           create: squadIds.map((id: string) => ({
             group: { connect: { id } },
@@ -44,34 +52,29 @@ export async function GET(req: Request) {
     const limit = parseInt(searchParams.get("limit") ?? "10");
     const search = searchParams.get("search")?.toLowerCase() ?? "";
     const baseId = searchParams.get("baseId") ?? "";
+    const includeArchived = searchParams.get("includeArchived") === "true";
 
     const skip = (page - 1) * limit;
 
+    const where = {
+      rank: "LIEUTENANT" as const,
+      baseId: baseId ? baseId : undefined,
+      name: {
+        contains: search,
+        mode: "insensitive" as const,
+      },
+      ...notDeleted(includeArchived),
+    };
+
     const [data, total] = await Promise.all([
       prisma.teen.findMany({
-        where: {
-          rank: "LIEUTENANT",
-          baseId: baseId ? baseId : undefined,
-          name: {
-            contains: search,
-            mode: "insensitive",
-          },
-        },
+        where,
         include: { base: true },
         skip,
         take: limit,
         orderBy: { createdAt: "desc" },
       }),
-      prisma.teen.count({
-        where: {
-          rank: "LIEUTENANT",
-          baseId: baseId ? baseId : undefined,
-          name: {
-            contains: search,
-            mode: "insensitive",
-          },
-        },
-      }),
+      prisma.teen.count({ where }),
     ]);
 
     return NextResponse.json({ data, total });

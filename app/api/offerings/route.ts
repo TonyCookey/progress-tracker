@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { requireSession, assertBaseAccess, handleApiError } from "@/lib/auth";
 import { createOfferingSchema } from "@/lib/validation/offering";
 import { parseOrThrow } from "@/lib/validation/parse";
+import { notDeleted } from "@/lib/softDelete";
 
 export async function GET(req: Request) {
   try {
@@ -13,32 +14,28 @@ export async function GET(req: Request) {
     const limit = parseInt(searchParams.get("limit") ?? "10");
     const search = searchParams.get("search")?.toLowerCase() ?? "";
     const baseId = searchParams.get("baseId") ?? "";
+    const includeArchived = searchParams.get("includeArchived") === "true";
 
     const skip = (page - 1) * limit;
 
+    const where = {
+      service: {
+        contains: search,
+        mode: "insensitive" as const,
+      },
+      baseId: baseId ? baseId : undefined,
+      ...notDeleted(includeArchived),
+    };
+
     const [offerings, total] = await Promise.all([
       prisma.offering.findMany({
-        where: {
-          service: {
-            contains: search,
-            mode: "insensitive",
-          },
-          baseId: baseId ? baseId : undefined,
-        },
+        where,
         include: { base: true },
         skip,
         take: limit,
         orderBy: { date: "desc" },
       }),
-      prisma.offering.count({
-        where: {
-          service: {
-            contains: search,
-            mode: "insensitive",
-          },
-          baseId: baseId ? baseId : undefined,
-        },
-      }),
+      prisma.offering.count({ where }),
     ]);
     return NextResponse.json({ offerings, total });
   } catch (error) {

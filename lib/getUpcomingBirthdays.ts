@@ -45,6 +45,7 @@ export async function getUpcomingBirthdays() {
     JOIN "Base" b ON t."baseId" = b.id
     WHERE
       t."dateOfBirth" IS NOT NULL
+      AND t."deletedAt" IS NULL
       AND (${nextTeenBirthday}::date - CURRENT_DATE) BETWEEN 0 AND 30
     ORDER BY "nextBirthday"
   `);
@@ -62,6 +63,7 @@ export async function getUpcomingBirthdays() {
     WHERE
       u."role" IN ('GENERAL', 'COLONEL', 'VOLUNTEER')
       AND u."dateOfBirth" IS NOT NULL
+      AND u."deletedAt" IS NULL
       AND (${nextGeneralBirthday}::date - CURRENT_DATE) BETWEEN 0 AND 30
     ORDER BY "nextBirthday"
   `);

@@ -2,40 +2,65 @@
 import LoadingSpinner from "@/components/common/LoadingSpinner";
 import { formatDate } from "@/lib/formatDate";
 import Link from "next/link";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import EditGroupModal from "@/components/groups/EditGroupModal";
 
 type Platoon = {
   id: string;
   name: string;
   description: string | null;
+  baseId?: string;
+  leaderId?: string;
   base: { id: string; name: string } | null;
   leader: { id: string; name: string; email: string } | null;
+  support?: { user: { id: string; name: string } }[] | null;
   activities: { id: string; title: string; date: string }[] | null;
   teens: { id: string; name: string; email: string }[] | null;
 };
 
 export default function PlatoonDetailsPage() {
   const { id } = useParams();
+  const router = useRouter();
   const [platoon, setPlatoon] = useState(null as Platoon | null);
 
-  useEffect(() => {
-    async function fetchPlatoon() {
-      const res = await fetch(`/api/groups/${id}`, { cache: "no-store" });
-      if (!res.ok) {
-        console.error("Failed to fetch platoon data");
-        return;
-      }
-      const data = await res.json();
-      if (!data) {
-        console.error("No data found");
-        return;
-      }
-
-      setPlatoon(data);
+  async function fetchPlatoon() {
+    const res = await fetch(`/api/groups/${id}`, { cache: "no-store" });
+    if (!res.ok) {
+      console.error("Failed to fetch platoon data");
+      return;
     }
+    const data = await res.json();
+    if (!data) {
+      console.error("No data found");
+      return;
+    }
+
+    setPlatoon({
+      ...data,
+      baseId: data.base?.id,
+      leaderId: data.leader?.id,
+      supportIds: data.support?.map((s: any) => s.user.id) ?? [],
+    });
+  }
+
+  useEffect(() => {
     fetchPlatoon();
   }, [id]);
+
+  const handleDelete = async () => {
+    if (!platoon) return;
+    if (!confirm("Are you sure you want to delete this platoon?")) return;
+
+    const res = await fetch(`/api/groups/${platoon.id}`, { method: "DELETE" });
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}));
+      alert(data.error || "Failed to delete platoon");
+      return;
+    }
+    alert("Platoon deleted successfully");
+    router.push("/dashboard/platoons");
+  };
 
   if (!platoon) return <LoadingSpinner />;
 
@@ -60,6 +85,12 @@ export default function PlatoonDetailsPage() {
               </div>
             </div>
           </Link>
+        </div>
+        <div className="flex gap-4 justify-end">
+          <EditGroupModal group={platoon} label="Platoon" onSuccess={fetchPlatoon} />
+          <button onClick={handleDelete} className="bg-red-600 hover:bg-red-700 text-white px-5 py-2 rounded-lg font-semibold shadow">
+            Delete
+          </button>
         </div>
       </div>
 

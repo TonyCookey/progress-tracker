@@ -1,40 +1,65 @@
 "use client";
 import LoadingSpinner from "@/components/common/LoadingSpinner";
 import Link from "next/link";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import EditGroupModal from "@/components/groups/EditGroupModal";
 
 type Squad = {
   id: string;
   name: string;
   description: string | null;
+  baseId?: string;
+  leaderId?: string;
   base: { id: string; name: string } | null;
   leader: { id: string; name: string } | null;
+  support?: { user: { id: string; name: string } }[] | null;
   activities: { id: string; title: string; date: string }[] | null;
   members: { id: string; teen: { id: string; name: string } }[] | null;
 };
 
 export default function SquadDetailsPage() {
   const { id } = useParams();
+  const router = useRouter();
   const [squad, setSquad] = useState(null as Squad | null);
 
-  useEffect(() => {
-    async function fetchSquad() {
-      const res = await fetch(`/api/groups/${id}`, { cache: "no-store" });
-      if (!res.ok) {
-        console.error("Failed to fetch squad data");
-        return;
-      }
-      const data = await res.json();
-      if (!data) {
-        console.error("No data found");
-        return;
-      }
-
-      setSquad(data);
+  async function fetchSquad() {
+    const res = await fetch(`/api/groups/${id}`, { cache: "no-store" });
+    if (!res.ok) {
+      console.error("Failed to fetch squad data");
+      return;
     }
+    const data = await res.json();
+    if (!data) {
+      console.error("No data found");
+      return;
+    }
+
+    setSquad({
+      ...data,
+      baseId: data.base?.id,
+      leaderId: data.leader?.id,
+      supportIds: data.support?.map((s: any) => s.user.id) ?? [],
+    });
+  }
+
+  useEffect(() => {
     fetchSquad();
   }, [id]);
+
+  const handleDelete = async () => {
+    if (!squad) return;
+    if (!confirm("Are you sure you want to delete this squad?")) return;
+
+    const res = await fetch(`/api/groups/${squad.id}`, { method: "DELETE" });
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}));
+      alert(data.error || "Failed to delete squad");
+      return;
+    }
+    alert("Squad deleted successfully");
+    router.push("/dashboard/squads");
+  };
 
   if (!squad) return <LoadingSpinner />;
 
@@ -59,6 +84,12 @@ export default function SquadDetailsPage() {
               </div>
             </div>
           </Link>
+        </div>
+        <div className="flex gap-4 justify-end">
+          <EditGroupModal group={squad} label="Squad" onSuccess={fetchSquad} />
+          <button onClick={handleDelete} className="bg-red-600 hover:bg-red-700 text-white px-5 py-2 rounded-lg font-semibold shadow">
+            Delete
+          </button>
         </div>
       </div>
 

@@ -4,15 +4,23 @@ import { useForm, Controller } from "react-hook-form";
 import { useState, useEffect } from "react";
 import Select from "react-select";
 import CreateImageField from "../input/CreateImageField";
+import { useSyncSelectValue } from "@/lib/hooks/useSyncSelectValue";
 
 type FormData = {
   name: string;
   gender: string;
   dateOfBirth: string;
   baseId: string;
-  groupId: string;
+  platoonId: string;
   squadIds: string[];
   imageUrl?: string;
+  phone: string;
+  address: string;
+  school: string;
+  guardianName: string;
+  guardianPhone: string;
+  dateJoined: string;
+  status: string;
 };
 
 type Base = {
@@ -24,16 +32,27 @@ type SquadOption = {
   label: string;
 };
 
-export default function EditLieutenantForm({ lieutenant, onSuccess }: { lieutenant: FormData & { id: string; imageUrl?: string }; onSuccess: () => void }) {
+// The incoming teen record still uses the Prisma field name `groupId` for its
+// platoon assignment; the form field is `platoonId` to match updateTeenSchema.
+type Lieutenant = Omit<FormData, "platoonId"> & { id: string; imageUrl?: string; groupId?: string };
+
+export default function EditLieutenantForm({ lieutenant, onSuccess }: { lieutenant: Lieutenant; onSuccess: () => void }) {
   const { register, handleSubmit, reset, control, setValue } = useForm<FormData>({
     defaultValues: {
       name: lieutenant.name || "",
       gender: lieutenant.gender || "Male",
       dateOfBirth: lieutenant.dateOfBirth ? new Date(lieutenant.dateOfBirth).toISOString().slice(0, 10) : "",
       baseId: lieutenant.baseId || "",
-      groupId: lieutenant.groupId || "",
+      platoonId: lieutenant.groupId || "",
       squadIds: lieutenant.squadIds || [],
       imageUrl: lieutenant.imageUrl || "",
+      phone: lieutenant.phone || "",
+      address: lieutenant.address || "",
+      school: lieutenant.school || "",
+      guardianName: lieutenant.guardianName || "",
+      guardianPhone: lieutenant.guardianPhone || "",
+      dateJoined: lieutenant.dateJoined ? new Date(lieutenant.dateJoined).toISOString().slice(0, 10) : "",
+      status: lieutenant.status || "ACTIVE",
     },
   });
   const [loading, setLoading] = useState(false);
@@ -48,8 +67,15 @@ export default function EditLieutenantForm({ lieutenant, onSuccess }: { lieutena
     setValue("gender", lieutenant.gender || "Male");
     setValue("dateOfBirth", lieutenant.dateOfBirth ? new Date(lieutenant.dateOfBirth).toISOString().slice(0, 10) : "");
     setValue("baseId", lieutenant.baseId || "");
-    setValue("groupId", lieutenant.groupId || "");
+    setValue("platoonId", lieutenant.groupId || "");
     setValue("squadIds", lieutenant.squadIds || []);
+    setValue("phone", lieutenant.phone || "");
+    setValue("address", lieutenant.address || "");
+    setValue("school", lieutenant.school || "");
+    setValue("guardianName", lieutenant.guardianName || "");
+    setValue("guardianPhone", lieutenant.guardianPhone || "");
+    setValue("dateJoined", lieutenant.dateJoined ? new Date(lieutenant.dateJoined).toISOString().slice(0, 10) : "");
+    setValue("status", lieutenant.status || "ACTIVE");
     setPreviewUrl(lieutenant.imageUrl || "");
   }, [lieutenant]);
 
@@ -74,6 +100,9 @@ export default function EditLieutenantForm({ lieutenant, onSuccess }: { lieutena
     fetchSquads();
     fetchPlatoons();
   }, []);
+
+  useSyncSelectValue(bases, setValue, "baseId", lieutenant.baseId || "");
+  useSyncSelectValue(platoons, setValue, "platoonId", lieutenant.groupId || "");
 
   const uploadLieutenantImage = async (imageFile: File, lieutenantId: string) => {
     try {
@@ -172,7 +201,7 @@ export default function EditLieutenantForm({ lieutenant, onSuccess }: { lieutena
 
         <div>
           <label className="block text-sm font-medium mb-2">Base</label>
-          <select {...register("baseId", { required: true })} className="w-full border px-3 py-2 rounded" defaultValue={lieutenant.baseId}>
+          <select {...register("baseId", { required: true })} className="w-full border px-3 py-2 rounded">
             <option value="">Select a base</option>
             {bases.map((base) => (
               <option key={base.id} value={base.id}>
@@ -184,7 +213,7 @@ export default function EditLieutenantForm({ lieutenant, onSuccess }: { lieutena
 
         <div>
           <label className="block text-sm font-medium mb-2">Platoon</label>
-          <select {...register("groupId", { required: true })} className="w-full border px-3 py-2 rounded">
+          <select {...register("platoonId", { required: true })} className="w-full border px-3 py-2 rounded">
             <option value="">Select a Platoon</option>
             {platoons.map((platoon) => (
               <option key={platoon.id} value={platoon.id}>
@@ -212,6 +241,45 @@ export default function EditLieutenantForm({ lieutenant, onSuccess }: { lieutena
               />
             )}
           />
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium mb-2">Phone</label>
+          <input {...register("phone")} className="w-full border px-3 py-2 rounded" />
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium mb-2">Address</label>
+          <input {...register("address")} className="w-full border px-3 py-2 rounded" />
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium mb-2">School</label>
+          <input {...register("school")} className="w-full border px-3 py-2 rounded" />
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium mb-2">Date Joined</label>
+          <input type="date" {...register("dateJoined")} className="w-full border px-3 py-2 rounded" />
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium mb-2">Guardian Name</label>
+          <input {...register("guardianName")} className="w-full border px-3 py-2 rounded" />
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium mb-2">Guardian Phone</label>
+          <input {...register("guardianPhone")} className="w-full border px-3 py-2 rounded" />
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium mb-2">Status</label>
+          <select {...register("status")} className="w-full border px-3 py-2 rounded">
+            <option value="ACTIVE">Active</option>
+            <option value="INACTIVE">Inactive</option>
+            <option value="LEFT">Left</option>
+          </select>
         </div>
 
         <div className="md:col-span-2">

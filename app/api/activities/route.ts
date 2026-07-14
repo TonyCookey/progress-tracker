@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { requireSession, assertBaseAccess, handleApiError } from "@/lib/auth";
 import { createActivitySchema } from "@/lib/validation/activity";
 import { parseOrThrow } from "@/lib/validation/parse";
+import { notDeleted } from "@/lib/softDelete";
 
 export async function POST(req: NextRequest) {
   try {
@@ -54,9 +55,10 @@ export async function GET(req: NextRequest) {
 
     const { searchParams } = new URL(req.url);
     const baseId = searchParams.get("baseId");
+    const includeArchived = searchParams.get("includeArchived") === "true";
 
     const activities = await prisma.activity.findMany({
-      where: baseId ? { baseId } : {},
+      where: { ...(baseId ? { baseId } : {}), ...notDeleted(includeArchived) },
       include: {
         base: true,
       },

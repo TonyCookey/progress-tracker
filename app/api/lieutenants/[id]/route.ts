@@ -3,17 +3,22 @@ import { prisma } from "@/lib/prisma";
 import { requireSession, requireRole, assertBaseAccess, handleApiError } from "@/lib/auth";
 import { updateTeenSchema } from "@/lib/validation/teen";
 import { parseOrThrow } from "@/lib/validation/parse";
+import { notDeleted } from "@/lib/softDelete";
 
 export async function GET(req: Request, { params }: { params: { id: string } }) {
   try {
     await requireSession();
+    const { searchParams } = new URL(req.url);
+    const includeArchived = searchParams.get("includeArchived") === "true";
 
-    const teen = await prisma.teen.findUnique({
-      where: { id: params.id },
+    const teen = await prisma.teen.findFirst({
+      where: { id: params.id, ...notDeleted(includeArchived) },
       include: {
         base: true,
         platoon: true,
+        // A soft-deleted squad must not appear as one of this teen's active squads.
         squadMemberships: {
+          where: { group: notDeleted(includeArchived) },
           include: { group: true },
         },
       },
@@ -23,8 +28,13 @@ export async function GET(req: Request, { params }: { params: { id: string } }) 
       return NextResponse.json({ error: "Lieutenant not found" }, { status: 404 });
     }
 
+    // `platoon` is a to-one relation, so Prisma can't filter it out via `include`'s
+    // `where` — null it out manually if that platoon was soft-deleted.
+    const platoonDeleted = !includeArchived && !!teen.platoon?.deletedAt;
+
     return NextResponse.json({
       ...teen,
+      platoon: platoonDeleted ? null : teen.platoon,
       squads: teen.squadMemberships.map((membership) => membership.group),
     });
   } catch (error) {
@@ -55,6 +65,13 @@ export async function PUT(req: Request, { params }: { params: { id: string } }) 
         dateOfBirth: data.dateOfBirth,
         baseId: data.baseId,
         groupId: data.platoonId || null,
+        phone: data.phone,
+        address: data.address,
+        school: data.school,
+        guardianName: data.guardianName,
+        guardianPhone: data.guardianPhone,
+        dateJoined: data.dateJoined,
+        status: data.status,
         squadMemberships: {
           deleteMany: {}, // Clear previous
           create: (data.squadIds ?? []).map((groupId: string) => ({
@@ -74,8 +91,9 @@ export async function DELETE(_req: Request, { params }: { params: { id: string }
   try {
     await requireRole(["SUPERADMIN"]);
 
-    await prisma.teen.delete({
+    await prisma.teen.update({
       where: { id: params.id },
+      data: { deletedAt: new Date() },
     });
 
     return NextResponse.json({ message: "Lieutenant deleted" });

@@ -8,6 +8,7 @@ type FormValues = {
   description: string;
   baseId: string;
   leaderId: string;
+  supportIds: string[];
 };
 
 export default function CreateGroupForm({ bases, leaders, type, onClose }: { bases: any[]; leaders: any[]; type: string; onClose: () => void }) {
@@ -71,13 +72,7 @@ export default function CreateGroupForm({ bases, leaders, type, onClose }: { bas
       </div>
       <div>
         <label className="block text-sm font-medium">Supporting Members</label>
-        <select
-          // {...register("leaderId", { required: true })}
-          className="w-full border p-2 rounded"
-        >
-          <option value="" disabled selected>
-            Select Supporting Generals
-          </option>
+        <select multiple {...register("supportIds")} className="w-full border p-2 rounded">
           {leaders.map((user) => (
             <option key={user.id} value={user.id}>
               {user.name}

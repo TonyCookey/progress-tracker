@@ -9,3 +9,5 @@ export const createOfferingSchema = z.object({
   baseId: z.string().min(1).nullable().optional(),
   isCrossBase: z.boolean().optional(),
 });
+
+export const updateOfferingSchema = createOfferingSchema;
