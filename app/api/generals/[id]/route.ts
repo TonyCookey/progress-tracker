@@ -19,6 +19,11 @@ export async function GET(req: Request, { params }: { params: { id: string } }) 
         // supportingGroups is the GroupSupport join table, not Group itself —
         // must include the nested `group` to get name/id, not just the join row.
         supportingGroups: { where: { group: notDeleted(includeArchived) }, include: { group: true } },
+        teacherParticipation: {
+          where: { activity: notDeleted(includeArchived) },
+          include: { activity: true },
+          orderBy: { activity: { date: "asc" } },
+        },
       },
     });
 
@@ -26,7 +31,41 @@ export async function GET(req: Request, { params }: { params: { id: string } }) 
       return NextResponse.json({ error: "General not found" }, { status: 404 });
     }
 
-    return NextResponse.json(general);
+    const groups = [...general.leadingGroups, ...general.supportingGroups.map((s) => s.group)];
+    const platoonIds = groups.filter((g) => g.type === "PLATOON").map((g) => g.id);
+    const squadIds = groups.filter((g) => g.type === "SQUAD").map((g) => g.id);
+    const [platoonCounts, squadCounts] = await Promise.all([
+      platoonIds.length
+        ? prisma.teen.groupBy({ by: ["groupId"], where: { groupId: { in: platoonIds }, deletedAt: null }, _count: { id: true } })
+        : [],
+      squadIds.length
+        ? prisma.groupMember.groupBy({ by: ["groupId"], where: { groupId: { in: squadIds }, teen: { deletedAt: null } }, _count: { id: true } })
+        : [],
+    ]);
+    const teenCountByGroup = new Map([
+      ...platoonCounts.map((t): [string, number] => [t.groupId as string, t._count.id]),
+      ...squadCounts.map((t): [string, number] => [t.groupId, t._count.id]),
+    ]);
+
+    const teaching = general.teacherParticipation.map((p) => ({
+      activityId: p.activityId,
+      activityName: p.activity.name,
+      date: p.activity.date,
+      attended: p.attended,
+    }));
+    const taughtCount = teaching.filter((t) => t.attended).length;
+    const teachingRate = teaching.length ? Math.round((taughtCount / teaching.length) * 100) : null;
+
+    return NextResponse.json({
+      ...general,
+      leadingGroups: general.leadingGroups.map((g) => ({ ...g, teenCount: teenCountByGroup.get(g.id) ?? 0 })),
+      supportingGroups: general.supportingGroups.map((s) => ({
+        ...s,
+        group: { ...s.group, teenCount: teenCountByGroup.get(s.group.id) ?? 0 },
+      })),
+      teaching,
+      teachingRate,
+    });
   } catch (error) {
     return handleApiError(error);
   }

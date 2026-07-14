@@ -1,10 +1,14 @@
 "use client";
 import LoadingSpinner from "@/components/common/LoadingSpinner";
-import { formatDate } from "@/lib/formatDate";
+import { formatDate, formatDateUTC } from "@/lib/formatDate";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import EditGroupModal from "@/components/groups/EditGroupModal";
+import LineTrendChart from "@/components/charts/LineTrendChart";
+import StatTile from "@/components/charts/StatTile";
+
+type AttendanceTrendPoint = { activityId: string; activityName: string; date: string; rate: number | null };
 
 type Platoon = {
   id: string;
@@ -15,8 +19,9 @@ type Platoon = {
   base: { id: string; name: string } | null;
   leader: { id: string; name: string; email: string } | null;
   support?: { user: { id: string; name: string } }[] | null;
-  activities: { id: string; title: string; date: string }[] | null;
-  teens: { id: string; name: string; email: string }[] | null;
+  activities: { id: string; name: string; date: string }[] | null;
+  teens: { id: string; name: string }[] | null;
+  attendanceTrend: AttendanceTrendPoint[];
 };
 
 export default function PlatoonDetailsPage() {
@@ -92,6 +97,33 @@ export default function PlatoonDetailsPage() {
             Delete
           </button>
         </div>
+      </div>
+
+      {/* Attendance Trend */}
+      <div className="bg-white rounded-xl shadow-lg p-8 mb-8">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-xl font-semibold">Attendance Trend</h2>
+          <StatTile
+            label="Average Attendance"
+            value={
+              platoon.attendanceTrend.length
+                ? `${Math.round(
+                    platoon.attendanceTrend.reduce((sum, p) => sum + (p.rate ?? 0), 0) / platoon.attendanceTrend.length,
+                  )}%`
+                : "N/A"
+            }
+          />
+        </div>
+        {platoon.attendanceTrend.length ? (
+          <LineTrendChart
+            title="Platoon Attendance Over Time"
+            labels={platoon.attendanceTrend.map((p) => formatDateUTC(p.date, { month: "short", day: "numeric" }))}
+            series={[{ name: "Attendance Rate", data: platoon.attendanceTrend.map((p) => p.rate ?? 0) }]}
+            formatValue={(n) => `${n}%`}
+          />
+        ) : (
+          <p className="text-gray-500">No attendance data yet.</p>
+        )}
       </div>
 
       {/* Main Content: Teens & Activities Side by Side */}

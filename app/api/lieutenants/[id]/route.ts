@@ -21,6 +21,11 @@ export async function GET(req: Request, { params }: { params: { id: string } }) 
           where: { group: notDeleted(includeArchived) },
           include: { group: true },
         },
+        activityParticipation: {
+          where: { activity: notDeleted(includeArchived) },
+          include: { activity: true },
+          orderBy: { activity: { date: "asc" } },
+        },
       },
     });
 
@@ -32,10 +37,21 @@ export async function GET(req: Request, { params }: { params: { id: string } }) 
     // `where` — null it out manually if that platoon was soft-deleted.
     const platoonDeleted = !includeArchived && !!teen.platoon?.deletedAt;
 
+    const attendance = teen.activityParticipation.map((p) => ({
+      activityId: p.activityId,
+      activityName: p.activity.name,
+      date: p.activity.date,
+      attended: p.attended,
+    }));
+    const attendedCount = attendance.filter((a) => a.attended).length;
+    const attendanceRate = attendance.length ? Math.round((attendedCount / attendance.length) * 100) : null;
+
     return NextResponse.json({
       ...teen,
       platoon: platoonDeleted ? null : teen.platoon,
       squads: teen.squadMemberships.map((membership) => membership.group),
+      attendance,
+      attendanceRate,
     });
   } catch (error) {
     return handleApiError(error);
