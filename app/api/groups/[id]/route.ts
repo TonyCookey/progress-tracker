@@ -18,7 +18,7 @@ export async function GET(req: Request, { params }: { params: { id: string } }) 
         // members just because the parent group itself wasn't deleted.
         teens: { where: notDeleted(includeArchived) },
         base: true,
-        activities: true,
+        activities: { where: notDeleted(includeArchived), orderBy: { date: "asc" } },
         leader: true,
         members: { where: { teen: notDeleted(includeArchived) }, include: { teen: true } },
         support: { where: { user: notDeleted(includeArchived) }, include: { user: true } },
@@ -31,7 +31,28 @@ export async function GET(req: Request, { params }: { params: { id: string } }) 
     // `include`'s `where` — null it out manually if that general was soft-deleted.
     const leaderDeleted = !includeArchived && !!group.leader?.deletedAt;
 
-    return NextResponse.json({ ...group, leader: leaderDeleted ? null : group.leader });
+    // Attendance trend: for each of the group's activities, the % of the group's
+    // own teens (platoon roster or squad members) who attended.
+    const memberTeenIds =
+      group.type === "PLATOON" ? group.teens.map((t) => t.id) : group.members.map((m) => m.teenId);
+    const activityIds = group.activities.map((a) => a.id);
+    const participation = activityIds.length
+      ? await prisma.activityParticipation.findMany({
+          where: { activityId: { in: activityIds }, teenId: { in: memberTeenIds } },
+        })
+      : [];
+    const attendanceTrend = group.activities.map((activity) => {
+      const records = participation.filter((p) => p.activityId === activity.id);
+      const attended = records.filter((p) => p.attended).length;
+      return {
+        activityId: activity.id,
+        activityName: activity.name,
+        date: activity.date,
+        rate: records.length ? Math.round((attended / records.length) * 100) : null,
+      };
+    });
+
+    return NextResponse.json({ ...group, leader: leaderDeleted ? null : group.leader, attendanceTrend });
   } catch (error) {
     return handleApiError(error);
   }

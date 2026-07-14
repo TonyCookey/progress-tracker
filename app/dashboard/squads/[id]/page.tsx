@@ -1,9 +1,14 @@
 "use client";
 import LoadingSpinner from "@/components/common/LoadingSpinner";
+import { formatDateUTC } from "@/lib/formatDate";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import EditGroupModal from "@/components/groups/EditGroupModal";
+import LineTrendChart from "@/components/charts/LineTrendChart";
+import StatTile from "@/components/charts/StatTile";
+
+type AttendanceTrendPoint = { activityId: string; activityName: string; date: string; rate: number | null };
 
 type Squad = {
   id: string;
@@ -14,8 +19,9 @@ type Squad = {
   base: { id: string; name: string } | null;
   leader: { id: string; name: string } | null;
   support?: { user: { id: string; name: string } }[] | null;
-  activities: { id: string; title: string; date: string }[] | null;
-  members: { id: string; teen: { id: string; name: string } }[] | null;
+  activities: { id: string; name: string; date: string }[] | null;
+  members: { id: string; teenId: string; teen: { id: string; name: string } }[] | null;
+  attendanceTrend: AttendanceTrendPoint[];
 };
 
 export default function SquadDetailsPage() {
@@ -93,12 +99,41 @@ export default function SquadDetailsPage() {
         </div>
       </div>
 
+      {/* Attendance Trend */}
+      {(() => {
+        // Activities with no ActivityParticipation rows yet (attendance never taken)
+        // report rate: null - exclude them rather than counting as 0%, which would
+        // understate real attendance.
+        const recordedTrend = squad.attendanceTrend.filter((p) => p.rate !== null);
+        return (
+          <div className="bg-white rounded-xl shadow-lg p-8 mb-8">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-xl font-semibold">Attendance Trend</h2>
+              <StatTile
+                label="Average Attendance"
+                value={recordedTrend.length ? `${Math.round(recordedTrend.reduce((sum, p) => sum + p.rate!, 0) / recordedTrend.length)}%` : "N/A"}
+              />
+            </div>
+            {recordedTrend.length ? (
+              <LineTrendChart
+                title="Squad Attendance Over Time"
+                labels={recordedTrend.map((p) => formatDateUTC(p.date, { month: "short", day: "numeric" }))}
+                series={[{ name: "Attendance Rate", data: recordedTrend.map((p) => p.rate!) }]}
+                formatValue={(n) => `${n}%`}
+              />
+            ) : (
+              <p className="text-gray-500">No attendance data yet.</p>
+            )}
+          </div>
+        );
+      })()}
+
       {/* Main Content: Teens & Activities Side by Side */}
       <div className="flex flex-col md:flex-row gap-8">
         {/* Teens List Card */}
         <div className="flex-1 bg-white rounded-xl shadow-lg p-8 mb-8 md:mb-0">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-xl font-semibold">Teens in this Platoon</h2>
+            <h2 className="text-xl font-semibold">Teens in this Squad</h2>
             <span className="inline-block bg-blue-100 text-blue-700 px-3 py-1 rounded-full text-sm font-semibold">
               {squad.members?.length ?? 0} Teen{squad.members?.length === 1 ? "" : "s"}
             </span>
@@ -133,12 +168,15 @@ export default function SquadDetailsPage() {
           </div>
           {squad.activities?.length ? (
             <ul className="divide-y divide-gray-200">
-              {squad.activities.map((activity: any) => (
+              {squad.activities
+                .slice()
+                .reverse()
+                .map((activity: any) => (
                 <Link href={`/dashboard/activities/${activity.id}`} key={activity.id} className="block hover:bg-blue-50 rounded-lg px-1">
                   <li key={activity.id} className="py-3">
                     <div className="flex flex-col">
-                      <span className="font-semibold text-cyan-900">{activity.title}</span>
-                      <span className="text-xs text-gray-500">{activity.date}</span>
+                      <span className="font-semibold text-cyan-900">{activity.name}</span>
+                      <span className="text-xs text-gray-500">{formatDateUTC(activity.date, { month: "long", day: "numeric", year: "numeric" })}</span>
                     </div>
                   </li>
                 </Link>

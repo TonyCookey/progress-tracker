@@ -2,11 +2,23 @@
 
 import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import LoadingSpinner from "@/components/common/LoadingSpinner";
 import { calculateAge } from "@/lib/calculateAge";
 import { formatDate } from "@/lib/formatDate";
 import LieutenantAvatar from "@/components/lieutenants/AvatarImage";
 import EditLieutenantModal from "@/components/lieutenants/EditLieutenantsModal";
+import LineTrendChart from "@/components/charts/LineTrendChart";
+import StatTile from "@/components/charts/StatTile";
+import { formatDateUTC } from "@/lib/formatDate";
+import { getNextBirthday } from "@/lib/getNextBirthday";
+
+type AttendanceRecord = {
+  activityId: string;
+  activityName: string;
+  date: string;
+  attended: boolean;
+};
 
 type Teen = {
   id: string;
@@ -28,6 +40,8 @@ type Teen = {
   guardianPhone?: string | null;
   dateJoined?: string | null;
   status?: string;
+  attendance: AttendanceRecord[];
+  attendanceRate: number | null;
 };
 
 function getColorClasses(gender: string) {
@@ -155,6 +169,17 @@ export default function TeenDetailsPage() {
         </div>
       </div>
 
+      {/* Stat Tiles */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+        <StatTile label="Age" value={`${calculateAge(teen.dateOfBirth)} yrs`} />
+        <StatTile
+          label="Next Birthday"
+          value={`${getNextBirthday(teen.dateOfBirth).daysUntil} day${getNextBirthday(teen.dateOfBirth).daysUntil === 1 ? "" : "s"}`}
+        />
+        <StatTile label="Activities Logged" value={teen.attendance.length} />
+        <StatTile label="Attendance Rate" value={teen.attendanceRate !== null ? `${teen.attendanceRate}%` : "N/A"} />
+      </div>
+
       {/* Pastoral Info Card */}
       <div className="bg-white rounded-lg shadow p-8 mb-8">
         <div className="flex items-center justify-between mb-4">
@@ -187,6 +212,50 @@ export default function TeenDetailsPage() {
             <strong>Guardian Phone:</strong> {teen.guardianPhone || "N/A"}
           </p>
         </div>
+      </div>
+
+      {/* Attendance */}
+      <div className="bg-white rounded-lg shadow p-8 mb-8">
+        <h3 className={`text-xl font-semibold mb-4 ${color.header}`}>Attendance</h3>
+        {teen.attendance.length ? (
+          <>
+            <LineTrendChart
+              title="Attendance Rate Over Time"
+              labels={teen.attendance.map((a) => formatDateUTC(a.date, { month: "short", day: "numeric" }))}
+              series={[
+                {
+                  name: "Cumulative Attendance Rate",
+                  data: teen.attendance.reduce<number[]>((acc, a, i) => {
+                    const attendedSoFar = teen.attendance.slice(0, i + 1).filter((x) => x.attended).length;
+                    acc.push(Math.round((attendedSoFar / (i + 1)) * 100));
+                    return acc;
+                  }, []),
+                },
+              ]}
+              formatValue={(n) => `${n}%`}
+            />
+            <ul className="divide-y divide-gray-200 mt-4">
+              {teen.attendance
+                .slice()
+                .reverse()
+                .map((a) => (
+                  <li key={a.activityId} className="flex items-center justify-between py-2">
+                    <Link href={`/dashboard/activities/${a.activityId}`} className="text-sm font-medium text-gray-800 hover:underline">
+                      {a.activityName}
+                    </Link>
+                    <span className="text-xs text-gray-500">{formatDateUTC(a.date, { month: "short", day: "numeric", year: "numeric" })}</span>
+                    <span
+                      className={`text-xs font-semibold px-2 py-1 rounded-full ${a.attended ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"}`}
+                    >
+                      {a.attended ? "Attended" : "Absent"}
+                    </span>
+                  </li>
+                ))}
+            </ul>
+          </>
+        ) : (
+          <p className="text-gray-500">No attendance records yet.</p>
+        )}
       </div>
 
       <div className="flex gap-4 justify-end">
