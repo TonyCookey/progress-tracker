@@ -100,31 +100,33 @@ export default function PlatoonDetailsPage() {
       </div>
 
       {/* Attendance Trend */}
-      <div className="bg-white rounded-xl shadow-lg p-8 mb-8">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-xl font-semibold">Attendance Trend</h2>
-          <StatTile
-            label="Average Attendance"
-            value={
-              platoon.attendanceTrend.length
-                ? `${Math.round(
-                    platoon.attendanceTrend.reduce((sum, p) => sum + (p.rate ?? 0), 0) / platoon.attendanceTrend.length,
-                  )}%`
-                : "N/A"
-            }
-          />
-        </div>
-        {platoon.attendanceTrend.length ? (
-          <LineTrendChart
-            title="Platoon Attendance Over Time"
-            labels={platoon.attendanceTrend.map((p) => formatDateUTC(p.date, { month: "short", day: "numeric" }))}
-            series={[{ name: "Attendance Rate", data: platoon.attendanceTrend.map((p) => p.rate ?? 0) }]}
-            formatValue={(n) => `${n}%`}
-          />
-        ) : (
-          <p className="text-gray-500">No attendance data yet.</p>
-        )}
-      </div>
+      {(() => {
+        // Activities with no ActivityParticipation rows yet (attendance never taken)
+        // report rate: null - exclude them rather than counting as 0%, which would
+        // understate real attendance.
+        const recordedTrend = platoon.attendanceTrend.filter((p) => p.rate !== null);
+        return (
+          <div className="bg-white rounded-xl shadow-lg p-8 mb-8">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-xl font-semibold">Attendance Trend</h2>
+              <StatTile
+                label="Average Attendance"
+                value={recordedTrend.length ? `${Math.round(recordedTrend.reduce((sum, p) => sum + p.rate!, 0) / recordedTrend.length)}%` : "N/A"}
+              />
+            </div>
+            {recordedTrend.length ? (
+              <LineTrendChart
+                title="Platoon Attendance Over Time"
+                labels={recordedTrend.map((p) => formatDateUTC(p.date, { month: "short", day: "numeric" }))}
+                series={[{ name: "Attendance Rate", data: recordedTrend.map((p) => p.rate!) }]}
+                formatValue={(n) => `${n}%`}
+              />
+            ) : (
+              <p className="text-gray-500">No attendance data yet.</p>
+            )}
+          </div>
+        );
+      })()}
 
       {/* Main Content: Teens & Activities Side by Side */}
       <div className="flex flex-col md:flex-row gap-8">
@@ -166,7 +168,10 @@ export default function PlatoonDetailsPage() {
           </div>
           {platoon.activities?.length ? (
             <ul className="divide-y divide-gray-200">
-              {platoon.activities.map((activity: any) => (
+              {platoon.activities
+                .slice()
+                .reverse()
+                .map((activity: any) => (
                 <Link href={`/dashboard/activities/${activity.id}`} key={activity.id} className="block hover:bg-blue-50 rounded-lg px-1">
                   <li key={activity.id} className="py-3">
                     <div className="flex flex-col">
