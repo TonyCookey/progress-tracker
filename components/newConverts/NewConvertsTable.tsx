@@ -2,11 +2,13 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { useSession } from "next-auth/react";
-import { TrashIcon, ArrowPathIcon, CheckCircleIcon } from "@heroicons/react/24/outline";
+import { TrashIcon, ArrowPathIcon, CheckCircleIcon, ArrowRightIcon } from "@heroicons/react/24/outline";
+import Link from "next/link";
 import { formatDate } from "@/lib/formatDate";
 import LoadingSpinner from "../common/LoadingSpinner";
 import CreateNewConvertModal from "./CreateNewConvertModal";
 import EditNewConvertModal from "./EditNewConvertModal";
+import ConvertToTeenModal from "./ConvertToTeenModal";
 
 type NewConvert = {
   id: string;
@@ -17,6 +19,7 @@ type NewConvert = {
   base: { id: string; name: string } | null;
   followedUp: boolean;
   becameTeen: boolean;
+  teenId: string | null;
   invitedBy: string | null;
   notes: string | null;
 };
@@ -30,19 +33,30 @@ export default function NewConvertsTable() {
   const [total, setTotal] = useState(0);
   const [search, setSearch] = useState("");
   const [loading, setLoading] = useState(false);
+  const [baseId, setBaseId] = useState(user?.baseId ?? "");
+  const [bases, setBases] = useState<{ id: string; name: string }[]>([]);
   const limit = 10;
+
+  useEffect(() => {
+    if (isSuperAdmin) {
+      fetch("/api/bases")
+        .then((res) => res.json())
+        .then(setBases);
+    }
+    setBaseId(user?.baseId ?? "");
+  }, [isSuperAdmin, user?.baseId]);
 
   const fetchData = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await fetch(`/api/new-converts?page=${page}&limit=${limit}&search=${search}`, { cache: "no-store" });
+      const res = await fetch(`/api/new-converts?page=${page}&limit=${limit}&search=${search}&baseId=${baseId}`, { cache: "no-store" });
       const { data, total } = await res.json();
       setNewConverts(data);
       setTotal(total);
     } finally {
       setLoading(false);
     }
-  }, [page, search]);
+  }, [page, search, baseId]);
 
   useEffect(() => {
     fetchData();
@@ -60,10 +74,36 @@ export default function NewConvertsTable() {
 
   const totalPages = Math.max(1, Math.ceil(total / limit));
 
+  const conversionAction = (nc: NewConvert) =>
+    nc.teenId ? (
+      <Link href={`/dashboard/lieutenants/${nc.teenId}`} title="View Teen" className="p-2 rounded hover:bg-blue-100 transition">
+        <ArrowRightIcon className="w-5 h-5 text-blue-600" />
+      </Link>
+    ) : (
+      <ConvertToTeenModal newConvertId={nc.id} onSuccess={fetchData} />
+    );
+
   return (
     <div>
       <div className="flex flex-col gap-3 sm:flex-row sm:justify-between sm:items-center mb-4">
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center w-full sm:w-auto">
+          {isSuperAdmin && (
+            <select
+              value={baseId}
+              onChange={(e) => {
+                setBaseId(e.target.value);
+                setPage(1);
+              }}
+              className="border rounded px-3 py-2 w-full sm:w-auto"
+            >
+              <option value="">All Bases</option>
+              {bases.map((b) => (
+                <option key={b.id} value={b.id}>
+                  {b.name}
+                </option>
+              ))}
+            </select>
+          )}
           <input
             type="text"
             placeholder="Search by name..."
@@ -114,6 +154,7 @@ export default function NewConvertsTable() {
                     <td className="px-4 py-3">{nc.becameTeen ? <CheckCircleIcon className="w-5 h-5 text-green-600" /> : "-"}</td>
                     <td className="px-4 py-3 flex space-x-2">
                       <EditNewConvertModal newConvert={nc} onSuccess={fetchData} />
+                      {conversionAction(nc)}
                       {isSuperAdmin && (
                         <button onClick={() => handleDelete(nc.id)} title="Delete" className="p-2 rounded hover:bg-red-100 transition">
                           <TrashIcon className="w-5 h-5 text-red-600" />
@@ -149,6 +190,7 @@ export default function NewConvertsTable() {
                 </div>
                 <div className="flex mt-2 justify-end space-x-2">
                   <EditNewConvertModal newConvert={nc} onSuccess={fetchData} />
+                  {conversionAction(nc)}
                   {isSuperAdmin && (
                     <button onClick={() => handleDelete(nc.id)} title="Delete" className="p-2 rounded hover:bg-red-100 transition">
                       <TrashIcon className="w-5 h-5 text-red-600" />

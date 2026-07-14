@@ -7,15 +7,19 @@ import { notDeleted } from "@/lib/softDelete";
 
 export async function GET(req: Request) {
   try {
-    await requireSession();
+    const session = await requireSession();
 
     const { searchParams } = new URL(req.url);
     const page = Math.max(1, parseInt(searchParams.get("page") ?? "1") || 1);
     const limit = Math.min(1000, Math.max(1, parseInt(searchParams.get("limit") ?? "10") || 10));
     const search = searchParams.get("search")?.toLowerCase() ?? "";
-    const baseId = searchParams.get("baseId") ?? "";
+    const requestedBaseId = searchParams.get("baseId") ?? "";
     const includeArchived = searchParams.get("includeArchived") === "true";
     const skip = (page - 1) * limit;
+
+    // Non-SUPERADMIN users may only ever list their own base's records, regardless
+    // of what baseId (or none) the request asks for.
+    const baseId = session.user.role === "SUPERADMIN" ? requestedBaseId : session.user.baseId;
 
     const where = {
       baseId: baseId ? baseId : undefined,

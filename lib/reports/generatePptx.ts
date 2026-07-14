@@ -1,6 +1,7 @@
 import PptxGenJS from "pptxgenjs";
-import path from "path";
 import { formatMoney } from "@/lib/formatMoney";
+import { formatDateUTC } from "@/lib/formatDate";
+import { DA_LOGO_BASE64 } from "./daLogoBase64";
 import type { MonthlyReportData } from "./monthly";
 
 const NAVY = "44546A";
@@ -18,7 +19,6 @@ const MONTHS = [
   "July", "August", "September", "October", "November", "December",
 ];
 
-const LOGO_PATH = path.join(process.cwd(), "public", "assets", "da-logo.png");
 
 type ExpenseItem = { description: string; amount: number };
 
@@ -67,7 +67,7 @@ export function buildMonthlyReportPptx(data: MonthlyReportInput): PptxGenJS {
   // Slide 1 - Cover
   const cover = pptx.addSlide();
   cover.background = { color: WHITE };
-  cover.addImage({ path: LOGO_PATH, x: 5.17, y: 0.7, w: 3, h: 2.97 });
+  cover.addImage({ data: DA_LOGO_BASE64, x: 5.17, y: 0.7, w: 3, h: 2.97 });
   cover.addText(
     [
       { text: "PERFORMANCE REPORT\n", options: { breakLine: true } },
@@ -84,6 +84,12 @@ export function buildMonthlyReportPptx(data: MonthlyReportInput): PptxGenJS {
   exec.background = { color: WHITE };
   exec.addText("DAVID'S ARMY", { x: 0.5, y: 0.3, w: 12.3, h: 0.7, fontFace: FONT, fontSize: 28, bold: true, color: NAVY });
 
+  let execY = 1.0;
+  if (data.executiveSummary) {
+    exec.addText(data.executiveSummary, { x: 0.5, y: execY, w: 12.3, h: 0.9, fontFace: FONT, fontSize: 13, italic: true, color: DARKTEXT, valign: "top" });
+    execY += 1.0;
+  }
+
   const execRows: { label: string; value: string }[] = [
     { label: "Estimated membership", value: String(data.auto.membership) },
     { label: "Issues", value: data.issues || "-" },
@@ -94,7 +100,6 @@ export function buildMonthlyReportPptx(data: MonthlyReportInput): PptxGenJS {
     { label: "Alternative Churches", value: data.alternativeChurches || "-" },
   ];
 
-  let execY = 1.2;
   for (const row of execRows) {
     exec.addText(row.label, { x: 0.5, y: execY, w: 3.8, h: 0.6, fontFace: FONT, fontSize: 14, bold: true, color: MEDBLUE, valign: "top" });
     exec.addText(row.value, { x: 4.4, y: execY, w: 8.3, h: 0.6, fontFace: FONT, fontSize: 14, color: DARKTEXT, valign: "top" });
@@ -125,7 +130,7 @@ export function buildMonthlyReportPptx(data: MonthlyReportInput): PptxGenJS {
         { text: "Attendance", options: { bold: true, color: WHITE, fill: { color: MEDBLUE } } },
       ],
       ...data.auto.sundayAttendance.map((a, idx): PptxGenJS.TableRow => [
-        { text: new Date(a.date).toLocaleDateString(undefined, { month: "long", day: "numeric" }).toUpperCase(), options: { fill: { color: idx % 2 === 0 ? LIGHTGREY : WHITE } } },
+        { text: formatDateUTC(a.date, { month: "long", day: "numeric" }).toUpperCase(), options: { fill: { color: idx % 2 === 0 ? LIGHTGREY : WHITE } } },
         { text: String(a.count), options: { fill: { color: idx % 2 === 0 ? LIGHTGREY : WHITE } } },
       ]),
     ];

@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useForm, useFieldArray } from "react-hook-form";
 import { useSession } from "next-auth/react";
 import { formatMoney } from "@/lib/formatMoney";
+import { formatDateUTC } from "@/lib/formatDate";
 import LoadingSpinner from "../common/LoadingSpinner";
 
 type Option = { id: string; name: string; label?: string | null };
@@ -126,13 +127,20 @@ export default function MonthlyReportBuilder() {
 
   const currentBase = useMemo(() => bases.find((b) => b.id === baseId), [bases, baseId]);
 
+  // Drop rows the user never filled in (blank description, no amount entered) so an
+  // untouched "+ Add Expense" row doesn't block saving; keep everything else as-is.
+  const cleanExpenseItems = (items: ExpenseItem[]) =>
+    (items ?? [])
+      .map((item) => ({ description: (item.description ?? "").trim(), amount: Number(item.amount) || 0 }))
+      .filter((item) => item.description !== "" || item.amount !== 0);
+
   const buildPayload = (data: FormData) => ({
     baseId,
     month,
     year,
     openingBalance: data.openingBalance === "" ? null : Number(data.openingBalance),
     income: data.income === "" ? null : Number(data.income),
-    expenseItems: (data.expenseItems ?? []).map((item) => ({ description: item.description, amount: Number(item.amount) || 0 })),
+    expenseItems: cleanExpenseItems(data.expenseItems),
     theme: data.theme,
     executiveSummary: data.executiveSummary,
     issues: data.issues,
@@ -145,20 +153,32 @@ export default function MonthlyReportBuilder() {
     updateOnTeens: data.updateOnTeens,
   });
 
+  // Shared by Save Draft and Generate (which saves first) so the request, error
+  // handling, and expense-row validation stay in one place.
+  const saveDraft = async (data: FormData) => {
+    const incompleteRow = cleanExpenseItems(data.expenseItems).find((item) => item.description === "");
+    if (incompleteRow) {
+      alert("Each expense line item needs a description.");
+      return null;
+    }
+    const res = await fetch("/api/reports/monthly", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(buildPayload(data)),
+    });
+    if (!res.ok) {
+      const text = await res.text();
+      alert(`Failed to save draft: ${res.status} ${res.statusText} - ${text}`);
+      return null;
+    }
+    return res.json();
+  };
+
   const onSaveDraft = async (data: FormData) => {
     setSaving(true);
     try {
-      const res = await fetch("/api/reports/monthly", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(buildPayload(data)),
-      });
-      if (!res.ok) {
-        const text = await res.text();
-        alert(`Failed to save draft: ${res.status} ${res.statusText} - ${text}`);
-        return;
-      }
-      const report = await res.json();
+      const report = await saveDraft(data);
+      if (!report) return;
       setStatus(report.status);
       alert("Draft saved");
     } finally {
@@ -170,16 +190,9 @@ export default function MonthlyReportBuilder() {
     setGenerating(true);
     try {
       // Save first so the .pptx is built from the latest inputs.
-      const saveRes = await fetch("/api/reports/monthly", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(buildPayload(data)),
-      });
-      if (!saveRes.ok) {
-        const text = await saveRes.text();
-        alert(`Failed to save before generating: ${saveRes.status} ${saveRes.statusText} - ${text}`);
-        return;
-      }
+      const savedReport = await saveDraft(data);
+      if (!savedReport) return;
+
       const res = await fetch("/api/reports/monthly/generate", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -272,7 +285,7 @@ export default function MonthlyReportBuilder() {
                 <div className="flex flex-wrap gap-3">
                   {auto.sundayAttendance.map((a) => (
                     <span key={a.activityId} className="px-3 py-1 bg-blue-50 text-blue-700 rounded text-sm">
-                      {new Date(a.date).toLocaleDateString(undefined, { month: "short", day: "numeric" })}: {a.count}
+                      {formatDateUTC(a.date, { month: "short", day: "numeric" })}: {a.count}
                     </span>
                   ))}
                 </div>

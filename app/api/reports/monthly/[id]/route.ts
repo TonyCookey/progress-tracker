@@ -1,10 +1,10 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { requireSession, assertBaseAccess, handleApiError } from "@/lib/auth";
+import { requireRole, assertBaseAccess, handleApiError } from "@/lib/auth";
 
 export async function GET(_req: Request, { params }: { params: { id: string } }) {
   try {
-    const session = await requireSession();
+    const session = await requireRole(["SUPERADMIN", "GENERAL"]);
 
     const report = await prisma.monthlyReport.findUnique({
       where: { id: params.id },

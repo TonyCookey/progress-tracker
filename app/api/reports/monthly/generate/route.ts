@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { PutObjectCommand } from "@aws-sdk/client-s3";
 import { r2 } from "@/lib/r2";
 import { prisma } from "@/lib/prisma";
-import { requireSession, assertBaseAccess, handleApiError, ApiError } from "@/lib/auth";
+import { requireRole, assertBaseAccess, handleApiError, ApiError } from "@/lib/auth";
 import { generateMonthlyReportSchema } from "@/lib/validation/monthlyReport";
 import { parseOrThrow } from "@/lib/validation/parse";
 import { getMonthlyReport } from "@/lib/reports/monthly";
@@ -10,7 +10,7 @@ import { buildMonthlyReportPptx } from "@/lib/reports/generatePptx";
 
 export async function POST(req: Request) {
   try {
-    const session = await requireSession();
+    const session = await requireRole(["SUPERADMIN", "GENERAL"]);
     const { baseId, month, year } = parseOrThrow(generateMonthlyReportSchema, await req.json());
     assertBaseAccess(session, baseId);
 

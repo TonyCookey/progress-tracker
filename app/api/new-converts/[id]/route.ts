@@ -36,8 +36,10 @@ export async function PUT(req: Request, { params }: { params: { id: string } }) 
       return NextResponse.json({ error: "New convert not found" }, { status: 404 });
     }
 
-    const isCrossBase = data.isCrossBase ?? false;
-    const baseId = isCrossBase ? null : data.baseId;
+    // The edit form has no isCrossBase control, so a missing field on the request
+    // must preserve the record's existing value rather than silently reset it to false.
+    const isCrossBase = data.isCrossBase ?? existing.isCrossBase;
+    const baseId = isCrossBase ? null : (data.baseId ?? existing.baseId);
     assertBaseAccess(session, existing.isCrossBase ? null : existing.baseId);
     assertBaseAccess(session, isCrossBase ? null : baseId);
 

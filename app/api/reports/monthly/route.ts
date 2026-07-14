@@ -1,13 +1,13 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { requireSession, assertBaseAccess, handleApiError, ApiError } from "@/lib/auth";
+import { requireRole, assertBaseAccess, handleApiError, ApiError } from "@/lib/auth";
 import { saveMonthlyReportSchema } from "@/lib/validation/monthlyReport";
 import { parseOrThrow } from "@/lib/validation/parse";
 import { getMonthlyReport } from "@/lib/reports/monthly";
 
 export async function GET(req: Request) {
   try {
-    const session = await requireSession();
+    const session = await requireRole(["SUPERADMIN", "GENERAL"]);
     const { searchParams } = new URL(req.url);
     const baseId = searchParams.get("baseId");
     const month = searchParams.get("month");
@@ -40,7 +40,7 @@ export async function GET(req: Request) {
 
 export async function POST(req: Request) {
   try {
-    const session = await requireSession();
+    const session = await requireRole(["SUPERADMIN", "GENERAL"]);
     const data = parseOrThrow(saveMonthlyReportSchema, await req.json());
     assertBaseAccess(session, data.baseId);
 
