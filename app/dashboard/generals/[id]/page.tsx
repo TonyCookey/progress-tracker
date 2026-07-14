@@ -17,7 +17,7 @@ type General = {
   baseId: string;
   base: { id: string; name: string };
   leadingGroups?: { id: string; name: string }[];
-  supportingGroups?: { id: string; name: string }[];
+  supportingGroups?: { group: { id: string; name: string } }[];
 };
 
 export default function GeneralDetailsPage() {
@@ -93,7 +93,7 @@ export default function GeneralDetailsPage() {
             <p>
               <strong>Supporting Groups:</strong>{" "}
               {general.supportingGroups?.length ? (
-                <span className="text-cyan-700">{general.supportingGroups.map((s) => s.name).join(", ")}</span>
+                <span className="text-cyan-700">{general.supportingGroups.map((s) => s.group.name).join(", ")}</span>
               ) : (
                 <span className="text-gray-500">None</span>
               )}

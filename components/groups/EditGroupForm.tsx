@@ -3,6 +3,7 @@
 import { useForm, Controller } from "react-hook-form";
 import { useState, useEffect } from "react";
 import Select from "react-select";
+import { useSyncSelectValue } from "@/lib/hooks/useSyncSelectValue";
 
 type FormData = {
   name: string;
@@ -48,17 +49,8 @@ export default function EditGroupForm({ group, onSuccess }: { group: Group; onSu
       .then((data) => setGenerals(data.generals ?? []));
   }, []);
 
-  // Options load asynchronously; re-apply the select values once the matching
-  // <option> elements actually exist in the DOM, or the browser can't select them.
-  useEffect(() => {
-    if (bases.length) setValue("baseId", group.baseId || "");
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [bases]);
-
-  useEffect(() => {
-    if (generals.length) setValue("leaderId", group.leaderId || "");
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [generals]);
+  useSyncSelectValue(bases, setValue, "baseId", group.baseId || "");
+  useSyncSelectValue(generals, setValue, "leaderId", group.leaderId || "");
 
   const onSubmit = async (data: FormData) => {
     setLoading(true);

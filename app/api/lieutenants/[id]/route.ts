@@ -16,7 +16,9 @@ export async function GET(req: Request, { params }: { params: { id: string } }) 
       include: {
         base: true,
         platoon: true,
+        // A soft-deleted squad must not appear as one of this teen's active squads.
         squadMemberships: {
+          where: { group: notDeleted(includeArchived) },
           include: { group: true },
         },
       },
@@ -26,8 +28,13 @@ export async function GET(req: Request, { params }: { params: { id: string } }) 
       return NextResponse.json({ error: "Lieutenant not found" }, { status: 404 });
     }
 
+    // `platoon` is a to-one relation, so Prisma can't filter it out via `include`'s
+    // `where` — null it out manually if that platoon was soft-deleted.
+    const platoonDeleted = !includeArchived && !!teen.platoon?.deletedAt;
+
     return NextResponse.json({
       ...teen,
+      platoon: platoonDeleted ? null : teen.platoon,
       squads: teen.squadMemberships.map((membership) => membership.group),
     });
   } catch (error) {

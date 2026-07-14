@@ -4,6 +4,7 @@ import { useForm, Controller } from "react-hook-form";
 import { useState, useEffect } from "react";
 import Select from "react-select";
 import CreateImageField from "../input/CreateImageField";
+import { useSyncSelectValue } from "@/lib/hooks/useSyncSelectValue";
 
 type FormData = {
   name: string;
@@ -100,17 +101,8 @@ export default function EditLieutenantForm({ lieutenant, onSuccess }: { lieutena
     fetchPlatoons();
   }, []);
 
-  // Options load asynchronously; re-apply the select values once the matching
-  // <option> elements actually exist in the DOM, or the browser can't select them.
-  useEffect(() => {
-    if (bases.length) setValue("baseId", lieutenant.baseId || "");
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [bases]);
-
-  useEffect(() => {
-    if (platoons.length) setValue("platoonId", lieutenant.groupId || "");
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [platoons]);
+  useSyncSelectValue(bases, setValue, "baseId", lieutenant.baseId || "");
+  useSyncSelectValue(platoons, setValue, "platoonId", lieutenant.groupId || "");
 
   const uploadLieutenantImage = async (imageFile: File, lieutenantId: string) => {
     try {
@@ -209,7 +201,7 @@ export default function EditLieutenantForm({ lieutenant, onSuccess }: { lieutena
 
         <div>
           <label className="block text-sm font-medium mb-2">Base</label>
-          <select {...register("baseId", { required: true })} className="w-full border px-3 py-2 rounded" defaultValue={lieutenant.baseId}>
+          <select {...register("baseId", { required: true })} className="w-full border px-3 py-2 rounded">
             <option value="">Select a base</option>
             {bases.map((base) => (
               <option key={base.id} value={base.id}>

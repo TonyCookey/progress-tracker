@@ -3,6 +3,7 @@
 import { useForm } from "react-hook-form";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import { useSyncSelectValue } from "@/lib/hooks/useSyncSelectValue";
 
 type Option = { id: string; name: string };
 type SquadOption = {
@@ -54,12 +55,7 @@ export default function RecordOfferingForm({ offering }: { offering?: Offering }
     fetchBases();
   }, []);
 
-  // Bases load asynchronously; re-apply once the matching <option> elements
-  // actually exist in the DOM, or the browser can't select them.
-  useEffect(() => {
-    if (bases.length) setValue("baseId", offering?.isCrossBase ? "cross-base" : offering?.baseId ?? "");
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [bases]);
+  useSyncSelectValue(bases, setValue, "baseId", offering?.isCrossBase ? "cross-base" : offering?.baseId ?? "");
 
   const onSubmit = async (data: any) => {
     try {

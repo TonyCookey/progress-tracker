@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { optionalDate } from "./parse";
 
 const pastoralFields = {
   phone: z.string().optional().nullable(),
@@ -6,8 +7,7 @@ const pastoralFields = {
   school: z.string().optional().nullable(),
   guardianName: z.string().optional().nullable(),
   guardianPhone: z.string().optional().nullable(),
-  dateJoined: z.coerce.date().optional(),
-  status: z.enum(["ACTIVE", "INACTIVE", "LEFT"]).optional().default("ACTIVE"),
+  dateJoined: optionalDate(),
 };
 
 export const createTeenSchema = z.object({
@@ -18,6 +18,7 @@ export const createTeenSchema = z.object({
   rank: z.enum(["LIEUTENANT", "CAPTAIN"]),
   groupId: z.string().min(1).optional().nullable(),
   squadIds: z.array(z.string()).optional(),
+  status: z.enum(["ACTIVE", "INACTIVE", "LEFT"]).optional().default("ACTIVE"),
   ...pastoralFields,
 });
 
@@ -29,5 +30,8 @@ export const updateTeenSchema = z.object({
   baseId: z.string().min(1, "Base is required"),
   platoonId: z.string().min(1).optional().nullable(),
   squadIds: z.array(z.string()).optional().default([]),
+  // No .default() here: omitting `status` on an update must leave the existing value
+  // alone (Prisma treats `undefined` as "don't touch this field"), not silently reset it.
+  status: z.enum(["ACTIVE", "INACTIVE", "LEFT"]).optional(),
   ...pastoralFields,
 });

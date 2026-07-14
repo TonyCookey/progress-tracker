@@ -2,6 +2,7 @@
 
 import { useForm } from "react-hook-form";
 import { useState, useEffect } from "react";
+import { useSyncSelectValue } from "@/lib/hooks/useSyncSelectValue";
 
 type FormData = {
   name: string;
@@ -51,12 +52,7 @@ export default function EditGeneralForm({ general, onSuccess }: { general: Gener
     fetchBases();
   }, []);
 
-  // Bases load asynchronously; re-apply once the matching <option> elements
-  // actually exist in the DOM, or the browser can't select them.
-  useEffect(() => {
-    if (bases.length) setValue("baseId", general.baseId || "");
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [bases]);
+  useSyncSelectValue(bases, setValue, "baseId", general.baseId || "");
 
   const onSubmit = async (data: FormData) => {
     setLoading(true);

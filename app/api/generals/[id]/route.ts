@@ -13,7 +13,13 @@ export async function GET(req: Request, { params }: { params: { id: string } }) 
 
     const general = await prisma.user.findFirst({
       where: { id: params.id, ...notDeleted(includeArchived) },
-      include: { base: true, leadingGroups: true, supportingGroups: true },
+      include: {
+        base: true,
+        leadingGroups: { where: notDeleted(includeArchived) },
+        // supportingGroups is the GroupSupport join table, not Group itself —
+        // must include the nested `group` to get name/id, not just the join row.
+        supportingGroups: { where: { group: notDeleted(includeArchived) }, include: { group: true } },
+      },
     });
 
     if (!general) {

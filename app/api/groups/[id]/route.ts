@@ -14,18 +14,24 @@ export async function GET(req: Request, { params }: { params: { id: string } }) 
     const group = await prisma.group.findFirst({
       where: { id: params.id, ...notDeleted(includeArchived) },
       include: {
-        teens: true,
+        // Soft-deleted teens/support-generals must not appear as active roster
+        // members just because the parent group itself wasn't deleted.
+        teens: { where: notDeleted(includeArchived) },
         base: true,
         activities: true,
         leader: true,
-        members: { include: { teen: true } },
-        support: { include: { user: true } },
+        members: { where: { teen: notDeleted(includeArchived) }, include: { teen: true } },
+        support: { where: { user: notDeleted(includeArchived) }, include: { user: true } },
       },
     });
 
     if (!group) return NextResponse.json("Group not found", { status: 404 });
 
-    return NextResponse.json(group);
+    // `leader` is a required to-one relation, so Prisma can't filter it out via
+    // `include`'s `where` — null it out manually if that general was soft-deleted.
+    const leaderDeleted = !includeArchived && !!group.leader?.deletedAt;
+
+    return NextResponse.json({ ...group, leader: leaderDeleted ? null : group.leader });
   } catch (error) {
     return handleApiError(error);
   }
@@ -33,7 +39,9 @@ export async function GET(req: Request, { params }: { params: { id: string } }) 
 
 export async function PUT(req: Request, { params }: { params: { id: string } }) {
   try {
-    const session = await requireSession();
+    // Reassigning leadership/support is more consequential than a routine edit
+    // (e.g. teen contact info), so gate it like offerings: SUPERADMIN or GENERAL only.
+    const session = await requireRole(["SUPERADMIN", "GENERAL"]);
     const data = parseOrThrow(updateGroupSchema, await req.json());
 
     const existingGroup = await prisma.group.findUnique({ where: { id: params.id } });
