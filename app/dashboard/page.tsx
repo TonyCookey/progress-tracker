@@ -1,5 +1,6 @@
 import RequireAuth from "@/components/auth/RequireAuth";
 import { getDashboardCards } from "@/lib/dashboard";
+import DashboardCharts from "@/components/dashboard/DashboardCharts";
 
 export const dynamic = "force-dynamic";
 
@@ -26,6 +27,7 @@ export default async function DashboardPage() {
             </div>
           ))}
         </div>
+        <DashboardCharts />
       </div>
     </RequireAuth>
   );

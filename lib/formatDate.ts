@@ -11,3 +11,9 @@ export function formatDate(dateStr: string) {
 export function formatDateUTC(dateStr: string, options: Intl.DateTimeFormatOptions) {
   return new Intl.DateTimeFormat("en-US", { ...options, timeZone: "UTC" }).format(new Date(dateStr));
 }
+
+/** Formats a "YYYY-MM" month bucket key (e.g. from an analytics endpoint) as "Jan 2026". */
+export function formatMonthLabel(monthKey: string) {
+  const [year, month] = monthKey.split("-").map(Number);
+  return formatDateUTC(new Date(Date.UTC(year, month - 1, 1)).toISOString(), { month: "short", year: "numeric" });
+}
