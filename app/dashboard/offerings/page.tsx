@@ -1,5 +1,6 @@
 import OfferingsTable from "@/components/offerings/OfferingsTable";
 import RecordOfferingModal from "@/components/offerings/RecordOfferingForm";
+import OfferingsAnalytics from "@/components/offerings/OfferingsAnalytics";
 import Link from "next/link";
 
 export default function OfferingsPage() {
@@ -11,6 +12,8 @@ export default function OfferingsPage() {
           <button className="bg-cyan-600 text-white px-4 py-2 rounded hover:bg-cyan-700">Record Offering</button>
         </Link>
       </div>
+      <OfferingsAnalytics />
+      <hr className="my-8" />
       <OfferingsTable />
     </div>
   );
