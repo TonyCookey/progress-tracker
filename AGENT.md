@@ -74,12 +74,16 @@ app/
     offerings/                # Offering list/create (no edit/delete)
     platoons/                 # Platoon helpers
     users/                    # User list
+    new-converts/             # NewConvert CRUD (S3)
+    reports/monthly/          # Draft save/load, [id], [id]/download, generate (S3)
   auth/                       # Login / register pages
   dashboard/                  # All authenticated app pages
     activities/ birthdays/ generals/ lieutenants/ offerings/
-    platoons/ squads/ reports/ (STUB) settings/ (STUB) events/ (STUB, redundant) profile/
+    platoons/ squads/ new-converts/ reports/ (Monthly Report builder, S3)
+    settings/ (STUB) events/ (STUB, redundant) profile/
 components/                   # React components, grouped by domain
-lib/                          # prisma singleton, r2 client, date/age/gender helpers
+lib/                          # prisma singleton, r2 client, date/age/gender helpers,
+                               # formatMoney, reports/monthly.ts (aggregation), reports/generatePptx.ts
 prisma/                       # schema.prisma, migrations, seeds (bases, admins, squads)
 middleware.ts                 # Auth gate for /dashboard pages ONLY (NOT /api — see §8)
 types/next-auth.d.ts          # Session type augmentation (adds id, username, role, baseId)
@@ -91,7 +95,9 @@ types/next-auth.d.ts          # Session type augmentation (adds id, username, ro
 
 See `prisma/schema.prisma` for the source of truth. Key points:
 
-- **Base** 1─* User, Teen, Group, Activity, Offering.
+- **Base** 1─* User, Teen, Group, Activity, Offering, NewConvert, MonthlyReport. `label` (nullable
+  string, added S3) is the report location name: Alpha = "Mainland", Bravo = "Island" (backfilled
+  in the S3 migration; also set by `prisma/seeds/bases.seed.ts` for fresh seeds).
 - **User** (General): `role` ∈ {SUPERADMIN, GENERAL, COLONEL, VOLUNTEER}, belongs to one Base,
   leads Groups (`leadingGroups`), supports Groups (`GroupSupport`), teaches at Activities
   (`TeacherParticipation`), soft-delete via `deletedAt`.
@@ -112,6 +118,16 @@ See `prisma/schema.prisma` for the source of truth. Key points:
   `isCrossBase`, optional Base, notes, soft-delete via `deletedAt`. **Canonical `type` values are
   the literal strings `"Cash"` and `"Online"`** — `"Online"` is the transfer/online type (UI label
   is "Transfer", but the stored value stays `"Online"` to avoid orphaning existing data).
+- **NewConvert** (added S3): `name`, `gender?`, `phone?`, `dateOfBirth?`, optional Base
+  (`isCrossBase` flag, same convention as Activity/Offering), `date` (when they came/converted),
+  `activityId?`, `invitedBy?`, `followedUp`/`becameTeen` bools, `teenId?` (once converted to a
+  Teen), `notes?`, soft-delete via `deletedAt`.
+- **MonthlyReport** (added S3): unique per `(baseId, month, year)`. `status` ∈ {DRAFT, FINAL},
+  `dataJson` = snapshot of the **auto** figures taken at generation time, `fileKey` = R2 object key
+  of the generated .pptx. Manual finance inputs from the bank statement: `openingBalance`,
+  `income`, `expenseItems` (JSON array of `{ description, amount }`). Narrative fields: `theme`,
+  `executiveSummary`, `issues`, `alternativeChurches`, `sundayTeaching`, `description`,
+  `victories`/`challenges`/`plans` (JSON string arrays, one bullet per entry), `updateOnTeens`.
 
 ### Soft delete (added S2)
 Every model above with a `deletedAt DateTime?` field is soft-deleted: `DELETE` routes set
@@ -121,10 +137,9 @@ default; pass `?includeArchived=true` on list/detail GETs to include them. Histo
 therefore survives a "delete".
 
 ### Not yet modeled (needed — see roadmap)
-- **NewConvert / first-timer** (critical for the monthly report).
-- **MonthlyReport** (narrative + manual finance inputs + snapshot archive) — see S3.
-- **Base label** (report location name: Alpha = Mainland, Bravo = Island).
-- **Household** (grouping teens by family/household).
+- **Household** (grouping teens by family/household) — see S6.
+
+> NewConvert, MonthlyReport, and Base.label were modeled in S3 (see above).
 
 > **Deliberately NOT modeled:** expenses and account/bank balances are **not** tracked in-app — the
 > app is not the source of truth for them. In the monthly report the admin types opening balance,
@@ -143,14 +158,31 @@ therefore survives a "delete".
 - Currency is **Nigerian Naira (₦)**. Amounts are large (millions). Render via the shared
   `lib/formatMoney.ts` (added in S3). Never hardcode `$`.
 
-### The monthly report (product's reason for existing)
+### The monthly report (product's reason for existing) — implemented S3
 - Per-base **PowerPoint (.pptx)** deck, 8 slides, sent to the main church monthly. Generated with
-  `pptxgenjs`, must stay **editable**. It mixes **auto-computed** figures (membership, weekly Sunday
-  attendance, offerings/income, expenses, opening/closing balance) with **leader-written narrative**
-  (theme, executive summary, issues, alternative churches, victories, challenges, plans, update on
-  teens). Expenses + opening balance are **manual inputs on the report form** (not tracked); income
-  is auto and closing is computed. "Estimated membership" = count of active teens.
-  Real template lives at `~/Downloads/DA BRAVO REPORT - JUNE 2026....pptx`. Full spec in S3.
+  `pptxgenjs` via `lib/reports/generatePptx.ts` (`buildMonthlyReportPptx`), must stay **editable**
+  (native text boxes/tables, not flattened images). It mixes **auto-computed** figures (membership,
+  weekly Sunday attendance, offerings/income, expenses, opening/closing balance) with
+  **leader-written narrative** (theme, executive summary, issues, alternative churches, victories,
+  challenges, plans, update on teens). Expenses + opening balance are **manual inputs on the report
+  form** (not tracked); income is auto-suggested but editable, and closing is computed.
+  "Estimated membership" = count of active teens.
+  - `lib/reports/monthly.ts` (`getMonthlyReport`) computes the **auto** (app-owned) figures only.
+  - `POST /api/reports/monthly` saves/loads a DRAFT (upsert on `baseId`+`month`+`year`).
+  - `POST /api/reports/monthly/generate` re-saves the draft, builds the .pptx, uploads it to R2
+    (`reports/monthly/<baseId>/<year>-<month>.pptx`), snapshots the auto figures into `dataJson`,
+    flips `status` to FINAL, and streams the file back for immediate download.
+  - `GET /api/reports/monthly/[id]/download` mints a presigned R2 GET URL for re-download.
+  - Brand colors/fonts/logo were extracted directly from the provided template
+    (`~/Downloads/DA BRAVO REPORT - JUNE 2026....pptx`); the logo lives at
+    `public/assets/da-logo.png`. Layout is 16:9 widescreen (13.333in × 7.5in) to match the template.
+  - **R2 credentials must be set** (`R2_ENDPOINT`/`R2_ACCESS_KEY`/`R2_SECRET_KEY`/`R2_BUCKET` in
+    `.env`) for `/generate` to succeed — without them the R2 upload step throws (verified: the pptx
+    build logic itself is independent of R2 and was tested directly).
+  - `app/dashboard/reports/page.tsx` (sidebar: "Monthly Report") hosts the builder UI
+    (`components/reports/MonthlyReportBuilder.tsx`); reused the pre-existing `/dashboard/reports`
+    stub route rather than adding a new one. A future S4 analytics dashboard should use a different
+    route if it needs its own page.
 
 ---
 
@@ -273,8 +305,9 @@ same `lib/` functions, so there's one source of truth for each query.
   If you add more editable relations, double-check the client field name matches the zod schema key,
   not just the Prisma column name.
 - **`/dashboard/events` and `/dashboard/settings` are empty stubs.** Events is redundant (events =
-  activities) and should be removed/merged. **Reports & Settings sidebar links are commented out**
-  in `components/navigation/Sidebar.tsx` — enable when those pages are built.
+  activities) and should be removed/merged. **Settings sidebar link is commented out** in
+  `components/navigation/Sidebar.tsx` — enable when that page is built. The Reports link is now
+  live (S3, relabeled "Monthly Report").
 
 ---
 
@@ -315,9 +348,9 @@ Every schema change must be **additive and non-destructive**. Existing rows must
 ## 11. Roadmap context (so agents understand where things are going)
 
 Work is organized into **sprint prompt files** (see `/.docs/sprints/` — hidden docs folder). High-level order:
-1. Security hardening (auth on API + roles) + core bug patches (dashboard, birthdays, cross-base, singleton).
-2. **Monthly report engine** (add NewConvert model, report template, export) — the core goal.
-3. Offerings & attendance analytics with charts.
+1. Security hardening (auth on API + roles) + core bug patches (dashboard, birthdays, cross-base, singleton). ✅ done.
+2. **Monthly report engine** (NewConvert model, report template, .pptx export) — the core goal. ✅ done (S3).
+3. Offerings & attendance analytics with charts (reuses `lib/reports/monthly.ts`).
 4. Edit Generals, Group edit/delete, Households.
 5. Detail-page analytics (lieutenant/general/platoon/squad).
 6. UI/UX reskin & design system (clean/white, Origin+Quicken inspired) → then full mobile responsiveness.

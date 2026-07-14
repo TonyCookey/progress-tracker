@@ -31,13 +31,16 @@ enum TeenStatus {
 }
 
 model Base {
-  id         String     @id @default(cuid())
-  name       String
-  users      User[]
-  teens      Teen[]
-  groups     Group[]
-  activities Activity[]
-  offerings  Offering[]
+  id             String          @id @default(cuid())
+  name           String
+  label          String?
+  users          User[]
+  teens          Teen[]
+  groups         Group[]
+  activities     Activity[]
+  offerings      Offering[]
+  newConverts    NewConvert[]
+  monthlyReports MonthlyReport[]
 }
 
 model User {
@@ -90,7 +93,7 @@ model Teen {
 model Group {
   id          String         @id @default(cuid())
   name        String
-  description String                  @default("")
+  description String         @default("")
   type        GroupType
   baseId      String
   base        Base           @relation(fields: [baseId], references: [id])
@@ -161,7 +164,7 @@ model ActivityParticipation {
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
 
-  @@unique([activityId, teenId])  // prevent duplicate attendance records
+  @@unique([activityId, teenId]) // prevent duplicate attendance records
   @@index([activityId])
   @@index([teenId])
 }
@@ -185,13 +188,13 @@ model TeacherParticipation {
 
 model Offering {
   id          String    @id @default(cuid())
-  amount      Decimal   @db.Decimal(12,2) @default("0") // use Decimal for money (or keep Int cents)
+  amount      Decimal   @default("0") @db.Decimal(12, 2) // use Decimal for money (or keep Int cents)
   isCrossBase Boolean   @default(false)
   baseId      String?
   base        Base?     @relation(fields: [baseId], references: [id])
   date        DateTime
   service     String
-  notes       String?   
+  notes       String?
   type        String?
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
@@ -201,3 +204,65 @@ model Offering {
   @@index([baseId])
 }
 
+model NewConvert {
+  id          String    @id @default(cuid())
+  name        String
+  gender      String?
+  phone       String?
+  dateOfBirth DateTime?
+  baseId      String?
+  base        Base?     @relation(fields: [baseId], references: [id])
+  isCrossBase Boolean   @default(false)
+  date        DateTime
+  activityId  String?
+  invitedBy   String?
+  followedUp  Boolean   @default(false)
+  becameTeen  Boolean   @default(false)
+  teenId      String?
+  notes       String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  deletedAt   DateTime?
+
+  @@index([baseId])
+  @@index([date])
+}
+
+enum ReportStatus {
+  DRAFT
+  FINAL
+}
+
+model MonthlyReport {
+  id          String       @id @default(cuid())
+  baseId      String
+  base        Base         @relation(fields: [baseId], references: [id])
+  month       Int
+  year        Int
+  generatedBy String
+  generatedAt DateTime     @default(now())
+  status      ReportStatus @default(DRAFT)
+  dataJson    Json?
+  fileKey     String?
+
+  openingBalance Decimal? @db.Decimal(12, 2)
+  income         Decimal? @db.Decimal(12, 2)
+  expenseItems   Json?
+
+  theme               String?
+  executiveSummary    String?
+  issues              String?
+  alternativeChurches String?
+  sundayTeaching      String?
+  description         String?
+  victories           Json?
+  challenges          Json?
+  plans               Json?
+  updateOnTeens       String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([baseId, month, year])
+  @@index([baseId])
+}
