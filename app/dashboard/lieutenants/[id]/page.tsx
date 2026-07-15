@@ -32,6 +32,9 @@ type Teen = {
   platoon?: { id: string; name: string };
   squads: { id: string; name: string }[];
   squadIds?: string[];
+  householdId?: string | null;
+  household?: { id: string; name: string } | null;
+  siblings?: { id: string; name: string }[];
   imageKey?: string;
   phone?: string | null;
   address?: string | null;
@@ -153,6 +156,15 @@ export default function TeenDetailsPage() {
               </a>
             </p>
             <p>
+              <strong>Household:</strong>{" "}
+              <a
+                href={teen.household ? `/dashboard/households/${teen.household.id}` : "#"}
+                className={color.assignment + (teen.household ? " hover:underline" : " text-gray-500")}
+              >
+                <span className={color.assignment}>{teen.household?.name || "N/A"}</span>
+              </a>
+            </p>
+            <p>
               <strong>Squads:</strong>{" "}
               {teen.squads.length ? (
                 <a
@@ -213,6 +225,33 @@ export default function TeenDetailsPage() {
           </p>
         </div>
       </div>
+
+      {/* Siblings (same household) */}
+      {teen.household && (
+        <div className="bg-white rounded-lg shadow p-8 mb-8">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className={`text-xl font-semibold ${color.header}`}>
+              Siblings <span className="text-gray-500 font-normal text-base">({teen.household.name})</span>
+            </h3>
+          </div>
+          {teen.siblings?.length ? (
+            <ul className="divide-y divide-gray-200">
+              {teen.siblings.map((sibling) => (
+                <Link href={`/dashboard/lieutenants/${sibling.id}`} key={sibling.id} className="block hover:bg-blue-50 rounded-lg px-1">
+                  <li className="flex items-center gap-4 py-3">
+                    <div className="w-8 h-8 rounded-full bg-cyan-50 flex items-center justify-center text-sm font-bold text-blue-700 shadow">
+                      {sibling.name?.[0] ?? "?"}
+                    </div>
+                    <p className="font-medium text-blue-900 text-sm">{sibling.name}</p>
+                  </li>
+                </Link>
+              ))}
+            </ul>
+          ) : (
+            <p className="text-gray-500">No other teens in this household.</p>
+          )}
+        </div>
+      )}
 
       {/* Attendance */}
       <div className="bg-white rounded-lg shadow p-8 mb-8">

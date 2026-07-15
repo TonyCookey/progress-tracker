@@ -8,6 +8,7 @@ const pastoralFields = {
   guardianName: z.string().optional().nullable(),
   guardianPhone: z.string().optional().nullable(),
   dateJoined: optionalDate(),
+  householdId: z.string().min(1).optional().nullable(),
 };
 
 export const createTeenSchema = z.object({

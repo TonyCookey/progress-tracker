@@ -13,6 +13,7 @@ type FormData = {
   baseId: string;
   platoonId: string;
   squadIds: string[];
+  householdId: string;
   imageUrl?: string;
   phone: string;
   address: string;
@@ -45,6 +46,7 @@ export default function EditLieutenantForm({ lieutenant, onSuccess }: { lieutena
       baseId: lieutenant.baseId || "",
       platoonId: lieutenant.groupId || "",
       squadIds: lieutenant.squadIds || [],
+      householdId: lieutenant.householdId || "",
       imageUrl: lieutenant.imageUrl || "",
       phone: lieutenant.phone || "",
       address: lieutenant.address || "",
@@ -59,6 +61,7 @@ export default function EditLieutenantForm({ lieutenant, onSuccess }: { lieutena
   const [bases, setBases] = useState<Base[]>([]);
   const [squads, setSquads] = useState<Base[]>([]);
   const [platoons, setPlatoons] = useState<Base[]>([]);
+  const [households, setHouseholds] = useState<Base[]>([]);
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string>(lieutenant.imageUrl || "");
 
@@ -69,6 +72,7 @@ export default function EditLieutenantForm({ lieutenant, onSuccess }: { lieutena
     setValue("baseId", lieutenant.baseId || "");
     setValue("platoonId", lieutenant.groupId || "");
     setValue("squadIds", lieutenant.squadIds || []);
+    setValue("householdId", lieutenant.householdId || "");
     setValue("phone", lieutenant.phone || "");
     setValue("address", lieutenant.address || "");
     setValue("school", lieutenant.school || "");
@@ -95,14 +99,21 @@ export default function EditLieutenantForm({ lieutenant, onSuccess }: { lieutena
       const data = await res.json();
       setPlatoons(data);
     };
+    const fetchHouseholds = async () => {
+      const res = await fetch("/api/households");
+      const data = await res.json();
+      setHouseholds(data);
+    };
 
     fetchBases();
     fetchSquads();
     fetchPlatoons();
+    fetchHouseholds();
   }, []);
 
   useSyncSelectValue(bases, setValue, "baseId", lieutenant.baseId || "");
   useSyncSelectValue(platoons, setValue, "platoonId", lieutenant.groupId || "");
+  useSyncSelectValue(households, setValue, "householdId", lieutenant.householdId || "");
 
   const uploadLieutenantImage = async (imageFile: File, lieutenantId: string) => {
     try {
@@ -155,7 +166,7 @@ export default function EditLieutenantForm({ lieutenant, onSuccess }: { lieutena
       const res = await fetch(`/api/lieutenants/${lieutenant.id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...data, rank: "LIEUTENANT" }),
+        body: JSON.stringify({ ...data, rank: "LIEUTENANT", householdId: data.householdId || null }),
       });
       if (!res.ok) {
         const text = await res.text();
@@ -241,6 +252,18 @@ export default function EditLieutenantForm({ lieutenant, onSuccess }: { lieutena
               />
             )}
           />
+        </div>
+
+        <div>
+          <label className="block text-sm font-medium mb-2">Household</label>
+          <select {...register("householdId")} className="w-full border px-3 py-2 rounded">
+            <option value="">No household</option>
+            {households.map((household) => (
+              <option key={household.id} value={household.id}>
+                {household.name}
+              </option>
+            ))}
+          </select>
         </div>
 
         <div>

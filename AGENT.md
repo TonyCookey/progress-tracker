@@ -136,10 +136,18 @@ Every model above with a `deletedAt DateTime?` field is soft-deleted: `DELETE` r
 default; pass `?includeArchived=true` on list/detail GETs to include them. Historical/report data
 therefore survives a "delete".
 
-### Not yet modeled (needed — see roadmap)
-- **Household** (grouping teens by family/household) — see S6.
+- **Household** (added S6): `name`, `address?`, `primaryContactName?`, `primaryContactPhone?`,
+  optional Base (nullable `baseId`, same convention as Activity/Offering/NewConvert — a household
+  is typically tied to one base but isn't required to be), member `teens` (`Teen.householdId`, a
+  teen belongs to at most one household), soft-delete via `deletedAt`. **Deliberately kept
+  independent from `Teen.address`/`guardianName`/`guardianPhone` (added S2)** — a teen may have no
+  household, and even within a household a guardian can legitimately differ per teen (divorced
+  parents, foster care, a sibling living with a relative). No sync/fallback/override display
+  between the two; both are separately editable and both remain visible on the teen detail page and
+  household detail page. Deleting a household with active (non-deleted) member teens is blocked
+  (409), same pattern as Group.
 
-> NewConvert, MonthlyReport, and Base.label were modeled in S3 (see above).
+> NewConvert, MonthlyReport, Base.label were modeled in S3 (see above); Household in S6.
 
 > **Deliberately NOT modeled:** expenses and account/bank balances are **not** tracked in-app — the
 > app is not the source of truth for them. In the monthly report the admin types opening balance,

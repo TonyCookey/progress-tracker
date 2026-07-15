@@ -29,6 +29,7 @@ export async function POST(req: Request) {
         guardianPhone: body.guardianPhone,
         dateJoined: body.dateJoined ?? new Date(),
         status: body.status,
+        householdId: body.householdId,
         squadMemberships: {
           create: squadIds.map((id: string) => ({
             group: { connect: { id } },
