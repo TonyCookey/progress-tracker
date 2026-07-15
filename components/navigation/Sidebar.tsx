@@ -16,6 +16,7 @@ import {
   CalendarDaysIcon,
   CurrencyDollarIcon,
   UserPlusIcon,
+  HomeModernIcon,
 } from "@heroicons/react/24/outline";
 import { useSession } from "next-auth/react";
 import { UploadCloud } from "lucide-react";
@@ -26,6 +27,7 @@ const links = [
   { href: "/dashboard/generals", label: "Generals", icon: <UserCircleIcon className="h-6 w-6" />, role: "SUPERADMIN" },
   { href: "/dashboard/squads", label: "Squads", icon: <UserGroupIcon className="h-6 w-6" /> },
   { href: "/dashboard/platoons", label: "Platoons", icon: <ShieldCheckIcon className="h-6 w-6" /> },
+  { href: "/dashboard/households", label: "Households", icon: <HomeModernIcon className="h-6 w-6" /> },
   { href: "/dashboard/activities", label: "Activities", icon: <CalendarDaysIcon className="h-6 w-6" /> },
   { href: "/dashboard/offerings", label: "Offerings", icon: <CurrencyDollarIcon className="h-6 w-6" /> },
   { href: "/dashboard/birthdays", label: "Birthdays", icon: <CakeIcon className="h-6 w-6" /> },

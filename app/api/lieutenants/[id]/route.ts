@@ -16,6 +16,7 @@ export async function GET(req: Request, { params }: { params: { id: string } }) 
       include: {
         base: true,
         platoon: true,
+        household: true,
         // A soft-deleted squad must not appear as one of this teen's active squads.
         squadMemberships: {
           where: { group: notDeleted(includeArchived) },
@@ -36,6 +37,13 @@ export async function GET(req: Request, { params }: { params: { id: string } }) 
     // `platoon` is a to-one relation, so Prisma can't filter it out via `include`'s
     // `where` — null it out manually if that platoon was soft-deleted.
     const platoonDeleted = !includeArchived && !!teen.platoon?.deletedAt;
+    const householdDeleted = !includeArchived && !!teen.household?.deletedAt;
+
+    const siblings = teen.householdId
+      ? await prisma.teen.findMany({
+          where: { householdId: teen.householdId, id: { not: teen.id }, ...notDeleted(includeArchived) },
+        })
+      : [];
 
     const attendance = teen.activityParticipation.map((p) => ({
       activityId: p.activityId,
@@ -49,6 +57,8 @@ export async function GET(req: Request, { params }: { params: { id: string } }) 
     return NextResponse.json({
       ...teen,
       platoon: platoonDeleted ? null : teen.platoon,
+      household: householdDeleted ? null : teen.household,
+      siblings,
       squads: teen.squadMemberships.map((membership) => membership.group),
       attendance,
       attendanceRate,
@@ -88,6 +98,7 @@ export async function PUT(req: Request, { params }: { params: { id: string } }) 
         guardianPhone: data.guardianPhone,
         dateJoined: data.dateJoined,
         status: data.status,
+        householdId: data.householdId || null,
         squadMemberships: {
           deleteMany: {}, // Clear previous
           create: (data.squadIds ?? []).map((groupId: string) => ({

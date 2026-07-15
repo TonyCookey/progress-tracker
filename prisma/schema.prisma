@@ -41,6 +41,7 @@ model Base {
   offerings      Offering[]
   newConverts    NewConvert[]
   monthlyReports MonthlyReport[]
+  households     Household[]
 }
 
 model User {
@@ -85,9 +86,12 @@ model Teen {
   guardianPhone         String?
   dateJoined            DateTime?
   status                TeenStatus              @default(ACTIVE)
+  householdId           String?
+  household             Household?              @relation(fields: [householdId], references: [id])
 
   @@index([baseId])
   @@index([groupId])
+  @@index([householdId])
 }
 
 model Group {
@@ -226,6 +230,22 @@ model NewConvert {
 
   @@index([baseId])
   @@index([date])
+}
+
+model Household {
+  id                  String    @id @default(cuid())
+  name                String
+  address             String?
+  primaryContactName  String?
+  primaryContactPhone String?
+  baseId              String?
+  base                Base?     @relation(fields: [baseId], references: [id])
+  teens               Teen[]
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+  deletedAt           DateTime?
+
+  @@index([baseId])
 }
 
 enum ReportStatus {
