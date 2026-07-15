@@ -10,3 +10,7 @@ export const updateGeneralSchema = z.object({
   role: z.enum(["SUPERADMIN", "GENERAL", "COLONEL", "VOLUNTEER"]),
   baseId: z.string().min(1, "Base is required"),
 });
+
+export const toggleActiveSchema = z.object({
+  active: z.boolean(),
+});

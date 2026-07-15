@@ -10,6 +10,7 @@ type SquadOption = {
   value: string;
   label: string;
 };
+type RefDataOption = { id: string; key: string; label: string };
 export default function CreateActivityForm() {
   const {
     register,
@@ -23,6 +24,7 @@ export default function CreateActivityForm() {
   const [bases, setBases] = useState<Option[]>([]);
   const [platoons, setPlatoons] = useState<Option[]>([]);
   const [squads, setSquads] = useState<Option[]>([]);
+  const [activityTypes, setActivityTypes] = useState<RefDataOption[]>([]);
 
   useEffect(() => {
     const fetchBases = async () => {
@@ -40,10 +42,17 @@ export default function CreateActivityForm() {
       const data = await res.json();
       setPlatoons(data);
     };
+    const fetchActivityTypes = async () => {
+      const res = await fetch("/api/refdata?category=activity_type");
+      if (!res.ok) return;
+      const data = await res.json();
+      setActivityTypes(data);
+    };
 
     fetchBases();
     fetchSquads();
     fetchPlatoons();
+    fetchActivityTypes();
   }, []);
 
   const onSubmit = async (data: any) => {
@@ -97,14 +106,15 @@ export default function CreateActivityForm() {
         <label htmlFor="type" className="block text-sm font-medium">
           Type
         </label>
-        <select id="type" {...register("type")} className="w-full border rounded px-3 py-2 mt-1">
-          <option value="Outreach">Outreach</option>
-          <option value="Worship">Worship</option>
-          <option value="Sunday Service">Sunday Service</option>
-          <option value="Bible Study">Bible Study</option>
-          <option value="Hangouts">Hangouts</option>
-          <option value="Rehearsals">Rehearsals</option>
-          <option value="Other">Other</option>
+        <select id="type" {...register("type", { required: true })} className="w-full border rounded px-3 py-2 mt-1" defaultValue="">
+          <option value="" disabled>
+            Select a type
+          </option>
+          {activityTypes.map((t) => (
+            <option key={t.id} value={t.key}>
+              {t.label}
+            </option>
+          ))}
         </select>
       </div>
 

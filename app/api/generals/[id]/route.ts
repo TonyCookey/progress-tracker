@@ -1,9 +1,10 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { requireSession, requireRole, assertBaseAccess, handleApiError } from "@/lib/auth";
-import { updateGeneralSchema } from "@/lib/validation/general";
+import { requireSession, requireRole, assertBaseAccess, handleApiError, ApiError } from "@/lib/auth";
+import { updateGeneralSchema, toggleActiveSchema } from "@/lib/validation/general";
 import { parseOrThrow } from "@/lib/validation/parse";
 import { notDeleted } from "@/lib/softDelete";
+import { safeUserSelect } from "@/lib/users";
 
 export async function GET(req: Request, { params }: { params: { id: string } }) {
   try {
@@ -13,8 +14,8 @@ export async function GET(req: Request, { params }: { params: { id: string } }) 
 
     const general = await prisma.user.findFirst({
       where: { id: params.id, ...notDeleted(includeArchived) },
-      include: {
-        base: true,
+      select: {
+        ...safeUserSelect,
         leadingGroups: { where: notDeleted(includeArchived) },
         // supportingGroups is the GroupSupport join table, not Group itself —
         // must include the nested `group` to get name/id, not just the join row.
@@ -103,6 +104,7 @@ export async function PUT(req: Request, { params }: { params: { id: string } }) 
         role: isSuperAdmin ? data.role : existingGeneral.role,
         baseId: isSuperAdmin ? data.baseId : existingGeneral.baseId,
       },
+      select: safeUserSelect,
     });
 
     return NextResponse.json(updatedGeneral);
@@ -111,9 +113,34 @@ export async function PUT(req: Request, { params }: { params: { id: string } }) 
   }
 }
 
+export async function PATCH(req: Request, { params }: { params: { id: string } }) {
+  try {
+    const session = await requireRole(["SUPERADMIN"]);
+    const { active } = parseOrThrow(toggleActiveSchema, await req.json());
+
+    if (!active && session.user.id === params.id) {
+      throw new ApiError(400, "You cannot deactivate your own account");
+    }
+
+    const updated = await prisma.user.update({
+      where: { id: params.id },
+      data: { deletedAt: active ? null : new Date() },
+      select: safeUserSelect,
+    });
+
+    return NextResponse.json(updated);
+  } catch (error) {
+    return handleApiError(error);
+  }
+}
+
 export async function DELETE(req: Request, { params }: { params: { id: string } }) {
   try {
-    await requireRole(["SUPERADMIN"]);
+    const session = await requireRole(["SUPERADMIN"]);
+
+    if (session.user.id === params.id) {
+      throw new ApiError(400, "You cannot deactivate your own account");
+    }
 
     await prisma.user.update({
       where: { id: params.id },

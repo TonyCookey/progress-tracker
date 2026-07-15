@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { requireRole, handleApiError } from "@/lib/auth";
 import { registerSchema } from "@/lib/validation/register";
 import { parseOrThrow } from "@/lib/validation/parse";
+import { safeUserSelect } from "@/lib/users";
 
 export async function POST(req: Request) {
   try {
@@ -43,6 +44,7 @@ export async function POST(req: Request) {
         role,
         baseId: base.id,
       },
+      select: safeUserSelect,
     });
 
     return NextResponse.json({ user }, { status: 201 });

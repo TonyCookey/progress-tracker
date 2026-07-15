@@ -32,7 +32,7 @@ enum TeenStatus {
 
 model Base {
   id             String          @id @default(cuid())
-  name           String
+  name           String          @unique
   label          String?
   users          User[]
   teens          Teen[]
@@ -58,6 +58,7 @@ model User {
   leadingGroups        Group[]                @relation("GroupLeader")
   supportingGroups     GroupSupport[]
   teacherParticipation TeacherParticipation[]
+  passwordResetTokens  PasswordResetToken[]
   createdAt            DateTime               @default(now())
   updatedAt            DateTime               @updatedAt
   deletedAt            DateTime?
@@ -285,4 +286,38 @@ model MonthlyReport {
 
   @@unique([baseId, month, year])
   @@index([baseId])
+}
+
+model RefData {
+  id        String   @id @default(cuid())
+  category  String // "activity_type" | "offering_type"
+  key       String
+  label     String
+  sortOrder Int      @default(0)
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([category, key])
+  @@index([category])
+}
+
+model PasswordResetToken {
+  id        String    @id @default(cuid())
+  userId    String
+  user      User      @relation(fields: [userId], references: [id])
+  tokenHash String    @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  @@index([userId])
+}
+
+model ReportTemplateConfig {
+  id           String   @id @default(cuid())
+  key          String   @unique @default("default")
+  sectionsJson Json
+  updatedAt    DateTime @updatedAt
+  createdAt    DateTime @default(now())
 }

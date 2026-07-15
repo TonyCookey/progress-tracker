@@ -10,6 +10,7 @@ type SquadOption = {
   value: string;
   label: string;
 };
+type RefDataOption = { id: string; key: string; label: string; active: boolean };
 
 type Offering = {
   id: string;
@@ -44,6 +45,7 @@ export default function RecordOfferingForm({ offering }: { offering?: Offering }
   const router = useRouter();
 
   const [bases, setBases] = useState<Option[]>([]);
+  const [offeringTypes, setOfferingTypes] = useState<RefDataOption[]>([]);
 
   useEffect(() => {
     const fetchBases = async () => {
@@ -51,11 +53,19 @@ export default function RecordOfferingForm({ offering }: { offering?: Offering }
       const data = await res.json();
       setBases(data);
     };
+    const fetchOfferingTypes = async () => {
+      const res = await fetch(`/api/refdata?category=offering_type${isEdit ? "&includeInactive=true" : ""}`);
+      if (!res.ok) return;
+      const data = await res.json();
+      setOfferingTypes(data);
+    };
 
     fetchBases();
+    fetchOfferingTypes();
   }, []);
 
   useSyncSelectValue(bases, setValue, "baseId", offering?.isCrossBase ? "cross-base" : offering?.baseId ?? "");
+  useSyncSelectValue(offeringTypes, setValue, "type", offering?.type ?? "Cash");
 
   const onSubmit = async (data: any) => {
     try {
@@ -114,9 +124,16 @@ export default function RecordOfferingForm({ offering }: { offering?: Offering }
         <label htmlFor="type" className="block text-sm font-medium">
           Type
         </label>
-        <select id="type" {...register("type")} className="w-full border rounded px-3 py-2 mt-1">
-          <option value="Cash">Cash</option>
-          <option value="Online">Transfer</option>
+        <select id="type" {...register("type", { required: true })} className="w-full border rounded px-3 py-2 mt-1">
+          <option value="" disabled>
+            Select a type
+          </option>
+          {offeringTypes.map((t) => (
+            <option key={t.id} value={t.key}>
+              {t.label}
+              {!t.active ? " (inactive)" : ""}
+            </option>
+          ))}
         </select>
       </div>
 
