@@ -13,6 +13,7 @@ type FormData = {
   email: string;
   gender: string;
   dateOfBirth: string;
+  anniversaryDate: string;
   baseId: string;
   role: string;
 };
@@ -29,6 +30,7 @@ export default function EditGeneralForm({ general, onSuccess }: { general: Gener
       email: general.email || "",
       gender: general.gender || "Male",
       dateOfBirth: general.dateOfBirth ? new Date(general.dateOfBirth).toISOString().slice(0, 10) : "",
+      anniversaryDate: general.anniversaryDate ? new Date(general.anniversaryDate).toISOString().slice(0, 10) : "",
       baseId: general.baseId || "",
       role: general.role || "GENERAL",
     },
@@ -42,6 +44,7 @@ export default function EditGeneralForm({ general, onSuccess }: { general: Gener
     setValue("email", general.email || "");
     setValue("gender", general.gender || "Male");
     setValue("dateOfBirth", general.dateOfBirth ? new Date(general.dateOfBirth).toISOString().slice(0, 10) : "");
+    setValue("anniversaryDate", general.anniversaryDate ? new Date(general.anniversaryDate).toISOString().slice(0, 10) : "");
     setValue("baseId", general.baseId || "");
     setValue("role", general.role || "GENERAL");
   }, [general, setValue]);
@@ -95,6 +98,8 @@ export default function EditGeneralForm({ general, onSuccess }: { general: Gener
         </Select>
 
         <Input label="Date of Birth" type="date" {...register("dateOfBirth")} />
+
+        <Input label="Anniversary Date" type="date" {...register("anniversaryDate")} />
 
         <Select label="Base" {...register("baseId", { required: true })}>
           <option value="">Select a base</option>

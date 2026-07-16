@@ -27,9 +27,12 @@ function nextOccurrenceExpr(dobColumn: string) {
   `;
 }
 
+const GENERAL_ROLES = `'SUPERADMIN', 'GENERAL', 'COLONEL', 'VOLUNTEER'`;
+
 export async function getUpcomingBirthdays() {
   const nextTeenBirthday = nextOccurrenceExpr(`t."dateOfBirth"`);
   const nextGeneralBirthday = nextOccurrenceExpr(`u."dateOfBirth"`);
+  const nextGeneralAnniversary = nextOccurrenceExpr(`u."anniversaryDate"`);
 
   const teens = await prisma.$queryRawUnsafe(`
     SELECT
@@ -61,12 +64,30 @@ export async function getUpcomingBirthdays() {
     FROM "User" u
     JOIN "Base" b ON u."baseId" = b.id
     WHERE
-      u."role" IN ('GENERAL', 'COLONEL', 'VOLUNTEER')
+      u."role" IN (${GENERAL_ROLES})
       AND u."dateOfBirth" IS NOT NULL
       AND u."deletedAt" IS NULL
       AND (${nextGeneralBirthday}::date - CURRENT_DATE) BETWEEN 0 AND 30
     ORDER BY "nextBirthday"
   `);
 
-  return { generals, teens };
+  const anniversaries = await prisma.$queryRawUnsafe(`
+    SELECT
+      u.id,
+      u.name,
+      u."anniversaryDate",
+      b.name AS "baseName",
+      (${nextGeneralAnniversary})::date AS "nextAnniversary",
+      (${nextGeneralAnniversary}::date - CURRENT_DATE) AS "daysToNextAnniversary"
+    FROM "User" u
+    JOIN "Base" b ON u."baseId" = b.id
+    WHERE
+      u."role" IN (${GENERAL_ROLES})
+      AND u."anniversaryDate" IS NOT NULL
+      AND u."deletedAt" IS NULL
+      AND (${nextGeneralAnniversary}::date - CURRENT_DATE) BETWEEN 0 AND 30
+    ORDER BY "nextAnniversary"
+  `);
+
+  return { generals, teens, anniversaries };
 }

@@ -9,6 +9,7 @@ export const safeUserSelect = {
   username: true,
   email: true,
   dateOfBirth: true,
+  anniversaryDate: true,
   gender: true,
   role: true,
   baseId: true,

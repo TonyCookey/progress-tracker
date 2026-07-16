@@ -105,6 +105,7 @@ export async function PUT(req: Request, { params }: { params: { id: string } }) 
         email: data.email,
         gender: data.gender,
         dateOfBirth: data.dateOfBirth,
+        anniversaryDate: data.anniversaryDate,
         role: isSuperAdmin ? data.role : existingGeneral.role,
         baseId: isSuperAdmin ? data.baseId : existingGeneral.baseId,
       },
