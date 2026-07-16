@@ -3,6 +3,10 @@
 import { useForm } from "react-hook-form";
 import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
+import Input from "@/components/ui/Input";
+import Select from "@/components/ui/Select";
+import Textarea from "@/components/ui/Textarea";
+import Button from "@/components/ui/Button";
 
 type FormData = {
   name: string;
@@ -22,7 +26,12 @@ type Option = { id: string; name: string };
 export default function CreateNewConvertForm({ onSuccess }: { onSuccess: () => void }) {
   const { data: session } = useSession();
   const isSuperAdmin = session?.user?.role === "SUPERADMIN";
-  const { register, handleSubmit, reset } = useForm<FormData>({
+  const {
+    register,
+    handleSubmit,
+    reset,
+    formState: { errors },
+  } = useForm<FormData>({
     defaultValues: { baseId: session?.user?.baseId ?? "" },
   });
   const [loading, setLoading] = useState(false);
@@ -59,77 +68,60 @@ export default function CreateNewConvertForm({ onSuccess }: { onSuccess: () => v
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="mt-4">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div>
-          <label className="block text-sm font-medium mb-2">Full Name</label>
-          <input {...register("name", { required: true })} className="w-full border px-3 py-2 rounded" />
-        </div>
+        <Input label="Full Name" {...register("name", { required: true })} error={errors.name && "This field is required"} />
 
-        <div>
-          <label className="block text-sm font-medium mb-2">Gender</label>
-          <select {...register("gender")} className="w-full border px-3 py-2 rounded">
-            <option value="">Select</option>
-            <option value="Male">Male</option>
-            <option value="Female">Female</option>
-          </select>
-        </div>
+        <Select label="Gender" {...register("gender")}>
+          <option value="">Select</option>
+          <option value="Male">Male</option>
+          <option value="Female">Female</option>
+        </Select>
 
-        <div>
-          <label className="block text-sm font-medium mb-2">Phone</label>
-          <input {...register("phone")} className="w-full border px-3 py-2 rounded" />
-        </div>
+        <Input label="Phone" {...register("phone")} />
 
-        <div>
-          <label className="block text-sm font-medium mb-2">Date of Birth</label>
-          <input type="date" {...register("dateOfBirth")} className="w-full border px-3 py-2 rounded" />
-        </div>
+        <Input label="Date of Birth" type="date" {...register("dateOfBirth")} />
 
-        <div>
-          <label className="block text-sm font-medium mb-2">Date (came/converted)</label>
-          <input type="date" {...register("date", { required: true })} className="w-full border px-3 py-2 rounded" />
-        </div>
+        <Input
+          label="Date (came/converted)"
+          type="date"
+          {...register("date", { required: true })}
+          error={errors.date && "This field is required"}
+        />
 
         {isSuperAdmin && (
-          <div>
-            <label className="block text-sm font-medium mb-2">Base</label>
-            <select {...register("baseId", { required: true })} className="w-full border px-3 py-2 rounded">
-              <option value="">Select a base</option>
-              {bases.map((base) => (
-                <option key={base.id} value={base.id}>
-                  {base.name}
-                </option>
-              ))}
-            </select>
-          </div>
+          <Select label="Base" {...register("baseId", { required: true })} error={errors.baseId && "This field is required"}>
+            <option value="">Select a base</option>
+            {bases.map((base) => (
+              <option key={base.id} value={base.id}>
+                {base.name}
+              </option>
+            ))}
+          </Select>
         )}
 
-        <div>
-          <label className="block text-sm font-medium mb-2">Invited By</label>
-          <input {...register("invitedBy")} className="w-full border px-3 py-2 rounded" />
-        </div>
+        <Input label="Invited By" {...register("invitedBy")} />
 
         <div className="flex items-center gap-2 mt-6">
-          <input type="checkbox" {...register("followedUp")} id="followedUp" className="h-4 w-4" />
+          <input type="checkbox" {...register("followedUp")} id="followedUp" className="h-4 w-4 rounded accent-accent-500" />
           <label htmlFor="followedUp" className="text-sm font-medium">
             Followed Up
           </label>
         </div>
 
         <div className="flex items-center gap-2 mt-6">
-          <input type="checkbox" {...register("becameTeen")} id="becameTeen" className="h-4 w-4" />
+          <input type="checkbox" {...register("becameTeen")} id="becameTeen" className="h-4 w-4 rounded accent-accent-500" />
           <label htmlFor="becameTeen" className="text-sm font-medium">
             Became a Teen
           </label>
         </div>
 
         <div className="md:col-span-2">
-          <label className="block text-sm font-medium mb-2">Notes</label>
-          <textarea {...register("notes")} className="w-full border px-3 py-2 rounded" rows={3} />
+          <Textarea label="Notes" {...register("notes")} rows={3} />
         </div>
       </div>
 
-      <button type="submit" className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 w-full mt-4" disabled={loading}>
+      <Button type="submit" className="w-full mt-4" isLoading={loading}>
         {loading ? "Creating..." : "Create New Convert"}
-      </button>
+      </Button>
     </form>
   );
 }

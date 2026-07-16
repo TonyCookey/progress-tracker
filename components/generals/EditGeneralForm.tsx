@@ -3,6 +3,9 @@
 import { useForm } from "react-hook-form";
 import { useState, useEffect } from "react";
 import { useSyncSelectValue } from "@/lib/hooks/useSyncSelectValue";
+import Input from "@/components/ui/Input";
+import Select from "@/components/ui/Select";
+import Button from "@/components/ui/Button";
 
 type FormData = {
   name: string;
@@ -80,60 +83,39 @@ export default function EditGeneralForm({ general, onSuccess }: { general: Gener
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="mt-4">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div>
-          <label className="block text-sm font-medium mb-2">Full Name</label>
-          <input {...register("name", { required: true })} className="w-full border px-3 py-2 rounded" />
-        </div>
+        <Input label="Full Name" {...register("name", { required: true })} />
 
-        <div>
-          <label className="block text-sm font-medium mb-2">Username</label>
-          <input {...register("username", { required: true })} className="w-full border px-3 py-2 rounded" />
-        </div>
+        <Input label="Username" {...register("username", { required: true })} />
 
-        <div>
-          <label className="block text-sm font-medium mb-2">Email</label>
-          <input type="email" {...register("email", { required: true })} className="w-full border px-3 py-2 rounded" />
-        </div>
+        <Input label="Email" type="email" {...register("email", { required: true })} />
 
-        <div>
-          <label className="block text-sm font-medium mb-2">Gender</label>
-          <select {...register("gender")} className="w-full border px-3 py-2 rounded">
-            <option value="Male">Male</option>
-            <option value="Female">Female</option>
-          </select>
-        </div>
+        <Select label="Gender" {...register("gender")}>
+          <option value="Male">Male</option>
+          <option value="Female">Female</option>
+        </Select>
 
-        <div>
-          <label className="block text-sm font-medium mb-2">Date of Birth</label>
-          <input type="date" {...register("dateOfBirth")} className="w-full border px-3 py-2 rounded" />
-        </div>
+        <Input label="Date of Birth" type="date" {...register("dateOfBirth")} />
 
-        <div>
-          <label className="block text-sm font-medium mb-2">Base</label>
-          <select {...register("baseId", { required: true })} className="w-full border px-3 py-2 rounded">
-            <option value="">Select a base</option>
-            {bases.map((base) => (
-              <option key={base.id} value={base.id}>
-                {base.name}
-              </option>
-            ))}
-          </select>
-        </div>
+        <Select label="Base" {...register("baseId", { required: true })}>
+          <option value="">Select a base</option>
+          {bases.map((base) => (
+            <option key={base.id} value={base.id}>
+              {base.name}
+            </option>
+          ))}
+        </Select>
 
-        <div>
-          <label className="block text-sm font-medium mb-2">Role</label>
-          <select {...register("role", { required: true })} className="w-full border px-3 py-2 rounded">
-            <option value="SUPERADMIN">Super Admin</option>
-            <option value="GENERAL">General</option>
-            <option value="COLONEL">Colonel</option>
-            <option value="VOLUNTEER">Volunteer</option>
-          </select>
-        </div>
+        <Select label="Role" {...register("role", { required: true })}>
+          <option value="SUPERADMIN">Super Admin</option>
+          <option value="GENERAL">General</option>
+          <option value="COLONEL">Colonel</option>
+          <option value="VOLUNTEER">Volunteer</option>
+        </Select>
       </div>
 
-      <button type="submit" className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 w-full mt-4" disabled={loading}>
+      <Button type="submit" className="w-full mt-4" isLoading={loading}>
         {loading ? "Updating..." : "Update General"}
-      </button>
+      </Button>
     </form>
   );
 }

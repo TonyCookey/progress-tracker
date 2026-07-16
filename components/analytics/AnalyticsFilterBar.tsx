@@ -30,12 +30,12 @@ export default function AnalyticsFilterBar({
   presets?: boolean;
 }) {
   return (
-    <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:flex-wrap bg-white border rounded p-4 shadow-sm">
+    <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:flex-wrap bg-white border border-neutral-200 rounded-card p-4 shadow-soft">
       {isSuperAdmin && (
         <select
           value={value.baseId}
           onChange={(e) => onChange({ ...value, baseId: e.target.value })}
-          className="border rounded px-3 py-2"
+          className="border border-neutral-300 rounded-lg px-3 py-2 text-sm text-neutral-900 focus:outline-none focus:ring-2 focus:ring-accent-400 focus:border-accent-500"
         >
           <option value="">All bases</option>
           {bases.map((base) => (
@@ -45,20 +45,20 @@ export default function AnalyticsFilterBar({
           ))}
         </select>
       )}
-      <div className="flex items-center gap-2">
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
         <input
           type="date"
           value={value.from}
           onChange={(e) => onChange({ ...value, from: e.target.value })}
-          className="border rounded px-3 py-2"
+          className="w-full sm:w-auto border border-neutral-300 rounded-lg px-3 py-2 text-sm text-neutral-900 focus:outline-none focus:ring-2 focus:ring-accent-400 focus:border-accent-500"
           aria-label="From date"
         />
-        <span className="text-gray-400">to</span>
+        <span className="text-neutral-400 hidden sm:inline">to</span>
         <input
           type="date"
           value={value.to}
           onChange={(e) => onChange({ ...value, to: e.target.value })}
-          className="border rounded px-3 py-2"
+          className="w-full sm:w-auto border border-neutral-300 rounded-lg px-3 py-2 text-sm text-neutral-900 focus:outline-none focus:ring-2 focus:ring-accent-400 focus:border-accent-500"
           aria-label="To date"
         />
       </div>
@@ -76,7 +76,7 @@ export default function AnalyticsFilterBar({
               key={kind}
               type="button"
               onClick={() => onChange({ ...value, ...preset(kind) })}
-              className="text-sm px-3 py-1 bg-blue-50 text-blue-700 rounded hover:bg-blue-100"
+              className="text-sm px-3 py-1.5 bg-accent-50 text-accent-700 rounded-pill hover:bg-accent-100 font-medium transition-colors"
             >
               {label}
             </button>

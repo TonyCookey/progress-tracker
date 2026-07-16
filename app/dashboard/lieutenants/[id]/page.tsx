@@ -12,6 +12,11 @@ import LineTrendChart from "@/components/charts/LineTrendChart";
 import StatTile from "@/components/charts/StatTile";
 import { formatDateUTC } from "@/lib/formatDate";
 import { getNextBirthday } from "@/lib/getNextBirthday";
+import Card from "@/components/ui/Card";
+import Badge from "@/components/ui/Badge";
+import Button from "@/components/ui/Button";
+import Avatar from "@/components/ui/Avatar";
+import type { BadgeTone } from "@/components/ui/Badge";
 
 type AttendanceRecord = {
   activityId: string;
@@ -114,71 +119,72 @@ export default function TeenDetailsPage() {
   if (!teen) return <LoadingSpinner />;
 
   const color = getColorClasses(teen.gender);
+  const statusTone: BadgeTone = teen.status === "LEFT" ? "neutral" : teen.status === "INACTIVE" ? "warning" : "success";
 
   return (
     <div className="max-w-5xl mx-auto p-6">
-      <div className="flex flex-col md:flex-row gap-8 mb-8">
+      <div className="flex flex-col md:flex-row gap-6 mb-8">
         {/* Profile Card */}
-        <div className={`flex-1 ${color.gradient} rounded-xl shadow-lg p-8 flex items-center gap-6`}>
+        <Card className={`flex-1 ${color.gradient} flex items-center gap-6`}>
           {teen.imageKey ? (
             <LieutenantAvatar imageKey={teen.imageKey} alt={`${teen.name}'s profile`} size={80} />
           ) : (
-            <div className={`w-24 h-24 rounded-full ${color.avatar} flex items-center justify-center text-4xl font-bold text-white shadow`}>
+            <div className={`w-24 h-24 rounded-full ${color.avatar} flex items-center justify-center text-3xl font-bold text-white shadow`}>
               {teen.name?.[0] ?? "?"}
             </div>
           )}
           <div>
-            <h2 className={`text-3xl font-bold mb-2 ${color.name}`}>{teen.name}</h2>
-            <span className={`inline-block ${color.badge} text-white px-3 py-1 rounded-full text-sm font-semibold mb-2`}>{teen.rank}</span>
-            <p className="text-gray-700 mb-1">
-              <strong>Gender:</strong> {teen.gender}
+            <h2 className={`text-2xl font-bold mb-2 ${color.name}`}>{teen.name}</h2>
+            <span className={`inline-block ${color.badge} text-white px-3 py-1 rounded-pill text-sm font-semibold mb-2`}>{teen.rank}</span>
+            <p className="text-neutral-700 mb-1">
+              <strong className="text-neutral-800">Gender:</strong> {teen.gender}
             </p>
-            <p className="text-gray-700 mb-1">
-              <strong>Date of Birth:</strong> {formatDate(teen.dateOfBirth)} ({calculateAge(teen.dateOfBirth)} yrs)
+            <p className="text-neutral-700 mb-1">
+              <strong className="text-neutral-800">Date of Birth:</strong> {formatDate(teen.dateOfBirth)} ({calculateAge(teen.dateOfBirth)} yrs)
             </p>
           </div>
-        </div>
+        </Card>
 
         {/* Assignments Card */}
-        <div className="flex-1 bg-white rounded-lg shadow p-8">
-          <h3 className={`text-xl font-semibold mb-4 ${color.header}`}>Assignments</h3>
-          <div className="space-y-2 text-lg">
+        <Card className="flex-1">
+          <h3 className={`text-lg font-semibold mb-4 ${color.header}`}>Assignments</h3>
+          <div className="space-y-2 text-base">
             <p>
-              <strong>Base:</strong> <span className={color.assignment}>{teen.base.name}</span>
+              <strong className="text-neutral-800">Base:</strong> <span className={color.assignment}>{teen.base.name}</span>
             </p>
             <p>
-              <strong>Platoon:</strong>{" "}
+              <strong className="text-neutral-800">Platoon:</strong>{" "}
               <a
                 href={teen.platoon ? `/dashboard/platoons/${teen.platoon.id}` : "#"}
-                className={color.assignment + (teen.platoon ? " hover:underline" : " text-gray-500")}
+                className={color.assignment + (teen.platoon ? " hover:underline" : " text-neutral-500")}
               >
                 <span className={color.assignment}>{teen.platoon?.name || "N/A"}</span>
               </a>
             </p>
             <p>
-              <strong>Household:</strong>{" "}
+              <strong className="text-neutral-800">Household:</strong>{" "}
               <a
                 href={teen.household ? `/dashboard/households/${teen.household.id}` : "#"}
-                className={color.assignment + (teen.household ? " hover:underline" : " text-gray-500")}
+                className={color.assignment + (teen.household ? " hover:underline" : " text-neutral-500")}
               >
                 <span className={color.assignment}>{teen.household?.name || "N/A"}</span>
               </a>
             </p>
             <p>
-              <strong>Squads:</strong>{" "}
+              <strong className="text-neutral-800">Squads:</strong>{" "}
               {teen.squads.length ? (
                 <a
                   href={teen.squads ? `/dashboard/squads/${teen.squads.map((s) => s.id).join(",")}` : "#"}
-                  className={color.assignment + (teen.squads ? " hover:underline" : " text-gray-500")}
+                  className={color.assignment + (teen.squads ? " hover:underline" : " text-neutral-500")}
                 >
                   <span className={color.assignment}>{teen.squads.map((s) => s.name).join(", ")}</span>
                 </a>
               ) : (
-                <span className="text-gray-500">None</span>
+                <span className="text-neutral-500">None</span>
               )}
             </p>
           </div>
-        </div>
+        </Card>
       </div>
 
       {/* Stat Tiles */}
@@ -193,69 +199,61 @@ export default function TeenDetailsPage() {
       </div>
 
       {/* Pastoral Info Card */}
-      <div className="bg-white rounded-lg shadow p-8 mb-8">
+      <Card className="mb-8">
         <div className="flex items-center justify-between mb-4">
-          <h3 className={`text-xl font-semibold ${color.header}`}>Pastoral Info</h3>
-          <span
-            className={`inline-block px-3 py-1 rounded-full text-sm font-semibold ${
-              teen.status === "LEFT" ? "bg-gray-500 text-white" : teen.status === "INACTIVE" ? "bg-yellow-500 text-white" : "bg-green-600 text-white"
-            }`}
-          >
-            {teen.status ?? "ACTIVE"}
-          </span>
+          <h3 className={`text-lg font-semibold ${color.header}`}>Pastoral Info</h3>
+          <Badge tone={statusTone}>{teen.status ?? "ACTIVE"}</Badge>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-y-1">
-          <p className="text-gray-700 mb-1">
-            <strong>Phone:</strong> {teen.phone || "N/A"}
+          <p className="text-neutral-700 mb-1">
+            <strong className="text-neutral-800">Phone:</strong> {teen.phone || "N/A"}
           </p>
-          <p className="text-gray-700 mb-1">
-            <strong>Address:</strong> {teen.address || "N/A"}
+          <p className="text-neutral-700 mb-1">
+            <strong className="text-neutral-800">Address:</strong> {teen.address || "N/A"}
           </p>
-          <p className="text-gray-700 mb-1">
-            <strong>School:</strong> {teen.school || "N/A"}
+          <p className="text-neutral-700 mb-1">
+            <strong className="text-neutral-800">School:</strong> {teen.school || "N/A"}
           </p>
-          <p className="text-gray-700 mb-1">
-            <strong>Date Joined:</strong> {teen.dateJoined ? formatDate(teen.dateJoined) : "N/A"}
+          <p className="text-neutral-700 mb-1">
+            <strong className="text-neutral-800">Date Joined:</strong> {teen.dateJoined ? formatDate(teen.dateJoined) : "N/A"}
           </p>
-          <p className="text-gray-700 mb-1">
-            <strong>Guardian Name:</strong> {teen.guardianName || "N/A"}
+          <p className="text-neutral-700 mb-1">
+            <strong className="text-neutral-800">Guardian Name:</strong> {teen.guardianName || "N/A"}
           </p>
-          <p className="text-gray-700 mb-1">
-            <strong>Guardian Phone:</strong> {teen.guardianPhone || "N/A"}
+          <p className="text-neutral-700 mb-1">
+            <strong className="text-neutral-800">Guardian Phone:</strong> {teen.guardianPhone || "N/A"}
           </p>
         </div>
-      </div>
+      </Card>
 
       {/* Siblings (same household) */}
       {teen.household && (
-        <div className="bg-white rounded-lg shadow p-8 mb-8">
+        <Card className="mb-8">
           <div className="flex items-center justify-between mb-4">
-            <h3 className={`text-xl font-semibold ${color.header}`}>
-              Siblings <span className="text-gray-500 font-normal text-base">({teen.household.name})</span>
+            <h3 className={`text-lg font-semibold ${color.header}`}>
+              Siblings <span className="text-neutral-500 font-normal text-sm">({teen.household.name})</span>
             </h3>
           </div>
           {teen.siblings?.length ? (
-            <ul className="divide-y divide-gray-200">
+            <ul className="divide-y divide-neutral-100">
               {teen.siblings.map((sibling) => (
-                <Link href={`/dashboard/lieutenants/${sibling.id}`} key={sibling.id} className="block hover:bg-blue-50 rounded-lg px-1">
+                <Link href={`/dashboard/lieutenants/${sibling.id}`} key={sibling.id} className="block hover:bg-accent-50 rounded-lg px-1">
                   <li className="flex items-center gap-4 py-3">
-                    <div className="w-8 h-8 rounded-full bg-cyan-50 flex items-center justify-center text-sm font-bold text-blue-700 shadow">
-                      {sibling.name?.[0] ?? "?"}
-                    </div>
-                    <p className="font-medium text-blue-900 text-sm">{sibling.name}</p>
+                    <Avatar name={sibling.name ?? "?"} size="sm" />
+                    <p className="font-medium text-neutral-900 text-sm">{sibling.name}</p>
                   </li>
                 </Link>
               ))}
             </ul>
           ) : (
-            <p className="text-gray-500">No other teens in this household.</p>
+            <p className="text-neutral-500">No other teens in this household.</p>
           )}
-        </div>
+        </Card>
       )}
 
       {/* Attendance */}
-      <div className="bg-white rounded-lg shadow p-8 mb-8">
-        <h3 className={`text-xl font-semibold mb-4 ${color.header}`}>Attendance</h3>
+      <Card className="mb-8">
+        <h3 className={`text-lg font-semibold mb-4 ${color.header}`}>Attendance</h3>
         {teen.attendance.length ? (
           <>
             <LineTrendChart
@@ -273,35 +271,33 @@ export default function TeenDetailsPage() {
               ]}
               formatValue={(n) => `${n}%`}
             />
-            <ul className="divide-y divide-gray-200 mt-4">
+            <ul className="divide-y divide-neutral-100 mt-4">
               {teen.attendance
                 .slice()
                 .reverse()
                 .map((a) => (
                   <li key={a.activityId} className="flex items-center justify-between py-2">
-                    <Link href={`/dashboard/activities/${a.activityId}`} className="text-sm font-medium text-gray-800 hover:underline">
+                    <Link href={`/dashboard/activities/${a.activityId}`} className="text-sm font-medium text-neutral-800 hover:underline">
                       {a.activityName}
                     </Link>
-                    <span className="text-xs text-gray-500">{formatDateUTC(a.date, { month: "short", day: "numeric", year: "numeric" })}</span>
-                    <span
-                      className={`text-xs font-semibold px-2 py-1 rounded-full ${a.attended ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"}`}
-                    >
+                    <span className="text-xs text-neutral-500">{formatDateUTC(a.date, { month: "short", day: "numeric", year: "numeric" })}</span>
+                    <Badge tone={a.attended ? "success" : "danger"} size="sm">
                       {a.attended ? "Attended" : "Absent"}
-                    </span>
+                    </Badge>
                   </li>
                 ))}
             </ul>
           </>
         ) : (
-          <p className="text-gray-500">No attendance records yet.</p>
+          <p className="text-neutral-500">No attendance records yet.</p>
         )}
-      </div>
+      </Card>
 
       <div className="flex gap-4 justify-end">
         <EditLieutenantModal lieutenant={teen} onSuccess={fetchTeen} />
-        <button onClick={() => handleDelete(teen.id)} className="bg-red-600 hover:bg-red-700 text-white px-5 py-2 rounded-lg font-semibold shadow">
+        <Button variant="danger" onClick={() => handleDelete(teen.id)}>
           Delete
-        </button>
+        </Button>
       </div>
     </div>
   );

@@ -37,7 +37,7 @@ export type ChartColors = {
 // Never reassign by index dynamically - series identity must map to a known label
 // (e.g. "Cash" is always slot 1), not array position from the API response.
 const LIGHT: ChartColors = {
-  series: ["#2a78d6", "#1baf7a", "#eda100", "#008300", "#4a3aa7", "#e34948", "#e87ba4", "#eb6834"],
+  series: ["#4a8f43", "#1baf7a", "#eda100", "#008300", "#4a3aa7", "#e34948", "#e87ba4", "#eb6834"],
   grid: "#e1e0d9",
   axisText: "#898781",
   tooltipBg: "#fcfcfb",
@@ -47,7 +47,7 @@ const LIGHT: ChartColors = {
 };
 
 const DARK: ChartColors = {
-  series: ["#3987e5", "#199e70", "#c98500", "#008300", "#9085e9", "#e66767", "#d55181", "#d95926"],
+  series: ["#6fae66", "#199e70", "#c98500", "#008300", "#9085e9", "#e66767", "#d55181", "#d95926"],
   grid: "#2c2c2a",
   axisText: "#898781",
   tooltipBg: "#1a1a19",

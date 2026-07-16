@@ -7,6 +7,7 @@ import LineTrendChart from "@/components/charts/LineTrendChart";
 import BarComparisonChart from "@/components/charts/BarComparisonChart";
 import { formatMonthLabel } from "@/lib/formatDate";
 import { formatMoney } from "@/lib/formatMoney";
+import Card from "@/components/ui/Card";
 
 type OfferingsTrendPoint = { month: string; cash: number; online: number; total: number };
 type OfferingsByBasePoint = { baseId: string; baseName: string; month: string; cash: number; online: number; total: number };
@@ -75,11 +76,11 @@ export default function DashboardCharts() {
     <div className="space-y-6 mt-6">
       <AnalyticsFilterBar bases={bases} isSuperAdmin={isSuperAdmin} value={filter} onChange={setFilter} />
 
-      {loading && <p className="text-sm text-gray-500">Loading charts...</p>}
+      {loading && <p className="text-sm text-neutral-500">Loading charts...</p>}
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="bg-white border rounded p-6 shadow-sm">
-          <h3 className="font-semibold mb-3">Offerings Trend</h3>
+        <Card>
+          <h3 className="text-xs font-semibold uppercase tracking-wide text-neutral-500 mb-3">Offerings Trend</h3>
           <LineTrendChart
             title="Offerings trend, cash vs transfer, by month"
             labels={offeringsTrend.map((p) => formatMonthLabel(p.month))}
@@ -89,29 +90,29 @@ export default function DashboardCharts() {
             ]}
             formatValue={formatMoney}
           />
-        </div>
+        </Card>
 
-        <div className="bg-white border rounded p-6 shadow-sm">
-          <h3 className="font-semibold mb-3">Attendance Trend</h3>
+        <Card>
+          <h3 className="text-xs font-semibold uppercase tracking-wide text-neutral-500 mb-3">Attendance Trend</h3>
           <LineTrendChart
             title="Attendance per activity"
             labels={attendance.map((p) => new Date(p.date).toLocaleDateString(undefined, { month: "short", day: "numeric" }))}
             series={[{ name: "Attended", data: attendance.map((p) => p.attended) }]}
           />
-        </div>
+        </Card>
 
-        <div className="bg-white border rounded p-6 shadow-sm">
-          <h3 className="font-semibold mb-3">Membership Growth</h3>
+        <Card>
+          <h3 className="text-xs font-semibold uppercase tracking-wide text-neutral-500 mb-3">Membership Growth</h3>
           <LineTrendChart
             title="Teens added per month"
             labels={growth.map((p) => formatMonthLabel(p.month))}
             series={[{ name: "Added", data: growth.map((p) => p.added) }]}
           />
-        </div>
+        </Card>
 
         {showBaseComparison && (
-          <div className="bg-white border rounded p-6 shadow-sm">
-            <h3 className="font-semibold mb-3">Base Comparison (Offerings)</h3>
+          <Card>
+            <h3 className="text-xs font-semibold uppercase tracking-wide text-neutral-500 mb-3">Base Comparison (Offerings)</h3>
             <BarComparisonChart
               title="Total offerings by base, by month"
               labels={baseComparisonMonths.map(formatMonthLabel)}
@@ -123,7 +124,7 @@ export default function DashboardCharts() {
               }))}
               formatValue={formatMoney}
             />
-          </div>
+          </Card>
         )}
       </div>
     </div>

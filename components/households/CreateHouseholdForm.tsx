@@ -2,6 +2,9 @@
 
 import { useForm } from "react-hook-form";
 import { useState } from "react";
+import Input from "@/components/ui/Input";
+import Select from "@/components/ui/Select";
+import Button from "@/components/ui/Button";
 
 type FormValues = {
   name: string;
@@ -12,7 +15,11 @@ type FormValues = {
 };
 
 export default function CreateHouseholdForm({ bases, onClose }: { bases: any[]; onClose: () => void }) {
-  const { register, handleSubmit } = useForm<FormValues>();
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<FormValues>();
   const [loading, setLoading] = useState(false);
 
   const onSubmit = async (data: FormValues) => {
@@ -37,41 +44,26 @@ export default function CreateHouseholdForm({ bases, onClose }: { bases: any[]; 
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-      <div>
-        <label className="block text-sm font-medium">Name</label>
-        <input {...register("name", { required: true })} className="w-full border p-2 rounded" />
-      </div>
+      <Input label="Name" {...register("name", { required: true })} error={errors.name && "Name is required"} />
 
-      <div>
-        <label className="block text-sm font-medium">Base</label>
-        <select {...register("baseId")} className="w-full border p-2 rounded">
-          <option value="">No base</option>
-          {bases.map((base) => (
-            <option key={base.id} value={base.id}>
-              {base.name}
-            </option>
-          ))}
-        </select>
-      </div>
+      <Select label="Base" {...register("baseId")}>
+        <option value="">No base</option>
+        {bases.map((base) => (
+          <option key={base.id} value={base.id}>
+            {base.name}
+          </option>
+        ))}
+      </Select>
 
-      <div>
-        <label className="block text-sm font-medium">Address</label>
-        <input {...register("address")} className="w-full border p-2 rounded" />
-      </div>
+      <Input label="Address" {...register("address")} />
 
-      <div>
-        <label className="block text-sm font-medium">Primary Contact Name</label>
-        <input {...register("primaryContactName")} className="w-full border p-2 rounded" />
-      </div>
+      <Input label="Primary Contact Name" {...register("primaryContactName")} />
 
-      <div>
-        <label className="block text-sm font-medium">Primary Contact Phone</label>
-        <input {...register("primaryContactPhone")} className="w-full border p-2 rounded" />
-      </div>
+      <Input label="Primary Contact Phone" {...register("primaryContactPhone")} />
 
-      <button disabled={loading} className="bg-blue-600 text-white px-4 py-2 rounded">
+      <Button type="submit" disabled={loading} isLoading={loading} className="w-full">
         {loading ? "Creating..." : "Create"}
-      </button>
+      </Button>
     </form>
   );
 }

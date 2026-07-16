@@ -4,6 +4,7 @@ import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import LoadingSpinner from "@/components/common/LoadingSpinner";
 import RecordOfferingForm from "@/components/offerings/RecordOfferingForm";
+import Button from "@/components/ui/Button";
 
 export default function EditOfferingPage() {
   const { id } = useParams();
@@ -26,10 +27,10 @@ export default function EditOfferingPage() {
   if (error) {
     return (
       <div className="px-5 space-y-4">
-        <p className="text-red-600">{error}</p>
-        <button onClick={() => router.push("/dashboard/offerings")} className="text-cyan-700 hover:underline">
+        <p className="text-danger-500">{error}</p>
+        <Button variant="secondary" onClick={() => router.push("/dashboard/offerings")}>
           Back to Offerings
-        </button>
+        </Button>
       </div>
     );
   }

@@ -56,17 +56,17 @@ export default function CreateImageField({ onFileChange }: Props) {
         onClick={() => inputRef.current?.click()}
         onDragOver={(e) => e.preventDefault()}
         onDrop={onDrop}
-        className="w-28 h-28 rounded-full border-2 border-dashed border-gray-300 
-                   hover:border-blue-500 cursor-pointer flex items-center justify-center
-                   overflow-hidden bg-gray-50 transition"
+        className="w-28 h-28 rounded-full border-2 border-dashed border-neutral-300
+                   hover:border-accent-500 cursor-pointer flex items-center justify-center
+                   overflow-hidden bg-neutral-50 transition"
       >
-        {preview ? <img src={preview} className="w-full h-full object-cover" /> : <span className="text-xs text-gray-500 text-center px-2">Add photo</span>}
+        {preview ? <img src={preview} className="w-full h-full object-cover" /> : <span className="text-xs text-neutral-500 text-center px-2">Add photo</span>}
       </div>
 
       <input ref={inputRef} type="file" accept="image/*" hidden onChange={onChange} />
 
-      {error && <p className="text-xs text-red-500">{error}</p>}
-      <p className="text-xs text-gray-400">Optional • Max 1MB</p>
+      {error && <p className="text-xs text-danger-500">{error}</p>}
+      <p className="text-xs text-neutral-400">Optional • Max 1MB</p>
     </div>
   );
 }

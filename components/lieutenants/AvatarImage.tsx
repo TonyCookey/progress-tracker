@@ -32,14 +32,14 @@ export default function LieutenantAvatar({ imageKey, alt = "Lieutenant", size = 
 
   if (!imageKey) {
     return (
-      <div className={`rounded-full bg-gray-200 flex items-center justify-center text-gray-500`} style={{ width: size, height: size }}>
+      <div className={`rounded-full bg-neutral-200 flex items-center justify-center text-neutral-500`} style={{ width: size, height: size }}>
         ?
       </div>
     );
   }
 
   if (!url) {
-    return <div className={`rounded-full bg-gray-100 animate-pulse`} style={{ width: size, height: size }}></div>;
+    return <div className={`rounded-full bg-neutral-100 animate-pulse`} style={{ width: size, height: size }}></div>;
   }
 
   return <img src={url} alt={alt} className="rounded-full object-cover" style={{ width: size, height: size }} />;
