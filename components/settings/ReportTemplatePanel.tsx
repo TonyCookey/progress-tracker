@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import LoadingSpinner from "../common/LoadingSpinner";
 import Card from "@/components/ui/Card";
 import Button from "@/components/ui/Button";
+import { useToast } from "@/components/ui/Toast";
 
 const SECTION_LABELS: Record<string, string> = {
   theme: "Theme",
@@ -19,6 +20,7 @@ const SECTION_LABELS: Record<string, string> = {
 };
 
 export default function ReportTemplatePanel() {
+  const toast = useToast();
   const [sections, setSections] = useState<Record<string, boolean>>({});
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -52,10 +54,10 @@ export default function ReportTemplatePanel() {
       });
       if (!res.ok) {
         const text = await res.text();
-        alert(`Failed to save: ${res.status} ${res.statusText} - ${text}`);
+        toast.error(`Failed to save: ${res.status} ${res.statusText} - ${text}`);
         return;
       }
-      alert("Report template saved");
+      toast.success("Report template saved");
     } finally {
       setSaving(false);
     }

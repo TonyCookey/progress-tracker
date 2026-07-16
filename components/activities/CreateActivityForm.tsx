@@ -9,6 +9,7 @@ import Input from "@/components/ui/Input";
 import Textarea from "@/components/ui/Textarea";
 import UiSelect, { selectStyles } from "@/components/ui/Select";
 import Button from "@/components/ui/Button";
+import { useToast } from "@/components/ui/Toast";
 
 type Option = { id: string; name: string };
 type SquadOption = {
@@ -25,6 +26,7 @@ export default function CreateActivityForm() {
     formState: { isSubmitting, errors },
   } = useForm();
   const router = useRouter();
+  const toast = useToast();
 
   const [bases, setBases] = useState<Option[]>([]);
   const [platoons, setPlatoons] = useState<Option[]>([]);
@@ -73,13 +75,15 @@ export default function CreateActivityForm() {
       });
       if (!res.ok) {
         console.error("Failed to create activity", res.statusText);
-        alert("Failed to create activity");
+        toast.error("Failed to create activity");
         return;
       }
       reset();
+      toast.success("Activity created successfully");
       router.push("/dashboard/activities");
     } catch (error) {
       console.error("Failed to create activity:", error);
+      toast.error("Failed to create activity");
     }
   };
   const squadOptions: SquadOption[] = squads.map((s) => ({ value: s.id, label: s.name }));

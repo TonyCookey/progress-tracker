@@ -8,6 +8,7 @@ import Input from "@/components/ui/Input";
 import Select from "@/components/ui/Select";
 import Textarea from "@/components/ui/Textarea";
 import Button from "@/components/ui/Button";
+import { useToast } from "@/components/ui/Toast";
 
 type FormData = {
   name: string;
@@ -64,6 +65,7 @@ export default function EditNewConvertForm({ newConvert, onSuccess }: { newConve
       notes: newConvert.notes ?? "",
     },
   });
+  const toast = useToast();
   const [loading, setLoading] = useState(false);
   const [bases, setBases] = useState<Option[]>([]);
 
@@ -87,9 +89,10 @@ export default function EditNewConvertForm({ newConvert, onSuccess }: { newConve
       });
       if (!res.ok) {
         const text = await res.text();
-        alert(`Failed to update new convert: ${res.status} ${res.statusText} - ${text}`);
+        toast.error(`Failed to update new convert: ${res.status} ${res.statusText} - ${text}`);
         return;
       }
+      toast.success("New convert updated successfully");
       onSuccess();
     } finally {
       setLoading(false);

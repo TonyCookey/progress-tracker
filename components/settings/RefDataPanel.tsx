@@ -7,10 +7,12 @@ import Card from "@/components/ui/Card";
 import Button from "@/components/ui/Button";
 import Input from "@/components/ui/Input";
 import { Table, TableCell, TableContainer, TableHead, TableHeaderCell, TableRow } from "@/components/ui/Table";
+import { useToast } from "@/components/ui/Toast";
 
 type RefDataItem = { id: string; key: string; label: string; sortOrder: number; active: boolean };
 
 function EditRefDataRow({ item, onSuccess }: { item: RefDataItem; onSuccess: () => void }) {
+  const toast = useToast();
   const [editing, setEditing] = useState(false);
   const [loading, setLoading] = useState(false);
   const { register, handleSubmit } = useForm({ defaultValues: { label: item.label, sortOrder: item.sortOrder } });
@@ -25,10 +27,11 @@ function EditRefDataRow({ item, onSuccess }: { item: RefDataItem; onSuccess: () 
       });
       if (!res.ok) {
         const text = await res.text();
-        alert(`Failed to update: ${res.status} ${res.statusText} - ${text}`);
+        toast.error(`Failed to update: ${res.status} ${res.statusText} - ${text}`);
         return;
       }
       setEditing(false);
+      toast.success("Updated successfully");
       onSuccess();
     } finally {
       setLoading(false);
@@ -45,9 +48,10 @@ function EditRefDataRow({ item, onSuccess }: { item: RefDataItem; onSuccess: () 
       });
       if (!res.ok) {
         const text = await res.text();
-        alert(`Failed to update: ${res.status} ${res.statusText} - ${text}`);
+        toast.error(`Failed to update: ${res.status} ${res.statusText} - ${text}`);
         return;
       }
+      toast.success("Updated successfully");
       onSuccess();
     } finally {
       setLoading(false);
@@ -96,6 +100,7 @@ function EditRefDataRow({ item, onSuccess }: { item: RefDataItem; onSuccess: () 
 }
 
 function EditRefDataCard({ item, onSuccess }: { item: RefDataItem; onSuccess: () => void }) {
+  const toast = useToast();
   const [editing, setEditing] = useState(false);
   const [loading, setLoading] = useState(false);
   const { register, handleSubmit } = useForm({ defaultValues: { label: item.label, sortOrder: item.sortOrder } });
@@ -110,10 +115,11 @@ function EditRefDataCard({ item, onSuccess }: { item: RefDataItem; onSuccess: ()
       });
       if (!res.ok) {
         const text = await res.text();
-        alert(`Failed to update: ${res.status} ${res.statusText} - ${text}`);
+        toast.error(`Failed to update: ${res.status} ${res.statusText} - ${text}`);
         return;
       }
       setEditing(false);
+      toast.success("Updated successfully");
       onSuccess();
     } finally {
       setLoading(false);
@@ -130,9 +136,10 @@ function EditRefDataCard({ item, onSuccess }: { item: RefDataItem; onSuccess: ()
       });
       if (!res.ok) {
         const text = await res.text();
-        alert(`Failed to update: ${res.status} ${res.statusText} - ${text}`);
+        toast.error(`Failed to update: ${res.status} ${res.statusText} - ${text}`);
         return;
       }
+      toast.success("Updated successfully");
       onSuccess();
     } finally {
       setLoading(false);
@@ -183,6 +190,7 @@ function EditRefDataCard({ item, onSuccess }: { item: RefDataItem; onSuccess: ()
 }
 
 function AddRefDataForm({ category, onSuccess }: { category: string; onSuccess: () => void }) {
+  const toast = useToast();
   const [loading, setLoading] = useState(false);
   const { register, handleSubmit, reset } = useForm({ defaultValues: { label: "" } });
 
@@ -196,10 +204,11 @@ function AddRefDataForm({ category, onSuccess }: { category: string; onSuccess: 
       });
       if (!res.ok) {
         const text = await res.text();
-        alert(`Failed to add: ${res.status} ${res.statusText} - ${text}`);
+        toast.error(`Failed to add: ${res.status} ${res.statusText} - ${text}`);
         return;
       }
       reset();
+      toast.success("Added successfully");
       onSuccess();
     } finally {
       setLoading(false);

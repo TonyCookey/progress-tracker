@@ -7,6 +7,7 @@ import { useSyncSelectValue } from "@/lib/hooks/useSyncSelectValue";
 import Input from "@/components/ui/Input";
 import Select from "@/components/ui/Select";
 import Button from "@/components/ui/Button";
+import { useToast } from "@/components/ui/Toast";
 
 type FormData = {
   name: string;
@@ -55,6 +56,7 @@ export default function ConvertToTeenForm({ newConvert, onSuccess }: { newConver
       groupId: "",
     },
   });
+  const toast = useToast();
   const [loading, setLoading] = useState(false);
   const [bases, setBases] = useState<Option[]>([]);
   const [platoons, setPlatoons] = useState<Option[]>([]);
@@ -91,7 +93,7 @@ export default function ConvertToTeenForm({ newConvert, onSuccess }: { newConver
       });
       if (!teenRes.ok) {
         const text = await teenRes.text();
-        alert(`Failed to create teen: ${teenRes.status} ${teenRes.statusText} - ${text}`);
+        toast.error(`Failed to create teen: ${teenRes.status} ${teenRes.statusText} - ${text}`);
         return;
       }
       const teen = await teenRes.json();
@@ -116,13 +118,14 @@ export default function ConvertToTeenForm({ newConvert, onSuccess }: { newConver
       });
       if (!linkRes.ok) {
         const text = await linkRes.text();
-        alert(
+        toast.error(
           `Teen was created, but linking it back to the New Convert record failed: ${linkRes.status} ${linkRes.statusText} - ${text}. ` +
             `You can link it manually by editing the New Convert entry.`,
         );
         return;
       }
 
+      toast.success("Teen created and linked successfully");
       onSuccess();
     } finally {
       setLoading(false);

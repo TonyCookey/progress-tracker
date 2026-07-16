@@ -5,6 +5,7 @@ import { useState } from "react";
 import Input from "@/components/ui/Input";
 import Select from "@/components/ui/Select";
 import Button from "@/components/ui/Button";
+import { useToast } from "@/components/ui/Toast";
 
 type FormValues = {
   name: string;
@@ -20,6 +21,7 @@ export default function CreateHouseholdForm({ bases, onClose }: { bases: any[]; 
     handleSubmit,
     formState: { errors },
   } = useForm<FormValues>();
+  const toast = useToast();
   const [loading, setLoading] = useState(false);
 
   const onSubmit = async (data: FormValues) => {
@@ -32,10 +34,11 @@ export default function CreateHouseholdForm({ bases, onClose }: { bases: any[]; 
       });
 
       if (res.ok) {
+        toast.success("Household created successfully");
         onClose();
       } else {
         const text = await res.text();
-        alert(`Failed to create household: ${text}`);
+        toast.error(`Failed to create household: ${text}`);
       }
     } finally {
       setLoading(false);

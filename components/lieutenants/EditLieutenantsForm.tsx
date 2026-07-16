@@ -8,6 +8,7 @@ import { useSyncSelectValue } from "@/lib/hooks/useSyncSelectValue";
 import Input from "@/components/ui/Input";
 import UISelect, { selectStyles } from "@/components/ui/Select";
 import Button from "@/components/ui/Button";
+import { useToast } from "@/components/ui/Toast";
 
 type FormData = {
   name: string;
@@ -41,6 +42,7 @@ type SquadOption = {
 type Lieutenant = Omit<FormData, "platoonId"> & { id: string; imageUrl?: string; groupId?: string };
 
 export default function EditLieutenantForm({ lieutenant, onSuccess }: { lieutenant: Lieutenant; onSuccess: () => void }) {
+  const toast = useToast();
   const { register, handleSubmit, reset, control, setValue } = useForm<FormData>({
     defaultValues: {
       name: lieutenant.name || "",
@@ -173,7 +175,7 @@ export default function EditLieutenantForm({ lieutenant, onSuccess }: { lieutena
       });
       if (!res.ok) {
         const text = await res.text();
-        alert(`Failed to update lieutenant: ${res.status} ${res.statusText} - ${text}`);
+        toast.error(`Failed to update lieutenant: ${res.status} ${res.statusText} - ${text}`);
         return;
       }
 
@@ -181,9 +183,10 @@ export default function EditLieutenantForm({ lieutenant, onSuccess }: { lieutena
         await uploadLieutenantImage(imageFile, lieutenant.id);
       }
       reset();
+      toast.success("Lieutenant updated successfully");
       onSuccess();
     } catch (err) {
-      alert("Failed to update lieutenant");
+      toast.error("Failed to update lieutenant");
       console.error("Failed to update lieutenant", err);
     } finally {
       setLoading(false);

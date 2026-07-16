@@ -432,6 +432,11 @@ same `lib/` functions, so there's one source of truth for each query.
 - Money is `Decimal(12,2)` in Prisma; serialize carefully (Decimal → string/number) for the client.
 - Dates from forms arrive as strings; wrap in `new Date(...)` before writing.
 - Client components start with `"use client"`. Data pages often fetch their own API via `fetch`.
+- **User-facing errors/successes use toasts, not `alert()`** (S10) — call `useToast()` from
+  `components/ui/Toast.tsx` (`toast.success(...)`/`toast.error(...)`/`toast.info(...)`), never
+  `window.alert`. `ToastProvider` is mounted once in `app/layout.tsx`. If a success toast is
+  immediately followed by a client-side navigation (`router.push`/`window.location.href`), delay the
+  navigation by ~800ms (`setTimeout`) so the toast is visible before the page changes.
 - Images: never store URLs — store the R2 **object key** (`imageKey`) and mint presigned URLs on demand.
 - Keep the military metaphor consistent in **UI copy**; keep model/field names generic.
 

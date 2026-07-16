@@ -12,9 +12,11 @@ import Button from "@/components/ui/Button";
 import Card from "@/components/ui/Card";
 import { TableContainer, Table, TableHead, TableHeaderCell, TableRow, TableCell } from "@/components/ui/Table";
 import Pagination from "@/components/ui/Pagination";
+import { useToast } from "@/components/ui/Toast";
 
 export default function OfferingsTable() {
   const router = useRouter();
+  const toast = useToast();
   const { data: session } = useSession();
   const user = session?.user;
   const isSuperAdmin = user?.role === "SUPERADMIN";
@@ -59,9 +61,10 @@ export default function OfferingsTable() {
     const res = await fetch(`/api/offerings/${id}`, { method: "DELETE" });
     if (!res.ok) {
       const data = await res.json().catch(() => ({}));
-      alert(data.error || "Failed to delete offering");
+      toast.error(data.error || "Failed to delete offering");
       return;
     }
+    toast.success("Offering deleted successfully");
     fetchData(page, search, baseId);
   };
 

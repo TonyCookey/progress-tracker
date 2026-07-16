@@ -6,6 +6,7 @@ import { useSyncSelectValue } from "@/lib/hooks/useSyncSelectValue";
 import Input from "@/components/ui/Input";
 import Select from "@/components/ui/Select";
 import Button from "@/components/ui/Button";
+import { useToast } from "@/components/ui/Toast";
 
 type FormData = {
   name: string;
@@ -23,6 +24,7 @@ type Base = { id: string; name: string };
 type General = FormData & { id: string };
 
 export default function EditGeneralForm({ general, onSuccess }: { general: General; onSuccess: () => void }) {
+  const toast = useToast();
   const { register, handleSubmit, reset, setValue } = useForm<FormData>({
     defaultValues: {
       name: general.name || "",
@@ -70,13 +72,14 @@ export default function EditGeneralForm({ general, onSuccess }: { general: Gener
       });
       if (!res.ok) {
         const text = await res.text();
-        alert(`Failed to update general: ${res.status} ${res.statusText} - ${text}`);
+        toast.error(`Failed to update general: ${res.status} ${res.statusText} - ${text}`);
         return;
       }
       reset();
+      toast.success("General updated successfully");
       onSuccess();
     } catch (err) {
-      alert("Failed to update general");
+      toast.error("Failed to update general");
       console.error("Failed to update general", err);
     } finally {
       setLoading(false);

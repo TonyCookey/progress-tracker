@@ -9,6 +9,7 @@ import Card from "@/components/ui/Card";
 import Badge from "@/components/ui/Badge";
 import Avatar from "@/components/ui/Avatar";
 import Button from "@/components/ui/Button";
+import { useToast } from "@/components/ui/Toast";
 
 type Household = {
   id: string;
@@ -24,6 +25,7 @@ type Household = {
 export default function HouseholdDetailsPage() {
   const { id } = useParams();
   const router = useRouter();
+  const toast = useToast();
   const [household, setHousehold] = useState(null as Household | null);
 
   async function fetchHousehold() {
@@ -52,11 +54,11 @@ export default function HouseholdDetailsPage() {
     const res = await fetch(`/api/households/${household.id}`, { method: "DELETE" });
     if (!res.ok) {
       const data = await res.json().catch(() => ({}));
-      alert(data.error || "Failed to delete household");
+      toast.error(data.error || "Failed to delete household");
       return;
     }
-    alert("Household deleted successfully");
-    router.push("/dashboard/households");
+    toast.success("Household deleted successfully");
+    setTimeout(() => router.push("/dashboard/households"), 800);
   };
 
   if (!household) return <LoadingSpinner />;

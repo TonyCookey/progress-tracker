@@ -7,6 +7,7 @@ import Input from "@/components/ui/Input";
 import Select from "@/components/ui/Select";
 import Textarea from "@/components/ui/Textarea";
 import Button from "@/components/ui/Button";
+import { useToast } from "@/components/ui/Toast";
 
 type FormData = {
   name: string;
@@ -34,6 +35,7 @@ export default function CreateNewConvertForm({ onSuccess }: { onSuccess: () => v
   } = useForm<FormData>({
     defaultValues: { baseId: session?.user?.baseId ?? "" },
   });
+  const toast = useToast();
   const [loading, setLoading] = useState(false);
   const [bases, setBases] = useState<Option[]>([]);
 
@@ -55,10 +57,11 @@ export default function CreateNewConvertForm({ onSuccess }: { onSuccess: () => v
       });
       if (!res.ok) {
         const text = await res.text();
-        alert(`Failed to create new convert: ${res.status} ${res.statusText} - ${text}`);
+        toast.error(`Failed to create new convert: ${res.status} ${res.statusText} - ${text}`);
         return;
       }
       reset();
+      toast.success("New convert created successfully");
       onSuccess();
     } finally {
       setLoading(false);
