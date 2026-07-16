@@ -53,6 +53,8 @@ language are military**. Do not confuse them.
 - **Chart.js 4** + `react-chartjs-2` (charts)
 - **Cloudflare R2** for image storage, accessed via the **AWS S3 SDK** (`@aws-sdk/client-s3`, presigned URLs)
 - **react-hook-form**, **react-select**, **zod** (installed; validation largely NOT wired up yet), **papaparse** (CSV bulk upload), **date-fns**, **bcrypt**, **nanoid**
+- **Resend** (`resend` package, added S7) — transactional email (password reset today; reusable for
+  future notifications). Needs `RESEND_API_KEY`/`EMAIL_FROM` — see §7.
 
 ---
 
@@ -64,27 +66,36 @@ app/
     activities/               # Activities CRUD + [id]/participation (attendance)
     auth/[...nextauth]/       # NextAuth handler (authOptions is INLINE here — see §8)
     auth/register/            # Leader (User) registration
-    bases/                    # Base list/create
+    auth/forgot-password/     # Self-service reset request (S7, public)
+    auth/reset-password/      # Token consumption → new password (S7, public)
+    bases/                    # Base list/create, [id] rename/edit (PUT, S7)
     birthdays/                # Upcoming birthdays (uses lib/getUpcomingBirthdays)
     bulk-upload/teens/        # CSV bulk upload of teens
     dashboard/                # Dashboard aggregate counts (HAS BUGS — see §9)
-    generals/                 # User CRUD (NO PUT/edit yet), [id]/change-password
+    generals/                 # User CRUD: GET/PUT/PATCH (activate/deactivate)/DELETE, [id]/change-password,
+                               # [id]/send-reset (admin-triggered password reset email, S7)
     groups/                   # Group CRUD (GET/POST only; [id] is GET-only)
     lieutenants/              # Teen CRUD + image upload (upload-url/save-image/get-image-url)
     offerings/                # Offering list/create (no edit/delete)
     platoons/                 # Platoon helpers
     users/                    # User list
     new-converts/             # NewConvert CRUD (S3)
+    refdata/                  # Managed dropdown values (activity/offering types), [id] (S7)
     reports/monthly/          # Draft save/load, [id], [id]/download, generate (S3)
-  auth/                       # Login / register pages
+    settings/report-template/ # Monthly report section toggles, GET/PUT (S7)
+  auth/                       # Login / register pages, forgot-password / reset-password/[token] (S7)
   dashboard/                  # All authenticated app pages
     activities/ birthdays/ generals/ lieutenants/ offerings/
     platoons/ squads/ new-converts/ reports/ (Monthly Report builder, S3)
-    settings/ (STUB) events/ (STUB, redundant) profile/
+    settings/ (Settings area, S7 — SUPERADMIN-only, see §8) events/ (STUB, redundant) profile/
 components/                   # React components, grouped by domain
+  settings/                  # SettingsTabs, BasesPanel, UsersSettingsTable, RefDataPanel,
+                              # ReportTemplatePanel (S7)
 lib/                          # prisma singleton, r2 client, date/age/gender helpers,
                                # formatMoney, reports/monthly.ts (aggregation), reports/generatePptx.ts
-prisma/                       # schema.prisma, migrations, seeds (bases, admins, squads)
+                               # email.ts (Resend wrapper), passwordReset.ts (token issue/consume),
+                               # refdata.ts (getRefData/slugifyKey/nextSortOrder) — all added S7
+prisma/                       # schema.prisma, migrations, seeds (bases, admins, squads, refdata)
 middleware.ts                 # Auth gate for /dashboard pages ONLY (NOT /api — see §8)
 types/next-auth.d.ts          # Session type augmentation (adds id, username, role, baseId)
 ```
@@ -97,7 +108,9 @@ See `prisma/schema.prisma` for the source of truth. Key points:
 
 - **Base** 1─* User, Teen, Group, Activity, Offering, NewConvert, MonthlyReport. `label` (nullable
   string, added S3) is the report location name: Alpha = "Mainland", Bravo = "Island" (backfilled
-  in the S3 migration; also set by `prisma/seeds/bases.seed.ts` for fresh seeds).
+  in the S3 migration; also set by `prisma/seeds/bases.seed.ts` for fresh seeds). `name` is
+  **`@unique`** (added S7) — creating/renaming a base to a name that already exists returns a
+  friendly 400, not a 500 (see `app/api/bases/route.ts` / `[id]/route.ts`).
 - **User** (General): `role` ∈ {SUPERADMIN, GENERAL, COLONEL, VOLUNTEER}, belongs to one Base,
   leads Groups (`leadingGroups`), supports Groups (`GroupSupport`), teaches at Activities
   (`TeacherParticipation`), soft-delete via `deletedAt`.
@@ -110,14 +123,16 @@ See `prisma/schema.prisma` for the source of truth. Key points:
 - **Group**: `type` ∈ {PLATOON, SQUAD}, one leader (`User`), supporters (`GroupSupport`), members
   (`GroupMember`, squads only — platoon membership is via `Teen.groupId`), teens, activities,
   soft-delete via `deletedAt`. Deleting a group with active (non-deleted) teens is blocked (409).
-- **Activity**: `type` (free string), `date`, `isCrossBase`, optional Base, connected Groups,
-  teen attendance + teacher attendance, soft-delete via `deletedAt` (no edit/delete UI yet).
+- **Activity**: `type` (free string — options now sourced from `RefData` category `activity_type`,
+  S7, see below), `date`, `isCrossBase`, optional Base, connected Groups, teen attendance + teacher
+  attendance, soft-delete via `deletedAt` (no edit/delete UI yet).
 - **ActivityParticipation**: unique `(activityId, teenId)`, `attended` bool, notes.
 - **TeacherParticipation**: unique `(activityId, userId)`, `attended`, role, notes.
-- **Offering**: `amount` Decimal(12,2), `date`, `service`, `type` (`"Cash"` | `"Online"`),
-  `isCrossBase`, optional Base, notes, soft-delete via `deletedAt`. **Canonical `type` values are
-  the literal strings `"Cash"` and `"Online"`** — `"Online"` is the transfer/online type (UI label
-  is "Transfer", but the stored value stays `"Online"` to avoid orphaning existing data).
+- **Offering**: `amount` Decimal(12,2), `date`, `service`, `type` (`"Cash"` | `"Online"`, options
+  now sourced from `RefData` category `offering_type`, S7), `isCrossBase`, optional Base, notes,
+  soft-delete via `deletedAt`. **Canonical `type` values are the literal strings `"Cash"` and
+  `"Online"`** — `"Online"` is the transfer/online type (UI label is "Transfer", but the stored
+  value stays `"Online"` to avoid orphaning existing data).
 - **NewConvert** (added S3): `name`, `gender?`, `phone?`, `dateOfBirth?`, optional Base
   (`isCrossBase` flag, same convention as Activity/Offering), `date` (when they came/converted),
   `activityId?`, `invitedBy?`, `followedUp`/`becameTeen` bools, `teenId?` (once converted to a
@@ -147,7 +162,32 @@ therefore survives a "delete".
   household detail page. Deleting a household with active (non-deleted) member teens is blocked
   (409), same pattern as Group.
 
-> NewConvert, MonthlyReport, Base.label were modeled in S3 (see above); Household in S6.
+- **RefData** (added S7): generic managed-dropdown table backing `Activity.type` and
+  `Offering.type`, `@@unique([category, key])`. `category` ∈ `"activity_type" | "offering_type"`;
+  `key` is the **immutable, stable value actually stored** in `Activity.type`/`Offering.type` —
+  `lib/reports/monthly.ts` hardcodes matches on the literal strings `"Sunday Service"`, `"Cash"`,
+  `"Online"`, so the seeded rows' `key` is set to those exact strings and **must never change**.
+  `label` is the admin-editable display text (e.g. key `"Online"` / label `"Transfer"`), `sortOrder`
+  controls dropdown order, `active` toggles visibility (soft "delete" — no `deletedAt`, since
+  `active:false` already means "hidden but the key slot is reserved for reactivation"). Managed from
+  **Settings → Reference Data** (`components/settings/RefDataPanel.tsx`); `app/api/refdata/route.ts`
+  POST reactivates a matching inactive row instead of colliding on the unique constraint, and
+  computes `sortOrder` as append-at-end (via `lib/refdata.ts`'s `nextSortOrder`) when the caller
+  doesn't supply one. The UI never exposes `key` as editable.
+- **PasswordResetToken** (added S7): `userId` → User, `tokenHash` (SHA-256 of the raw token — the
+  raw token is never persisted), `expiresAt` (1 hour TTL), `usedAt`. Issued by
+  `lib/passwordReset.ts`'s `issuePasswordResetToken` (self-service via `POST
+  /api/auth/forgot-password`, or admin-triggered via `POST /api/generals/[id]/send-reset`), which
+  also invalidates any other outstanding tokens for that user first — only the newest issued token
+  is ever valid. Consumed by `POST /api/auth/reset-password`.
+- **ReportTemplateConfig** (added S7): singleton row (`key: "default"`), `sectionsJson` (which
+  monthly-report sections are enabled). Managed from **Settings → Report Template**
+  (`components/settings/ReportTemplatePanel.tsx`, `app/api/settings/report-template/route.ts`).
+  **Not yet consumed by report generation** — `lib/reports/monthly.ts`/`generatePptx.ts` always
+  render every section regardless of this config; wiring it in is unfinished follow-up work.
+
+> NewConvert, MonthlyReport, Base.label were modeled in S3 (see above); Household in S6; RefData,
+> PasswordResetToken, ReportTemplateConfig, and Base.name uniqueness in S7.
 
 > **Deliberately NOT modeled:** expenses and account/bank balances are **not** tracked in-app — the
 > app is not the source of truth for them. In the monthly report the admin types opening balance,
@@ -198,12 +238,15 @@ therefore survives a "delete".
 
 ```bash
 npm run dev            # start dev server (localhost:3000)
-npm run build          # prisma generate + migrate deploy + next build
+npm run build          # prisma generate + migrate deploy + seed:refdata + next build
 npm run lint           # next lint
 npm run seed           # prisma/seed.ts
 npm run seed:bases     # create Alpha + Bravo bases (REQUIRED before dashboard works)
 npm run seed:admins    # create admin users
 npm run seed:squads    # seed squads
+npm run seed:refdata   # upsert Activity/Offering type RefData rows + default ReportTemplateConfig
+                        # (S7 — idempotent, runs on every `npm run build` so a fresh deploy never
+                        # ships with empty Activity/Offering type dropdowns)
 
 npx prisma migrate dev --name <desc>   # create + apply a migration in dev
 npx prisma studio                      # inspect the DB
@@ -226,6 +269,10 @@ R2_ENDPOINT=
 R2_ACCESS_KEY=
 R2_SECRET_KEY=
 R2_BUCKET=
+
+# Resend (transactional email — password reset, S7)
+RESEND_API_KEY=
+EMAIL_FROM=              # e.g. "DA Progress Tracker <no-reply@yourdomain.com>"
 ```
 
 ---
@@ -239,7 +286,10 @@ R2_BUCKET=
 
 ### `lib/auth.ts` helpers (implemented in S0)
 - `getSession()` → `getServerSession(authOptions)`.
-- `requireSession()` → returns the session or throws `ApiError(401)`.
+- `requireSession()` → returns the session or throws `ApiError(401)`. **(S7)** Also re-checks the
+  user's `deletedAt` against the DB on every call — a user deactivated mid-session is rejected on
+  their very next request, rather than only being blocked at their next login. `authorize()` in the
+  Credentials provider separately blocks a deactivated user from signing in at all.
 - `requireRole(roles: UserRole[])` → throws `ApiError(401)` if unauthenticated, `ApiError(403)` if
   the role isn't in `roles`.
 - `assertBaseAccess(session, baseId)` → non-`SUPERADMIN` users may only mutate data whose `baseId`
@@ -269,6 +319,25 @@ because the seed scripts already provision `SUPERADMIN` accounts (`npm run seed:
 always an existing admin to create subsequent leaders. The client still submits `role` in the body,
 but it's only trusted now because the caller is already an authenticated `SUPERADMIN`; the value is
 still validated against the `UserRole` enum via zod.
+
+### Settings area & SUPERADMIN self-lockout guards (added S7)
+`/dashboard/settings` (Bases, Users, Reference Data, Report Template tabs) is gated
+**client-side** by `RequireRole roles={["SUPERADMIN"]}` and the sidebar link is SUPERADMIN-only, but
+**every underlying API route re-enforces `requireRole(["SUPERADMIN"])` independently** — the
+client-side gate is UX only, never the security boundary. There is no shared registry tying the
+sidebar/page/route checks together; when adding a new settings sub-page or route, add all three
+gates by hand and don't assume one implies another.
+
+Three mutation paths on `app/api/generals/[id]/route.ts` can affect the acting SUPERADMIN's own
+account, and **all three** must reject a self-inflicted lockout (a change made once, then found
+incomplete, then completed — see history if this needs touching again):
+- `PATCH` (activate/deactivate) and `DELETE` (soft-delete) reject `session.user.id === params.id`
+  when deactivating.
+- `PUT` (profile edit, reused by `EditGeneralForm`) rejects a SUPERADMIN changing their own `role`
+  away from `"SUPERADMIN"`.
+
+If a fourth mutation path is ever added here (or a "last active SUPERADMIN" count-based invariant
+replaces these per-self checks), update all of the above together.
 
 ### Self-fetching server components (fixed)
 `app/dashboard/page.tsx`, `.../birthdays/page.tsx`, `.../platoons/page.tsx`, `.../squads/page.tsx`
@@ -312,10 +381,19 @@ same `lib/` functions, so there's one source of truth for each query.
   `groupId: null`, clearing the teen's platoon. Now fixed by renaming the form field to `platoonId`.
   If you add more editable relations, double-check the client field name matches the zod schema key,
   not just the Prisma column name.
-- **`/dashboard/events` and `/dashboard/settings` are empty stubs.** Events is redundant (events =
-  activities) and should be removed/merged. **Settings sidebar link is commented out** in
-  `components/navigation/Sidebar.tsx` — enable when that page is built. The Reports link is now
-  live (S3, relabeled "Monthly Report").
+- **`/dashboard/events` is an empty stub** — redundant with Activities (events = activities) and
+  should be removed/merged. The Reports link is live (S3, relabeled "Monthly Report"). **Settings is
+  now fully built (S7)** — do not re-stub it or re-comment its sidebar link.
+- **RefData `key` must never be edited after creation (S7)** — `lib/reports/monthly.ts` hardcodes
+  string matches on `"Sunday Service"`, `"Cash"`, `"Online"`; those are the literal seeded `key`
+  values. `updateRefDataSchema` deliberately excludes `key`/`category` so the Settings UI can't touch
+  them. If you ever add a "rename key" feature or let the report engine read RefData dynamically
+  instead of hardcoded strings, update both sides together — don't change one without the other.
+- **Deactivating a RefData row (Settings → Reference Data) doesn't hide it from historical
+  records** — it only stops it appearing as a *new* selectable option; existing Activities/Offerings
+  keep whatever `type` they already had. The edit form for an Offering fetches with
+  `includeInactive=true` so a since-deactivated type still shows (labeled "(inactive)") rather than
+  silently reassigning the record to a different type on save.
 
 ---
 
@@ -361,7 +439,9 @@ Work is organized into **sprint prompt files** (see `/.docs/sprints/` — hidden
 3. Offerings & attendance analytics with charts (reuses `lib/reports/monthly.ts`).
 4. Edit Generals, Group edit/delete, Households.
 5. Detail-page analytics (lieutenant/general/platoon/squad).
-6. UI/UX reskin & design system (clean/white, Origin+Quicken inspired) → then full mobile responsiveness.
-7. AI assistance features (last — only once the system is stable).
+6. Settings admin area (bases, users/roles, managed activity/offering types, password reset,
+   report-template config) ✅ done (S7) — see §5, §8, §9.
+7. UI/UX reskin & design system (clean/white, Origin+Quicken inspired) → then full mobile responsiveness.
+8. AI assistance features (last — only once the system is stable).
 
 Always re-read this file's glossary (§2) and known-bugs list (§9) before starting a sprint.
