@@ -31,14 +31,14 @@ export default function RecordOfferingForm({ offering }: { offering?: Offering }
     control,
     reset,
     setValue,
-    formState: { isSubmitting },
+    formState: { isSubmitting, errors },
   } = useForm({
     defaultValues: {
       service: offering?.service ?? "",
       amount: offering?.amount ?? "",
       date: offering?.date ? new Date(offering.date).toISOString().slice(0, 10) : "",
       notes: offering?.notes ?? "",
-      type: offering?.type ?? "Cash",
+      type: offering?.type ?? "",
       baseId: offering?.isCrossBase ? "cross-base" : offering?.baseId ?? "",
     },
   });
@@ -65,7 +65,7 @@ export default function RecordOfferingForm({ offering }: { offering?: Offering }
   }, []);
 
   useSyncSelectValue(bases, setValue, "baseId", offering?.isCrossBase ? "cross-base" : offering?.baseId ?? "");
-  useSyncSelectValue(offeringTypes, setValue, "type", offering?.type ?? "Cash");
+  useSyncSelectValue(offeringTypes, setValue, "type", offering?.type ?? "");
 
   const onSubmit = async (data: any) => {
     try {
@@ -135,6 +135,7 @@ export default function RecordOfferingForm({ offering }: { offering?: Offering }
             </option>
           ))}
         </select>
+        {errors.type && <p className="text-sm text-red-600 mt-1">Please select a type.</p>}
       </div>
 
       <div>

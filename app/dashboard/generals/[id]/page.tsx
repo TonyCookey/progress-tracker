@@ -80,7 +80,9 @@ export default function GeneralDetailsPage() {
     });
 
     if (!res.ok) {
-      console.error("Failed to delete general");
+      const data = await res.json().catch(() => null);
+      console.error("Failed to delete general", data);
+      alert(data?.message ?? "Failed to delete general");
       return;
     }
     alert("General deleted successfully");

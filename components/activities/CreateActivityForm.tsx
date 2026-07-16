@@ -17,7 +17,7 @@ export default function CreateActivityForm() {
     handleSubmit,
     control,
     reset,
-    formState: { isSubmitting },
+    formState: { isSubmitting, errors },
   } = useForm();
   const router = useRouter();
 
@@ -67,8 +67,9 @@ export default function CreateActivityForm() {
         body: JSON.stringify({ ...data, squadIds: data.squadIds?.map((s: Option) => s.id) }),
       });
       if (!res.ok) {
-        console.error("Failed to create lieutenant", res.statusText);
-        alert("Failed to create lieutenant");
+        console.error("Failed to create activity", res.statusText);
+        alert("Failed to create activity");
+        return;
       }
       reset();
       router.push("/dashboard/activities");
@@ -116,6 +117,7 @@ export default function CreateActivityForm() {
             </option>
           ))}
         </select>
+        {errors.type && <p className="text-sm text-red-600 mt-1">Please select a type.</p>}
       </div>
 
       <div>

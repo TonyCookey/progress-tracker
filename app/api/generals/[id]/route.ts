@@ -91,6 +91,10 @@ export async function PUT(req: Request, { params }: { params: { id: string } }) 
     if (isSuperAdmin) {
       assertBaseAccess(session, existingGeneral.baseId);
       assertBaseAccess(session, data.baseId);
+
+      if (session.user.id === params.id && data.role !== "SUPERADMIN") {
+        throw new ApiError(400, "You cannot remove your own SUPERADMIN role");
+      }
     }
 
     const updatedGeneral = await prisma.user.update({

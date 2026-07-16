@@ -7,6 +7,14 @@ export function getRefData(category: string, includeInactive = false) {
   });
 }
 
+export async function nextSortOrder(category: string) {
+  const last = await prisma.refData.findFirst({
+    where: { category },
+    orderBy: { sortOrder: "desc" },
+  });
+  return (last?.sortOrder ?? -1) + 1;
+}
+
 export function slugifyKey(label: string) {
   return label
     .trim()

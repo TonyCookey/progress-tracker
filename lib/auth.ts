@@ -88,6 +88,14 @@ export async function requireSession(): Promise<Session> {
   if (!session?.user) {
     throw new ApiError(401, "Unauthorized");
   }
+
+  // A user deactivated after their JWT was issued must lose access immediately,
+  // not just be blocked from signing in again — re-check on every request.
+  const user = await prisma.user.findUnique({ where: { id: session.user.id }, select: { deletedAt: true } });
+  if (!user || user.deletedAt) {
+    throw new ApiError(401, "Unauthorized");
+  }
+
   return session;
 }
 
