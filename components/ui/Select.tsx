@@ -51,7 +51,7 @@ export const selectStyles = {
     borderRadius: "0.5rem",
     borderColor: state.isFocused ? "#5c9153" : "#d3d0c9",
     boxShadow: state.isFocused ? "0 0 0 2px rgba(92,145,83,0.35)" : "none",
-    minHeight: "2.75rem",
+    minHeight: "2.375rem",
     "&:hover": { borderColor: "#5c9153" },
   }),
   option: (base: Record<string, unknown>, state: { isSelected: boolean; isFocused: boolean }) => ({
