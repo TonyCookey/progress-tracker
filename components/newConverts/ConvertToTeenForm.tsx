@@ -4,6 +4,9 @@ import { useForm } from "react-hook-form";
 import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
 import { useSyncSelectValue } from "@/lib/hooks/useSyncSelectValue";
+import Input from "@/components/ui/Input";
+import Select from "@/components/ui/Select";
+import Button from "@/components/ui/Button";
 
 type FormData = {
   name: string;
@@ -37,7 +40,12 @@ function toDateInput(value: string | null | undefined) {
 export default function ConvertToTeenForm({ newConvert, onSuccess }: { newConvert: NewConvertDetail; onSuccess: () => void }) {
   const { data: session } = useSession();
   const isSuperAdmin = session?.user?.role === "SUPERADMIN";
-  const { register, handleSubmit, setValue } = useForm<FormData>({
+  const {
+    register,
+    handleSubmit,
+    setValue,
+    formState: { errors },
+  } = useForm<FormData>({
     defaultValues: {
       name: newConvert.name,
       gender: newConvert.gender ?? "",
@@ -123,67 +131,54 @@ export default function ConvertToTeenForm({ newConvert, onSuccess }: { newConver
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="mt-4">
-      <p className="text-sm text-gray-500 mb-4">
+      <p className="text-sm text-neutral-500 mb-4">
         Creates a new Teen record from this New Convert&apos;s details, and marks the New Convert as having become a teen.
       </p>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div>
-          <label className="block text-sm font-medium mb-2">Full Name</label>
-          <input {...register("name", { required: true })} className="w-full border px-3 py-2 rounded" />
-        </div>
+        <Input label="Full Name" {...register("name", { required: true })} error={errors.name && "This field is required"} />
 
-        <div>
-          <label className="block text-sm font-medium mb-2">Gender</label>
-          <select {...register("gender", { required: true })} className="w-full border px-3 py-2 rounded">
-            <option value="">Select</option>
-            <option value="Male">Male</option>
-            <option value="Female">Female</option>
-          </select>
-        </div>
+        <Select label="Gender" {...register("gender", { required: true })} error={errors.gender && "This field is required"}>
+          <option value="">Select</option>
+          <option value="Male">Male</option>
+          <option value="Female">Female</option>
+        </Select>
 
-        <div>
-          <label className="block text-sm font-medium mb-2">Date of Birth</label>
-          <input type="date" {...register("dateOfBirth", { required: true })} className="w-full border px-3 py-2 rounded" />
-        </div>
+        <Input
+          label="Date of Birth"
+          type="date"
+          {...register("dateOfBirth", { required: true })}
+          error={errors.dateOfBirth && "This field is required"}
+        />
 
-        <div>
-          <label className="block text-sm font-medium mb-2">Rank</label>
-          <select {...register("rank", { required: true })} className="w-full border px-3 py-2 rounded">
-            <option value="LIEUTENANT">Lieutenant</option>
-            <option value="CAPTAIN">Captain</option>
-          </select>
-        </div>
+        <Select label="Rank" {...register("rank", { required: true })} error={errors.rank && "This field is required"}>
+          <option value="LIEUTENANT">Lieutenant</option>
+          <option value="CAPTAIN">Captain</option>
+        </Select>
 
         {isSuperAdmin && (
-          <div>
-            <label className="block text-sm font-medium mb-2">Base</label>
-            <select {...register("baseId", { required: true })} className="w-full border px-3 py-2 rounded">
-              <option value="">Select a base</option>
-              {bases.map((base) => (
-                <option key={base.id} value={base.id}>
-                  {base.name}
-                </option>
-              ))}
-            </select>
-          </div>
-        )}
-
-        <div>
-          <label className="block text-sm font-medium mb-2">Platoon</label>
-          <select {...register("groupId")} className="w-full border px-3 py-2 rounded">
-            <option value="">No platoon yet</option>
-            {platoons.map((platoon) => (
-              <option key={platoon.id} value={platoon.id}>
-                {platoon.name}
+          <Select label="Base" {...register("baseId", { required: true })} error={errors.baseId && "This field is required"}>
+            <option value="">Select a base</option>
+            {bases.map((base) => (
+              <option key={base.id} value={base.id}>
+                {base.name}
               </option>
             ))}
-          </select>
-        </div>
+          </Select>
+        )}
+
+        <Select label="Platoon" {...register("groupId")}>
+          <option value="">No platoon yet</option>
+          {platoons.map((platoon) => (
+            <option key={platoon.id} value={platoon.id}>
+              {platoon.name}
+            </option>
+          ))}
+        </Select>
       </div>
 
-      <button type="submit" className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 w-full mt-4" disabled={loading}>
+      <Button type="submit" className="w-full mt-4" isLoading={loading}>
         {loading ? "Converting..." : "Create Teen & Link"}
-      </button>
+      </Button>
     </form>
   );
 }

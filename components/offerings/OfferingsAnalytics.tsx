@@ -9,6 +9,7 @@ import BarComparisonChart from "@/components/charts/BarComparisonChart";
 import StatTile from "@/components/charts/StatTile";
 import { formatMonthLabel } from "@/lib/formatDate";
 import { formatMoney } from "@/lib/formatMoney";
+import Card from "@/components/ui/Card";
 
 type TrendPoint = { month: string; cash: number; online: number; total: number };
 type ByBasePoint = { baseId: string; baseName: string; month: string; cash: number; online: number; total: number };
@@ -85,7 +86,7 @@ export default function OfferingsAnalytics() {
     <div className="space-y-6">
       <AnalyticsFilterBar bases={bases} isSuperAdmin={isSuperAdmin} value={filter} onChange={setFilter} />
 
-      {loading && <p className="text-sm text-gray-500">Loading charts...</p>}
+      {loading && <p className="text-sm text-neutral-500">Loading charts...</p>}
 
       {monthOverMonth && (
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
@@ -100,8 +101,8 @@ export default function OfferingsAnalytics() {
       )}
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="bg-white border rounded p-6 shadow-sm">
-          <h3 className="font-semibold mb-3">Monthly Totals</h3>
+        <Card>
+          <h3 className="text-xs font-semibold uppercase tracking-wide text-neutral-500 mb-3">Monthly Totals</h3>
           <LineTrendChart
             title="Offerings monthly totals, cash vs transfer"
             labels={trend.map((p) => formatMonthLabel(p.month))}
@@ -111,10 +112,10 @@ export default function OfferingsAnalytics() {
             ]}
             formatValue={formatMoney}
           />
-        </div>
+        </Card>
 
-        <div className="bg-white border rounded p-6 shadow-sm">
-          <h3 className="font-semibold mb-3">Cash vs Transfer Split</h3>
+        <Card>
+          <h3 className="text-xs font-semibold uppercase tracking-wide text-neutral-500 mb-3">Cash vs Transfer Split</h3>
           <StackedBarChart
             title="Offerings split, cash vs transfer, by month"
             labels={trend.map((p) => formatMonthLabel(p.month))}
@@ -124,10 +125,10 @@ export default function OfferingsAnalytics() {
             ]}
             formatValue={formatMoney}
           />
-        </div>
+        </Card>
 
-        <div className="bg-white border rounded p-6 shadow-sm">
-          <h3 className="font-semibold mb-3">By Service</h3>
+        <Card>
+          <h3 className="text-xs font-semibold uppercase tracking-wide text-neutral-500 mb-3">By Service</h3>
           <BarComparisonChart
             title="Offerings total by service"
             labels={byService.map((p) => p.service)}
@@ -135,11 +136,11 @@ export default function OfferingsAnalytics() {
             formatValue={formatMoney}
             horizontal
           />
-        </div>
+        </Card>
 
         {showBaseComparison && (
-          <div className="bg-white border rounded p-6 shadow-sm">
-            <h3 className="font-semibold mb-3">Base Comparison</h3>
+          <Card>
+            <h3 className="text-xs font-semibold uppercase tracking-wide text-neutral-500 mb-3">Base Comparison</h3>
             <BarComparisonChart
               title="Total offerings by base, by month"
               labels={baseMonths.map(formatMonthLabel)}
@@ -149,7 +150,7 @@ export default function OfferingsAnalytics() {
               }))}
               formatValue={formatMoney}
             />
-          </div>
+          </Card>
         )}
       </div>
     </div>

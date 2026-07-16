@@ -1,4 +1,7 @@
 import { format } from "date-fns";
+import { TableContainer, Table, TableHead, TableHeaderCell, TableRow, TableCell } from "@/components/ui/Table";
+import Avatar from "@/components/ui/Avatar";
+import Badge from "@/components/ui/Badge";
 
 type Lieutenant = {
   name: string;
@@ -13,57 +16,58 @@ export default function TeenBirthdaysTable({ data }: { data: Lieutenant[] }) {
   return (
     <div>
       {/* Desktop Table */}
-      <div className="hidden md:block overflow-x-auto border rounded-xl shadow bg-white">
-        <table className="min-w-full divide-y divide-gray-200">
-          <thead className="bg-blue-50 text-800">
-            <tr>
-              <th className="px-4 py-3 text-left font-semibold">Name</th>
-              <th className="px-4 py-3 text-left font-semibold">Gender</th>
-              <th className="px-4 py-3 text-left font-semibold">Rank</th>
-              <th className="px-4 py-3 text-left font-semibold">Base</th>
-              <th className="px-4 py-3 text-left font-semibold">Birthday</th>
-            </tr>
-          </thead>
-          <tbody>
-            {data.map((teen, idx) => (
-              <tr key={teen.id} className={`transition-colors hover:bg-blue-50 ${idx % 2 === 0 ? "bg-gray-50" : "bg-white"}`}>
-                <td className="px-4 py-3 flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-full bg-cyan-50 flex items-center justify-center text-blue-700 font-bold text-sm">
-                    {teen.name.charAt(0).toUpperCase()}
-                  </div>
-                  <span className="font-medium">{teen.name}</span>
-                </td>
-                <td className="px-4 py-3">
-                  <span className="inline-block bg-cyan-100 text-cyan-700 px-2 py-1 rounded-full text-sm font-semibold">{teen.gender}</span>
-                </td>
-                <td className="px-4 py-3">
-                  <span className="inline-block bg-indigo-100 text-indigo-700 px-2 py-1 rounded-full text-xs font-semibold">{teen.rank}</span>
-                </td>
-                <td className="px-4 py-3">{teen.baseName}</td>
-                <td className="px-4 py-3">{format(new Date(teen.dateOfBirth), "do MMMM")}</td>
+      <div className="hidden md:block">
+        <TableContainer>
+          <Table>
+            <TableHead>
+              <tr>
+                <TableHeaderCell>Name</TableHeaderCell>
+                <TableHeaderCell>Gender</TableHeaderCell>
+                <TableHeaderCell>Rank</TableHeaderCell>
+                <TableHeaderCell>Base</TableHeaderCell>
+                <TableHeaderCell>Birthday</TableHeaderCell>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </TableHead>
+            <tbody>
+              {data.map((teen) => (
+                <TableRow key={teen.id}>
+                  <TableCell className="flex items-center gap-3">
+                    <Avatar name={teen.name} size="sm" />
+                    <span className="font-medium text-neutral-900">{teen.name}</span>
+                  </TableCell>
+                  <TableCell>
+                    <Badge tone="accent">{teen.gender}</Badge>
+                  </TableCell>
+                  <TableCell>
+                    <Badge tone="neutral" size="sm">
+                      {teen.rank}
+                    </Badge>
+                  </TableCell>
+                  <TableCell>{teen.baseName}</TableCell>
+                  <TableCell>{format(new Date(teen.dateOfBirth), "do MMMM")}</TableCell>
+                </TableRow>
+              ))}
+            </tbody>
+          </Table>
+        </TableContainer>
       </div>
       {/* Mobile Cards */}
       <div className="md:hidden space-y-4">
         {data.map((teen) => (
-          <div key={teen.id} className="border rounded-xl shadow bg-white p-4 flex flex-col gap-2">
+          <div key={teen.id} className="border border-neutral-200 rounded-card shadow-soft bg-white p-4 flex flex-col gap-2">
             <div className="flex items-center gap-3 mb-2">
-              <div className="w-8 h-8 rounded-full bg-cyan-50 flex items-center justify-center text-blue-700 font-bold text-sm">
-                {teen.name.charAt(0).toUpperCase()}
-              </div>
-              <span className="font-medium text-base break-words leading-snug">{teen.name}</span>
+              <Avatar name={teen.name} size="sm" />
+              <span className="font-medium text-sm break-words leading-snug">{teen.name}</span>
             </div>
             <div className="flex flex-wrap gap-4 text-sm mb-2">
               <div>
-                <span className="font-semibold">Gender:</span>{" "}
-                <span className="inline-block bg-cyan-100 text-cyan-700 px-2 py-1 rounded-full text-xs font-semibold">{teen.gender}</span>
+                <span className="font-semibold">Gender:</span> <Badge tone="accent">{teen.gender}</Badge>
               </div>
               <div>
                 <span className="font-semibold">Rank:</span>{" "}
-                <span className="inline-block bg-indigo-100 text-indigo-700 px-2 py-1 rounded-full text-xs font-semibold">{teen.rank}</span>
+                <Badge tone="neutral" size="sm">
+                  {teen.rank}
+                </Badge>
               </div>
               <div>
                 <span className="font-semibold">Base:</span> {teen.baseName}

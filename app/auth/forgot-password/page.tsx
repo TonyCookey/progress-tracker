@@ -3,6 +3,9 @@
 import { useState } from "react";
 import Link from "next/link";
 import GuestOnly from "@/components/auth/GuestOnly";
+import Card from "@/components/ui/Card";
+import Input from "@/components/ui/Input";
+import Button from "@/components/ui/Button";
 
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState("");
@@ -26,36 +29,29 @@ export default function ForgotPasswordPage() {
 
   return (
     <GuestOnly>
-      <div className="min-h-screen flex items-center justify-center bg-gray-100 px-4">
-        <div className="w-full max-w-md bg-white p-6 rounded shadow">
-          <h2 className="text-2xl font-bold mb-4 text-center">Forgot Password</h2>
+      <div className="min-h-screen flex items-center justify-center bg-neutral-50 px-4">
+        <Card className="w-full max-w-md">
+          <h2 className="text-xl font-bold mb-4 text-center text-neutral-900">Forgot Password</h2>
 
           {submitted ? (
-            <p className="text-center text-gray-700">If that email exists, a reset link has been sent. Please check your inbox.</p>
+            <p className="text-center text-neutral-600">If that email exists, a reset link has been sent. Please check your inbox.</p>
           ) : (
             <form onSubmit={handleSubmit}>
               <div className="mb-6">
-                <label className="block mb-1">Email</label>
-                <input
-                  type="email"
-                  className="w-full border px-3 py-2 rounded"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  required
-                />
+                <Input label="Email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
               </div>
-              <button type="submit" disabled={loading} className="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700 disabled:opacity-50">
+              <Button type="submit" isLoading={loading} className="w-full">
                 {loading ? "Sending..." : "Send Reset Link"}
-              </button>
+              </Button>
             </form>
           )}
 
           <p className="text-center text-sm mt-4">
-            <Link href="/auth/login" className="text-blue-600 hover:underline">
+            <Link href="/auth/login" className="text-accent-600 hover:underline">
               Back to login
             </Link>
           </p>
-        </div>
+        </Card>
       </div>
     </GuestOnly>
   );

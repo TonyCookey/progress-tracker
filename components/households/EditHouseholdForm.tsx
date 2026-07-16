@@ -3,6 +3,9 @@
 import { useForm } from "react-hook-form";
 import { useState, useEffect } from "react";
 import { useSyncSelectValue } from "@/lib/hooks/useSyncSelectValue";
+import Input from "@/components/ui/Input";
+import Select from "@/components/ui/Select";
+import Button from "@/components/ui/Button";
 
 type FormData = {
   name: string;
@@ -17,7 +20,13 @@ type Option = { id: string; name: string };
 type Household = FormData & { id: string };
 
 export default function EditHouseholdForm({ household, onSuccess }: { household: Household; onSuccess: () => void }) {
-  const { register, handleSubmit, reset, setValue } = useForm<FormData>({
+  const {
+    register,
+    handleSubmit,
+    reset,
+    setValue,
+    formState: { errors },
+  } = useForm<FormData>({
     defaultValues: {
       name: household.name || "",
       address: household.address || "",
@@ -71,42 +80,29 @@ export default function EditHouseholdForm({ household, onSuccess }: { household:
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="mt-4">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div>
-          <label className="block text-sm font-medium mb-2">Name</label>
-          <input {...register("name", { required: true })} className="w-full border px-3 py-2 rounded" />
-        </div>
+        <Input label="Name" {...register("name", { required: true })} error={errors.name && "Name is required"} />
 
-        <div>
-          <label className="block text-sm font-medium mb-2">Base</label>
-          <select {...register("baseId")} className="w-full border px-3 py-2 rounded">
-            <option value="">No base</option>
-            {bases.map((base) => (
-              <option key={base.id} value={base.id}>
-                {base.name}
-              </option>
-            ))}
-          </select>
-        </div>
+        <Select label="Base" {...register("baseId")}>
+          <option value="">No base</option>
+          {bases.map((base) => (
+            <option key={base.id} value={base.id}>
+              {base.name}
+            </option>
+          ))}
+        </Select>
 
         <div className="md:col-span-2">
-          <label className="block text-sm font-medium mb-2">Address</label>
-          <input {...register("address")} className="w-full border px-3 py-2 rounded" />
+          <Input label="Address" {...register("address")} />
         </div>
 
-        <div>
-          <label className="block text-sm font-medium mb-2">Primary Contact Name</label>
-          <input {...register("primaryContactName")} className="w-full border px-3 py-2 rounded" />
-        </div>
+        <Input label="Primary Contact Name" {...register("primaryContactName")} />
 
-        <div>
-          <label className="block text-sm font-medium mb-2">Primary Contact Phone</label>
-          <input {...register("primaryContactPhone")} className="w-full border px-3 py-2 rounded" />
-        </div>
+        <Input label="Primary Contact Phone" {...register("primaryContactPhone")} />
       </div>
 
-      <button type="submit" className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 w-full mt-4" disabled={loading}>
+      <Button type="submit" className="w-full mt-4" disabled={loading} isLoading={loading}>
         {loading ? "Updating..." : "Update Household"}
-      </button>
+      </Button>
     </form>
   );
 }

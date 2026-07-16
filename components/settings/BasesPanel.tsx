@@ -3,6 +3,10 @@
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import LoadingSpinner from "../common/LoadingSpinner";
+import Card from "@/components/ui/Card";
+import Button from "@/components/ui/Button";
+import Input from "@/components/ui/Input";
+import { Table, TableCell, TableContainer, TableHead, TableHeaderCell, TableRow } from "@/components/ui/Table";
 
 type Base = { id: string; name: string; label: string | null };
 
@@ -36,35 +40,35 @@ function EditBaseRow({ base, onSuccess }: { base: Base; onSuccess: () => void })
 
   if (!editing) {
     return (
-      <tr className="border-t">
-        <td className="px-4 py-3">{base.name}</td>
-        <td className="px-4 py-3">{base.label || "-"}</td>
-        <td className="px-4 py-3 text-right">
-          <button onClick={() => setEditing(true)} className="text-blue-600 hover:underline text-sm">
+      <TableRow>
+        <TableCell>{base.name}</TableCell>
+        <TableCell>{base.label || "-"}</TableCell>
+        <TableCell className="text-right">
+          <button onClick={() => setEditing(true)} className="text-accent-600 hover:underline text-sm">
             Edit
           </button>
-        </td>
-      </tr>
+        </TableCell>
+      </TableRow>
     );
   }
 
   return (
-    <tr className="border-t bg-blue-50">
-      <td className="px-4 py-2">
-        <input {...register("name", { required: true })} className="w-full border px-2 py-1 rounded" />
-      </td>
-      <td className="px-4 py-2">
-        <input {...register("label")} className="w-full border px-2 py-1 rounded" />
-      </td>
-      <td className="px-4 py-2 text-right space-x-2">
-        <button onClick={handleSubmit(onSubmit)} disabled={loading} className="text-green-700 hover:underline text-sm">
+    <TableRow className="bg-accent-50/40">
+      <TableCell>
+        <Input {...register("name", { required: true })} />
+      </TableCell>
+      <TableCell>
+        <Input {...register("label")} />
+      </TableCell>
+      <TableCell className="text-right space-x-2">
+        <button onClick={handleSubmit(onSubmit)} disabled={loading} className="text-success-700 hover:underline text-sm">
           {loading ? "Saving..." : "Save"}
         </button>
-        <button onClick={() => setEditing(false)} className="text-gray-500 hover:underline text-sm">
+        <button onClick={() => setEditing(false)} className="text-neutral-500 hover:underline text-sm">
           Cancel
         </button>
-      </td>
-    </tr>
+      </TableCell>
+    </TableRow>
   );
 }
 
@@ -97,17 +101,11 @@ function AddBaseForm({ onSuccess }: { onSuccess: () => void }) {
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="mt-4 flex flex-wrap items-end gap-3">
-      <div>
-        <label className="block text-sm font-medium mb-1">Name</label>
-        <input {...register("name", { required: true })} className="border px-3 py-2 rounded" placeholder="e.g. Charlie" />
-      </div>
-      <div>
-        <label className="block text-sm font-medium mb-1">Report Label</label>
-        <input {...register("label")} className="border px-3 py-2 rounded" placeholder="e.g. Downtown" />
-      </div>
-      <button type="submit" disabled={loading} className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 disabled:opacity-50">
+      <Input {...register("name", { required: true })} label="Name" placeholder="e.g. Charlie" />
+      <Input {...register("label")} label="Report Label" placeholder="e.g. Downtown" />
+      <Button type="submit" disabled={loading} isLoading={loading}>
         {loading ? "Adding..." : "Add Base"}
-      </button>
+      </Button>
     </form>
   );
 }
@@ -136,24 +134,24 @@ export default function BasesPanel() {
   if (loading) return <LoadingSpinner />;
 
   return (
-    <div className="shadow rounded p-2 sm:p-4">
-      <div className="overflow-x-auto">
-        <table className="w-full table-auto text-sm">
-          <thead>
-            <tr className="bg-gray-100 text-left">
-              <th className="px-4 py-2">Name</th>
-              <th className="px-4 py-2">Report Label</th>
-              <th className="px-4 py-2 text-right">Actions</th>
-            </tr>
-          </thead>
+    <Card>
+      <TableContainer className="border-0 shadow-none">
+        <Table>
+          <TableHead>
+            <TableRow>
+              <TableHeaderCell>Name</TableHeaderCell>
+              <TableHeaderCell>Report Label</TableHeaderCell>
+              <TableHeaderCell className="text-right">Actions</TableHeaderCell>
+            </TableRow>
+          </TableHead>
           <tbody>
             {bases.map((base) => (
               <EditBaseRow key={base.id} base={base} onSuccess={fetchBases} />
             ))}
           </tbody>
-        </table>
-      </div>
+        </Table>
+      </TableContainer>
       <AddBaseForm onSuccess={fetchBases} />
-    </div>
+    </Card>
   );
 }
