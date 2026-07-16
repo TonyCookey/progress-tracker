@@ -6,6 +6,12 @@ import { useSession } from "next-auth/react";
 import { formatMoney } from "@/lib/formatMoney";
 import { formatDateUTC } from "@/lib/formatDate";
 import LoadingSpinner from "../common/LoadingSpinner";
+import Card from "@/components/ui/Card";
+import Select from "@/components/ui/Select";
+import Input from "@/components/ui/Input";
+import Textarea from "@/components/ui/Textarea";
+import Button from "@/components/ui/Button";
+import Badge from "@/components/ui/Badge";
 
 type Option = { id: string; name: string; label?: string | null };
 
@@ -220,24 +226,24 @@ export default function MonthlyReportBuilder() {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center bg-white border rounded p-4 shadow-sm">
+      <Card className="flex flex-col gap-3 sm:flex-row sm:items-center">
         {isSuperAdmin && (
-          <select value={baseId} onChange={(e) => setBaseId(e.target.value)} className="border rounded px-3 py-2">
+          <Select value={baseId} onChange={(e) => setBaseId(e.target.value)} className="sm:w-auto">
             {bases.map((base) => (
               <option key={base.id} value={base.id}>
                 {base.name}
               </option>
             ))}
-          </select>
+          </Select>
         )}
-        <select value={month} onChange={(e) => setMonth(Number(e.target.value))} className="border rounded px-3 py-2">
+        <Select value={month} onChange={(e) => setMonth(Number(e.target.value))} className="sm:w-auto">
           {months.map((m, idx) => (
             <option key={m} value={idx + 1}>
               {m}
             </option>
           ))}
-        </select>
-        <select value={year} onChange={(e) => setYear(Number(e.target.value))} className="border rounded px-3 py-2">
+        </Select>
+        <Select value={year} onChange={(e) => setYear(Number(e.target.value))} className="sm:w-auto">
           {Array.from({ length: 6 }).map((_, idx) => {
             const y = now.getFullYear() - 2 + idx;
             return (
@@ -246,70 +252,66 @@ export default function MonthlyReportBuilder() {
               </option>
             );
           })}
-        </select>
-        {status && (
-          <span className={`px-3 py-1 rounded-full text-xs font-semibold ${status === "FINAL" ? "bg-green-100 text-green-700" : "bg-yellow-100 text-yellow-700"}`}>
-            {status}
-          </span>
-        )}
-      </div>
+        </Select>
+        {status && <Badge tone={status === "FINAL" ? "success" : "warning"}>{status}</Badge>}
+      </Card>
 
       {loading || !auto ? (
         <LoadingSpinner />
       ) : (
         <form className="space-y-6">
           {/* Auto figures */}
-          <div className="bg-white border rounded p-6 shadow-sm">
-            <h2 className="text-lg font-semibold mb-4">Auto Figures (read-only)</h2>
+          <Card>
+            <h2 className="text-lg font-semibold text-neutral-900 mb-4">Auto Figures (read-only)</h2>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
               <div>
-                <p className="text-sm text-gray-500">Estimated Membership</p>
-                <p className="text-xl font-bold">{auto.membership}</p>
+                <p className="text-sm text-neutral-500">Estimated Membership</p>
+                <p className="text-xl font-bold text-neutral-900">{auto.membership}</p>
               </div>
               <div>
-                <p className="text-sm text-gray-500">New Converts</p>
-                <p className="text-xl font-bold">{auto.newConverts.count}</p>
+                <p className="text-sm text-neutral-500">New Converts</p>
+                <p className="text-xl font-bold text-neutral-900">{auto.newConverts.count}</p>
               </div>
               <div>
-                <p className="text-sm text-gray-500">Offerings (Cash)</p>
-                <p className="text-xl font-bold">{formatMoney(auto.offeringsTotal.cash)}</p>
+                <p className="text-sm text-neutral-500">Offerings (Cash)</p>
+                <p className="text-xl font-bold text-neutral-900">{formatMoney(auto.offeringsTotal.cash)}</p>
               </div>
               <div>
-                <p className="text-sm text-gray-500">Offerings (Transfer)</p>
-                <p className="text-xl font-bold">{formatMoney(auto.offeringsTotal.online)}</p>
+                <p className="text-sm text-neutral-500">Offerings (Transfer)</p>
+                <p className="text-xl font-bold text-neutral-900">{formatMoney(auto.offeringsTotal.online)}</p>
               </div>
             </div>
             <div>
-              <p className="text-sm font-semibold text-gray-700 mb-2">Sunday Attendance</p>
+              <p className="text-sm font-semibold text-neutral-700 mb-2">Sunday Attendance</p>
               {auto.sundayAttendance.length ? (
                 <div className="flex flex-wrap gap-3">
                   {auto.sundayAttendance.map((a) => (
-                    <span key={a.activityId} className="px-3 py-1 bg-blue-50 text-blue-700 rounded text-sm">
+                    <span key={a.activityId} className="px-3 py-1 bg-accent-50 text-accent-700 rounded-pill text-sm">
                       {formatDateUTC(a.date, { month: "short", day: "numeric" })}: {a.count}
                     </span>
                   ))}
                 </div>
               ) : (
-                <p className="text-sm text-gray-500">No Sunday Service activities recorded for this month.</p>
+                <p className="text-sm text-neutral-500">No Sunday Service activities recorded for this month.</p>
               )}
             </div>
-          </div>
+          </Card>
 
           {/* Manual finance inputs */}
-          <div className="bg-white border rounded p-6 shadow-sm">
-            <h2 className="text-lg font-semibold mb-4">Finances (from bank statement)</h2>
+          <Card>
+            <h2 className="text-lg font-semibold text-neutral-900 mb-4">Finances (from bank statement)</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-4">
+              <Input type="number" step="0.01" label="Opening Balance" {...register("openingBalance")} />
               <div>
-                <label className="block text-sm font-medium mb-2">Opening Balance</label>
-                <input type="number" step="0.01" {...register("openingBalance")} className="w-full border px-3 py-2 rounded" />
-              </div>
-              <div>
-                <label className="block text-sm font-medium mb-2">
-                  Income (statement) <span className="text-gray-400 font-normal">- app offerings: {formatMoney(auto.offeringsTotal.total)}</span>
-                </label>
-                <input type="number" step="0.01" {...register("income")} className="w-full border px-3 py-2 rounded" />
+                <Input
+                  type="number"
+                  step="0.01"
+                  label="Income (statement)"
+                  hint={`app offerings: ${formatMoney(auto.offeringsTotal.total)}`}
+                  {...register("income")}
+                />
                 {reconciliationGap !== 0 && (
-                  <p className="text-xs text-amber-600 mt-1">
+                  <p className="text-xs text-warning-700 mt-1">
                     {reconciliationGap > 0 ? "Statement is higher by" : "Statement is lower by"} {formatMoney(Math.abs(reconciliationGap))} vs app offerings.
                   </p>
                 )}
@@ -318,113 +320,69 @@ export default function MonthlyReportBuilder() {
 
             <div className="mb-4">
               <div className="flex justify-between items-center mb-2">
-                <label className="block text-sm font-medium">Expense Line Items</label>
-                <button
-                  type="button"
-                  onClick={() => append({ description: "", amount: 0 })}
-                  className="text-sm px-3 py-1 bg-blue-50 text-blue-700 rounded hover:bg-blue-100"
-                >
+                <label className="block text-sm font-medium text-neutral-700">Expense Line Items</label>
+                <Button type="button" variant="secondary" size="sm" onClick={() => append({ description: "", amount: 0 })}>
                   + Add Expense
-                </button>
+                </Button>
               </div>
               <div className="space-y-2">
                 {fields.map((field, idx) => (
                   <div key={field.id} className="flex gap-2">
-                    <input
+                    <Input
                       placeholder="Description (e.g. Bank Charges)"
                       {...register(`expenseItems.${idx}.description` as const)}
-                      className="flex-1 border px-3 py-2 rounded"
+                      className="flex-1"
                     />
-                    <input
+                    <Input
                       type="number"
                       step="0.01"
                       placeholder="Amount"
                       {...register(`expenseItems.${idx}.amount` as const)}
-                      className="w-40 border px-3 py-2 rounded"
+                      className="w-40"
                     />
-                    <button type="button" onClick={() => remove(idx)} className="px-3 py-2 text-red-600 hover:bg-red-50 rounded">
+                    <Button type="button" variant="ghost" onClick={() => remove(idx)} className="text-danger-500 hover:bg-danger-50">
                       Remove
-                    </button>
+                    </Button>
                   </div>
                 ))}
-                {!fields.length && <p className="text-sm text-gray-500">No expense line items yet.</p>}
+                {!fields.length && <p className="text-sm text-neutral-500">No expense line items yet.</p>}
               </div>
             </div>
 
-            <div className="flex justify-end gap-8 border-t pt-4">
+            <div className="flex justify-end gap-8 border-t border-neutral-200 pt-4">
               <div className="text-right">
-                <p className="text-sm text-gray-500">Total Expenses</p>
-                <p className="font-semibold">{formatMoney(expensesTotal)}</p>
+                <p className="text-sm text-neutral-500">Total Expenses</p>
+                <p className="font-semibold text-neutral-900">{formatMoney(expensesTotal)}</p>
               </div>
               <div className="text-right">
-                <p className="text-sm text-gray-500">Closing Balance</p>
-                <p className="text-xl font-bold">{formatMoney(closingBalance)}</p>
+                <p className="text-sm text-neutral-500">Closing Balance</p>
+                <p className="text-xl font-bold text-neutral-900">{formatMoney(closingBalance)}</p>
               </div>
             </div>
-          </div>
+          </Card>
 
           {/* Narrative */}
-          <div className="bg-white border rounded p-6 shadow-sm space-y-4">
-            <h2 className="text-lg font-semibold mb-2">Narrative</h2>
-            <div>
-              <label className="block text-sm font-medium mb-2">Theme</label>
-              <input {...register("theme")} className="w-full border px-3 py-2 rounded" />
-            </div>
-            <div>
-              <label className="block text-sm font-medium mb-2">Executive Summary</label>
-              <textarea {...register("executiveSummary")} rows={3} className="w-full border px-3 py-2 rounded" />
-            </div>
-            <div>
-              <label className="block text-sm font-medium mb-2">Issues</label>
-              <textarea {...register("issues")} rows={2} className="w-full border px-3 py-2 rounded" />
-            </div>
-            <div>
-              <label className="block text-sm font-medium mb-2">Alternative Churches</label>
-              <textarea {...register("alternativeChurches")} rows={2} className="w-full border px-3 py-2 rounded" />
-            </div>
-            <div>
-              <label className="block text-sm font-medium mb-2">Sunday Teaching Summary</label>
-              <textarea {...register("sundayTeaching")} rows={3} className="w-full border px-3 py-2 rounded" />
-            </div>
-            <div>
-              <label className="block text-sm font-medium mb-2">Description</label>
-              <textarea {...register("description")} rows={2} className="w-full border px-3 py-2 rounded" />
-            </div>
-            <div>
-              <label className="block text-sm font-medium mb-2">Victories (one per line)</label>
-              <textarea {...register("victories")} rows={3} className="w-full border px-3 py-2 rounded" />
-            </div>
-            <div>
-              <label className="block text-sm font-medium mb-2">Challenges (one per line)</label>
-              <textarea {...register("challenges")} rows={3} className="w-full border px-3 py-2 rounded" />
-            </div>
-            <div>
-              <label className="block text-sm font-medium mb-2">Plans (one per line)</label>
-              <textarea {...register("plans")} rows={3} className="w-full border px-3 py-2 rounded" />
-            </div>
-            <div>
-              <label className="block text-sm font-medium mb-2">Update on Teens</label>
-              <textarea {...register("updateOnTeens")} rows={3} className="w-full border px-3 py-2 rounded" />
-            </div>
-          </div>
+          <Card className="space-y-4">
+            <h2 className="text-lg font-semibold text-neutral-900 mb-2">Narrative</h2>
+            <Input label="Theme" {...register("theme")} />
+            <Textarea label="Executive Summary" {...register("executiveSummary")} rows={3} />
+            <Textarea label="Issues" {...register("issues")} rows={2} />
+            <Textarea label="Alternative Churches" {...register("alternativeChurches")} rows={2} />
+            <Textarea label="Sunday Teaching Summary" {...register("sundayTeaching")} rows={3} />
+            <Textarea label="Description" {...register("description")} rows={2} />
+            <Textarea label="Victories (one per line)" {...register("victories")} rows={3} />
+            <Textarea label="Challenges (one per line)" {...register("challenges")} rows={3} />
+            <Textarea label="Plans (one per line)" {...register("plans")} rows={3} />
+            <Textarea label="Update on Teens" {...register("updateOnTeens")} rows={3} />
+          </Card>
 
           <div className="flex justify-end gap-3">
-            <button
-              type="button"
-              onClick={handleSubmit(onSaveDraft)}
-              disabled={saving || !baseId}
-              className="px-5 py-2 bg-blue-100 text-blue-700 rounded hover:bg-blue-200 disabled:opacity-50"
-            >
+            <Button type="button" variant="secondary" onClick={handleSubmit(onSaveDraft)} disabled={saving || !baseId} isLoading={saving}>
               {saving ? "Saving..." : "Save Draft"}
-            </button>
-            <button
-              type="button"
-              onClick={handleSubmit(onGenerate)}
-              disabled={generating || !baseId}
-              className="px-5 py-2 bg-green-600 text-white rounded hover:bg-green-700 disabled:opacity-50"
-            >
+            </Button>
+            <Button type="button" variant="primary" onClick={handleSubmit(onGenerate)} disabled={generating || !baseId} isLoading={generating}>
               {generating ? "Generating..." : "Generate .pptx"}
-            </button>
+            </Button>
           </div>
         </form>
       )}

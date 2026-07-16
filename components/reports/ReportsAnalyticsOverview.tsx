@@ -6,6 +6,7 @@ import Link from "next/link";
 import AnalyticsFilterBar, { AnalyticsFilterValue, BaseOption } from "@/components/analytics/AnalyticsFilterBar";
 import BarComparisonChart from "@/components/charts/BarComparisonChart";
 import StatTile from "@/components/charts/StatTile";
+import Card from "@/components/ui/Card";
 
 type AttendancePoint = { date: string; newCount: number; returningCount: number };
 type Dropoff = { priorCount: number; currentCount: number; droppedOffCount: number; droppedOffTeens: { id: string; name: string }[] };
@@ -74,10 +75,10 @@ export default function ReportsAnalyticsOverview() {
 
   return (
     <div className="space-y-6">
-      <h2 className="text-xl font-semibold">Analytics Overview</h2>
+      <h2 className="text-xl font-semibold text-neutral-900">Analytics Overview</h2>
       <AnalyticsFilterBar bases={bases} isSuperAdmin={isSuperAdmin} value={filter} onChange={setFilter} />
 
-      {loading && <p className="text-sm text-gray-500">Loading charts...</p>}
+      {loading && <p className="text-sm text-neutral-500">Loading charts...</p>}
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <StatTile label="Average attendance" value={summary.average} />
@@ -86,8 +87,8 @@ export default function ReportsAnalyticsOverview() {
         <StatTile label="Dropped off" value={dropoff?.droppedOffCount ?? 0} />
       </div>
 
-      <div className="bg-white border rounded p-6 shadow-sm">
-        <h3 className="font-semibold mb-3">New vs Returning Attendance</h3>
+      <Card>
+        <h3 className="text-xs font-semibold uppercase tracking-wide text-neutral-500 mb-3">New vs Returning Attendance</h3>
         <BarComparisonChart
           title="New vs returning attendance per activity"
           labels={points.map((p) => new Date(p.date).toLocaleDateString(undefined, { month: "short", day: "numeric" }))}
@@ -96,25 +97,25 @@ export default function ReportsAnalyticsOverview() {
             { name: "Returning", data: points.map((p) => p.returningCount) },
           ]}
         />
-      </div>
+      </Card>
 
-      <div className="bg-white border rounded p-6 shadow-sm">
-        <h3 className="font-semibold mb-3">Dropped Off ({dropoff?.droppedOffCount ?? 0})</h3>
+      <Card>
+        <h3 className="text-xs font-semibold uppercase tracking-wide text-neutral-500 mb-3">Dropped Off ({dropoff?.droppedOffCount ?? 0})</h3>
         {visibleDroppedOff.length ? (
           <ul className="flex flex-wrap gap-3 text-sm">
             {visibleDroppedOff.map((teen) => (
               <li key={teen.id}>
-                <Link href={`/dashboard/lieutenants/${teen.id}`} className="px-3 py-1 bg-amber-50 text-amber-700 rounded hover:bg-amber-100">
+                <Link href={`/dashboard/lieutenants/${teen.id}`} className="px-3 py-1 bg-warning-50 text-warning-700 rounded-pill hover:bg-warning-50/70 transition-colors">
                   {teen.name}
                 </Link>
               </li>
             ))}
-            {extraDroppedOff > 0 && <li className="px-3 py-1 text-gray-500">+{extraDroppedOff} more</li>}
+            {extraDroppedOff > 0 && <li className="px-3 py-1 text-neutral-500">+{extraDroppedOff} more</li>}
           </ul>
         ) : (
-          <p className="text-sm text-gray-500">No drop-off detected for this period.</p>
+          <p className="text-sm text-neutral-500">No drop-off detected for this period.</p>
         )}
-      </div>
+      </Card>
     </div>
   );
 }

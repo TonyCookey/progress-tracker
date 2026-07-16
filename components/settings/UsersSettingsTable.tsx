@@ -3,6 +3,10 @@
 import { useEffect, useState } from "react";
 import LoadingSpinner from "../common/LoadingSpinner";
 import EditGeneralModal from "../generals/EditGeneralModal";
+import Card from "@/components/ui/Card";
+import Badge from "@/components/ui/Badge";
+import Pagination from "@/components/ui/Pagination";
+import { Table, TableCell, TableContainer, TableHead, TableHeaderCell, TableRow } from "@/components/ui/Table";
 
 interface General {
   id: string;
@@ -82,74 +86,52 @@ export default function UsersSettingsTable() {
   if (loading) return <LoadingSpinner />;
 
   return (
-    <div className="shadow rounded p-2 sm:p-4">
-      <div className="overflow-x-auto">
-        <table className="w-full table-auto text-sm">
-          <thead>
-            <tr className="bg-gray-100 text-left">
-              <th className="px-4 py-2">Name</th>
-              <th className="px-4 py-2">Email</th>
-              <th className="px-4 py-2">Base</th>
-              <th className="px-4 py-2">Role</th>
-              <th className="px-4 py-2">Status</th>
-              <th className="px-4 py-2 text-right">Actions</th>
-            </tr>
-          </thead>
+    <Card>
+      <TableContainer className="border-0 shadow-none">
+        <Table>
+          <TableHead>
+            <TableRow>
+              <TableHeaderCell>Name</TableHeaderCell>
+              <TableHeaderCell>Email</TableHeaderCell>
+              <TableHeaderCell>Base</TableHeaderCell>
+              <TableHeaderCell>Role</TableHeaderCell>
+              <TableHeaderCell>Status</TableHeaderCell>
+              <TableHeaderCell className="text-right">Actions</TableHeaderCell>
+            </TableRow>
+          </TableHead>
           <tbody>
-            {generals.map((general, idx) => (
-              <tr key={general.id} className={`border-t ${idx % 2 === 0 ? "bg-gray-50" : "bg-white"}`}>
-                <td className="px-4 py-3 font-medium">{general.name}</td>
-                <td className="px-4 py-3">{general.email}</td>
-                <td className="px-4 py-3">{general.base?.name ?? "-"}</td>
-                <td className="px-4 py-3">{general.role}</td>
-                <td className="px-4 py-3">
-                  {general.deletedAt ? (
-                    <span className="text-red-600 font-medium">Inactive</span>
-                  ) : (
-                    <span className="text-green-600 font-medium">Active</span>
-                  )}
-                </td>
-                <td className="px-4 py-3 text-right space-x-2 whitespace-nowrap">
+            {generals.map((general) => (
+              <TableRow key={general.id}>
+                <TableCell className="font-medium text-neutral-900">{general.name}</TableCell>
+                <TableCell>{general.email}</TableCell>
+                <TableCell>{general.base?.name ?? "-"}</TableCell>
+                <TableCell>{general.role}</TableCell>
+                <TableCell>
+                  {general.deletedAt ? <Badge tone="danger">Inactive</Badge> : <Badge tone="success">Active</Badge>}
+                </TableCell>
+                <TableCell className="text-right space-x-2 whitespace-nowrap">
                   <EditGeneralModal general={general} onSuccess={() => fetchGenerals(page)} />
                   <button
                     onClick={() => toggleActive(general)}
                     disabled={actioningId === general.id}
-                    className="px-3 py-1 rounded text-sm bg-amber-100 text-amber-800 hover:bg-amber-200 disabled:opacity-50"
+                    className="px-3 py-1 rounded-pill text-sm bg-warning-50 text-warning-700 hover:bg-warning-50/70 disabled:opacity-50"
                   >
                     {general.deletedAt ? "Activate" : "Deactivate"}
                   </button>
                   <button
                     onClick={() => sendReset(general)}
                     disabled={actioningId === general.id}
-                    className="px-3 py-1 rounded text-sm bg-blue-100 text-blue-700 hover:bg-blue-200 disabled:opacity-50"
+                    className="px-3 py-1 rounded-pill text-sm bg-accent-50 text-accent-700 hover:bg-accent-100 disabled:opacity-50"
                   >
                     Send Password Reset
                   </button>
-                </td>
-              </tr>
+                </TableCell>
+              </TableRow>
             ))}
           </tbody>
-        </table>
-      </div>
-      <div className="mt-4 flex flex-col sm:flex-row justify-end items-center space-y-2 sm:space-y-0 sm:space-x-2">
-        <button
-          onClick={() => setPage((p) => Math.max(p - 1, 1))}
-          disabled={page === 1}
-          className="px-4 py-2 bg-blue-100 text-blue-700 rounded hover:bg-blue-200 disabled:opacity-50 transition"
-        >
-          Previous
-        </button>
-        <span className="px-2 py-1 font-medium text-gray-700">
-          Page {page} of {totalPages}
-        </span>
-        <button
-          onClick={() => setPage((p) => Math.min(p + 1, totalPages))}
-          disabled={page === totalPages}
-          className="px-4 py-2 bg-blue-100 text-blue-700 rounded hover:bg-blue-200 disabled:opacity-50 transition"
-        >
-          Next
-        </button>
-      </div>
-    </div>
+        </Table>
+      </TableContainer>
+      <Pagination page={page} totalPages={totalPages} onChange={setPage} />
+    </Card>
   );
 }

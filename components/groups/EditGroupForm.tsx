@@ -4,6 +4,10 @@ import { useForm, Controller } from "react-hook-form";
 import { useState, useEffect } from "react";
 import Select from "react-select";
 import { useSyncSelectValue } from "@/lib/hooks/useSyncSelectValue";
+import Input from "@/components/ui/Input";
+import UiSelect, { selectStyles } from "@/components/ui/Select";
+import Textarea from "@/components/ui/Textarea";
+import Button from "@/components/ui/Button";
 
 type FormData = {
   name: string;
@@ -19,7 +23,14 @@ type SupportOption = { value: string; label: string };
 type Group = FormData & { id: string; type: "PLATOON" | "SQUAD" };
 
 export default function EditGroupForm({ group, onSuccess }: { group: Group; onSuccess: () => void }) {
-  const { register, handleSubmit, reset, control, setValue } = useForm<FormData>({
+  const {
+    register,
+    handleSubmit,
+    reset,
+    control,
+    setValue,
+    formState: { errors },
+  } = useForm<FormData>({
     defaultValues: {
       name: group.name || "",
       description: group.description || "",
@@ -80,42 +91,32 @@ export default function EditGroupForm({ group, onSuccess }: { group: Group; onSu
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="mt-4">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div>
-          <label className="block text-sm font-medium mb-2">Name</label>
-          <input {...register("name", { required: true })} className="w-full border px-3 py-2 rounded" />
-        </div>
+        <Input label="Name" {...register("name", { required: true })} error={errors.name && "Name is required"} />
 
-        <div>
-          <label className="block text-sm font-medium mb-2">Base</label>
-          <select {...register("baseId", { required: true })} className="w-full border px-3 py-2 rounded">
-            <option value="">Select a base</option>
-            {bases.map((base) => (
-              <option key={base.id} value={base.id}>
-                {base.name}
-              </option>
-            ))}
-          </select>
-        </div>
+        <UiSelect label="Base" {...register("baseId", { required: true })} error={errors.baseId && "Base is required"}>
+          <option value="">Select a base</option>
+          {bases.map((base) => (
+            <option key={base.id} value={base.id}>
+              {base.name}
+            </option>
+          ))}
+        </UiSelect>
 
         <div className="md:col-span-2">
-          <label className="block text-sm font-medium mb-2">Description</label>
-          <textarea {...register("description")} className="w-full border px-3 py-2 rounded" rows={3} />
+          <Textarea label="Description" {...register("description")} rows={3} />
         </div>
 
-        <div>
-          <label className="block text-sm font-medium mb-2">Leader (General)</label>
-          <select {...register("leaderId", { required: true })} className="w-full border px-3 py-2 rounded">
-            <option value="">Select a leader</option>
-            {generals.map((general) => (
-              <option key={general.id} value={general.id}>
-                {general.name}
-              </option>
-            ))}
-          </select>
-        </div>
+        <UiSelect label="Leader (General)" {...register("leaderId", { required: true })} error={errors.leaderId && "Leader is required"}>
+          <option value="">Select a leader</option>
+          {generals.map((general) => (
+            <option key={general.id} value={general.id}>
+              {general.name}
+            </option>
+          ))}
+        </UiSelect>
 
         <div>
-          <label className="block text-sm font-medium mb-2">Supporting Generals</label>
+          <label className="block text-sm font-medium text-neutral-700 mb-1">Supporting Generals</label>
           <Controller
             name="supportIds"
             control={control}
@@ -126,6 +127,7 @@ export default function EditGroupForm({ group, onSuccess }: { group: Group; onSu
                 options={supportOptions}
                 className="react-select-container"
                 classNamePrefix="react-select"
+                styles={selectStyles}
                 value={supportOptions.filter((opt) => field.value?.includes(opt.value))}
                 onChange={(selected) => field.onChange(selected.map((opt) => opt.value))}
                 onBlur={field.onBlur}
@@ -135,9 +137,9 @@ export default function EditGroupForm({ group, onSuccess }: { group: Group; onSu
         </div>
       </div>
 
-      <button type="submit" className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 w-full mt-4" disabled={loading}>
+      <Button type="submit" className="w-full mt-4" disabled={loading} isLoading={loading}>
         {loading ? "Updating..." : "Update Group"}
-      </button>
+      </Button>
     </form>
   );
 }

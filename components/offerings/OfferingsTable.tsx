@@ -1,11 +1,17 @@
 "use client";
 import { useEffect, useState } from "react";
 import { EyeIcon, ArrowPathIcon } from "@heroicons/react/24/outline";
-import Select from "react-select";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { formatDate } from "@/lib/formatDate";
+import { formatMoney } from "@/lib/formatMoney";
+import UiSelect from "@/components/ui/Select";
+import Input from "@/components/ui/Input";
+import Button from "@/components/ui/Button";
+import Card from "@/components/ui/Card";
+import { TableContainer, Table, TableHead, TableHeaderCell, TableRow, TableCell } from "@/components/ui/Table";
+import Pagination from "@/components/ui/Pagination";
 
 export default function OfferingsTable() {
   const router = useRouter();
@@ -65,17 +71,22 @@ export default function OfferingsTable() {
     <div>
       <div className="flex flex-col gap-3 sm:flex-row sm:justify-between sm:items-center mb-4">
         {isSuperAdmin && (
-          <select id="baseId" className="border rounded px-3 py-2 mt-1 w-full sm:w-auto" onChange={(e) => setBaseId(e.target.value)} value={baseId}>
+          <UiSelect
+            id="baseId"
+            className="sm:w-auto"
+            onChange={(e) => setBaseId(e.target.value)}
+            value={baseId}
+          >
             <option value=" ">Cross Base</option>
             {bases.map((b: any) => (
               <option key={b.id} value={b.id}>
                 {b.name}
               </option>
             ))}
-          </select>
+          </UiSelect>
         )}
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center w-full sm:w-auto">
-          <input
+          <Input
             type="text"
             placeholder="Search by service..."
             value={search}
@@ -83,67 +94,70 @@ export default function OfferingsTable() {
               setSearch(e.target.value);
               setPage(1);
             }}
-            className="border px-3 py-2 rounded w-full sm:w-64"
+            className="sm:w-64"
           />
-          <button
+          <Button
+            variant="secondary"
+            className="w-full sm:w-auto"
             onClick={() => {
               setPage(1);
               setSearch("");
               fetchData(1, search, baseId);
             }}
-            className="flex items-center px-4 py-2 bg-green-100 text-green-600 rounded sm:mx-2 hover:bg-green-200 w-full sm:w-auto justify-center"
           >
             <ArrowPathIcon className="w-5 h-5 mr-2" />
             Refresh
-          </button>
+          </Button>
         </div>
       </div>
 
       {/* Table for desktop, cards for mobile */}
       <div>
         {/* Desktop Table */}
-        <div className="hidden md:block overflow-x-auto border rounded shadow-sm bg-white">
-          <table className="w-full divide-y divide-gray-200 text-sm">
-            <thead className="bg-blue-50">
-              <tr>
-                <th className="text-left px-4 py-3 font-semibold text-gray-700">Service</th>
-                <th className="text-left px-4 py-3 font-semibold text-gray-700">Amount</th>
-                <th className="text-left px-4 py-3 font-semibold text-gray-700">Date</th>
-                <th className="text-left px-4 py-3 font-semibold text-gray-700">Base</th>
-                <th className="text-left px-4 py-3 font-semibold text-gray-700">Type</th>
-                {canEditOffering && <th className="text-left px-4 py-3 font-semibold text-gray-700">Actions</th>}
-              </tr>
-            </thead>
-            <tbody>
-              {offerings.map((off: any, idx: number) => (
-                <tr key={off.id} className={`border-t transition-colors hover:bg-blue-50 ${idx % 2 === 0 ? "bg-gray-50" : "bg-white"}`}>
-                  <td className="px-4 py-2 font-medium">{off.service}</td>
-                  <td className="px-4 py-2 font-bold text-green-700">₦{Number(off.amount).toLocaleString()}</td>
-                  <td className="px-4 py-2">{formatDate(off.date)}</td>
-                  <td className="px-4 py-2">{off.base?.name ?? "-"}</td>
-                  <td className="px-4 py-2">{off.type === "Online" ? "Transfer" : off.type ?? "-"}</td>
-                  {canEditOffering && (
-                    <td className="px-4 py-2 space-x-2">
-                      <Link href={`/dashboard/offerings/${off.id}/edit`} className="text-blue-600 hover:underline">
-                        Edit
-                      </Link>
-                      <button onClick={() => handleDelete(off.id)} className="text-red-600 hover:underline">
-                        Delete
-                      </button>
-                    </td>
-                  )}
+        <div className="hidden md:block">
+          <TableContainer>
+            <Table>
+              <TableHead>
+                <tr>
+                  <TableHeaderCell>Service</TableHeaderCell>
+                  <TableHeaderCell>Amount</TableHeaderCell>
+                  <TableHeaderCell>Date</TableHeaderCell>
+                  <TableHeaderCell>Base</TableHeaderCell>
+                  <TableHeaderCell>Type</TableHeaderCell>
+                  {canEditOffering && <TableHeaderCell>Actions</TableHeaderCell>}
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </TableHead>
+              <tbody>
+                {offerings.map((off: any) => (
+                  <TableRow key={off.id}>
+                    <TableCell className="font-medium">{off.service}</TableCell>
+                    <TableCell className="font-bold text-success-700">{formatMoney(Number(off.amount))}</TableCell>
+                    <TableCell>{formatDate(off.date)}</TableCell>
+                    <TableCell>{off.base?.name ?? "-"}</TableCell>
+                    <TableCell>{off.type === "Online" ? "Transfer" : off.type ?? "-"}</TableCell>
+                    {canEditOffering && (
+                      <TableCell className="space-x-2">
+                        <Link href={`/dashboard/offerings/${off.id}/edit`} className="text-accent-600 hover:underline">
+                          Edit
+                        </Link>
+                        <button onClick={() => handleDelete(off.id)} className="text-danger-500 hover:underline">
+                          Delete
+                        </button>
+                      </TableCell>
+                    )}
+                  </TableRow>
+                ))}
+              </tbody>
+            </Table>
+          </TableContainer>
         </div>
         {/* Mobile Cards */}
         <div className="md:hidden space-y-4">
           {offerings.map((off: any) => (
-            <div key={off.id} className="border rounded shadow-sm bg-white p-4 flex flex-col gap-2">
+            <Card key={off.id} padded className="flex flex-col gap-2">
               <div className="mb-2">
                 <span className="block font-medium text-base break-words leading-snug mb-1">{off.service}</span>
-                <span className="block font-bold text-green-700 text-lg mb-1">₦{Number(off.amount).toLocaleString()}</span>
+                <span className="block font-bold text-success-700 text-lg mb-1">{formatMoney(Number(off.amount))}</span>
               </div>
               <div className="flex flex-wrap gap-4 text-sm mb-2">
                 <div>
@@ -158,38 +172,20 @@ export default function OfferingsTable() {
               </div>
               {canEditOffering && (
                 <div className="flex gap-4 text-sm">
-                  <Link href={`/dashboard/offerings/${off.id}/edit`} className="text-blue-600 hover:underline">
+                  <Link href={`/dashboard/offerings/${off.id}/edit`} className="text-accent-600 hover:underline">
                     Edit
                   </Link>
-                  <button onClick={() => handleDelete(off.id)} className="text-red-600 hover:underline">
+                  <button onClick={() => handleDelete(off.id)} className="text-danger-500 hover:underline">
                     Delete
                   </button>
                 </div>
               )}
-            </div>
+            </Card>
           ))}
         </div>
       </div>
 
-      <div className="flex justify-end mt-4 space-x-2">
-        <button
-          onClick={() => setPage((p) => Math.max(1, p - 1))}
-          disabled={page === 1}
-          className="px-4 py-2 bg-blue-100 text-blue-700 rounded hover:bg-blue-200 disabled:opacity-50 transition"
-        >
-          Previous
-        </button>
-        <span className="px-2 py-1 font-medium text-gray-700">
-          Page {page} of {totalPages}
-        </span>
-        <button
-          onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
-          disabled={page === totalPages}
-          className="px-4 py-2 bg-blue-100 text-blue-700 rounded hover:bg-blue-200 disabled:opacity-50 transition"
-        >
-          Next
-        </button>
-      </div>
+      <Pagination page={page} totalPages={totalPages} onChange={setPage} />
     </div>
   );
 }

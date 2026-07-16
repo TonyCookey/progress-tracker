@@ -53,8 +53,8 @@ export default function Sidebar() {
   // Sidebar content
   const sidebarContent = (
     <div className="flex flex-col h-full">
-      <div className="px-6 py-6 text-xl font-extrabold text-400">DA Church Tracker</div>
-      <div className="border-t border-cyan-700 mx-6 mb-2" />
+      <div className="px-6 py-6 text-xl font-extrabold text-neutral-900">DA Church Tracker</div>
+      <div className="border-t border-neutral-200 mx-6 mb-2" />
       <nav className="mt-2 flex-1">
         {visibleLinks.map(({ href, label, icon }) => (
           <Link
@@ -62,9 +62,10 @@ export default function Sidebar() {
             href={href}
             onClick={() => setOpen(false)}
             className={clsx(
-              "flex items-center space-x-4 px-6 py-3 rounded-lg transition-all duration-150 cursor-pointer ",
-              "hover:bg-cyan-600 hover:text-white",
-              pathname === href ? "bg-cyan-700 text-white border-l-4 border-cyan-400 font-semibold shadow" : "text-cyan-200",
+              "flex items-center space-x-4 px-6 py-3 mx-3 rounded-lg transition-all duration-150 cursor-pointer",
+              pathname === href
+                ? "bg-accent-50 text-accent-700 border-l-4 border-accent-500 font-semibold"
+                : "text-neutral-600 border-l-4 border-transparent hover:bg-neutral-50 hover:text-neutral-900",
             )}
           >
             {icon}
@@ -79,7 +80,7 @@ export default function Sidebar() {
     <>
       {/* Hamburger button for mobile */}
       <button
-        className="md:hidden fixed top-4 left-4 z-40 bg-cyan-800 p-2 rounded text-white focus:outline-none shadow-lg"
+        className="md:hidden fixed top-4 left-4 z-40 bg-white border border-neutral-200 p-2 rounded-lg text-neutral-700 focus:outline-none shadow-soft"
         onClick={() => setOpen(true)}
         aria-label="Open sidebar"
       >
@@ -89,7 +90,7 @@ export default function Sidebar() {
       </button>
 
       {/* Sidebar for desktop */}
-      <aside className="hidden md:flex w-64 h-screen bg-gradient-to-b from-cyan-900 via-cyan-800 to-cyan-700 text-white fixed top-0 left-0 shadow-lg z-30">
+      <aside className="hidden md:flex w-64 h-screen bg-white border-r border-neutral-200 fixed top-0 left-0 z-30">
         {sidebarContent}
       </aside>
 
@@ -97,9 +98,13 @@ export default function Sidebar() {
       {open && (
         <>
           {/* Overlay */}
-          <div className="fixed inset-0 bg-black bg-opacity-40 z-40 transition-opacity duration-200" onClick={() => setOpen(false)} />
-          <aside className="fixed top-0 left-0 w-64 h-full bg-gradient-to-b from-cyan-900 via-cyan-800 to-cyan-700 text-white shadow-lg z-50 animate-slide-in">
-            <button className="absolute top-4 right-3 text-white focus:outline-none" onClick={() => setOpen(false)} aria-label="Close sidebar">
+          <div className="fixed inset-0 bg-neutral-900/40 z-40 transition-opacity duration-200" onClick={() => setOpen(false)} />
+          <aside className="fixed top-0 left-0 w-64 h-full bg-white border-r border-neutral-200 shadow-softHover z-50 animate-slide-in">
+            <button
+              className="absolute top-4 right-3 text-neutral-500 hover:text-neutral-900 focus:outline-none"
+              onClick={() => setOpen(false)}
+              aria-label="Close sidebar"
+            >
               <svg className="h-6 w-6" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
               </svg>

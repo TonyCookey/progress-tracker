@@ -4,6 +4,11 @@ import { useForm } from "react-hook-form";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useSyncSelectValue } from "@/lib/hooks/useSyncSelectValue";
+import Card from "@/components/ui/Card";
+import Input from "@/components/ui/Input";
+import Textarea from "@/components/ui/Textarea";
+import UiSelect from "@/components/ui/Select";
+import Button from "@/components/ui/Button";
 
 type Option = { id: string; name: string };
 type SquadOption = {
@@ -91,40 +96,23 @@ export default function RecordOfferingForm({ offering }: { offering?: Offering }
   };
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 p-10 bg-white rounded shadow-md">
-      <h1 className="text-xl font-semibold">{isEdit ? "Edit Offering" : "Record Offering"}</h1>
-      <div>
-        <label htmlFor="service" className="block text-sm font-medium">
-          Service
-        </label>
-        <input id="service" {...register("service", { required: true })} className="w-full border rounded px-3 py-2 mt-1" />
-      </div>
-      <div>
-        <label htmlFor="amount" className="block text-sm font-medium">
-          Amount
-        </label>
-        <input id="amount" {...register("amount", { required: true })} type="number" className="w-full border rounded px-3 py-2 mt-1" />
-      </div>
+    <Card>
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+        <h1 className="text-xl font-semibold">{isEdit ? "Edit Offering" : "Record Offering"}</h1>
+        <Input id="service" label="Service" {...register("service", { required: true })} error={errors.service && "Service is required."} />
+        <Input
+          id="amount"
+          type="number"
+          label="Amount"
+          {...register("amount", { required: true })}
+          error={errors.amount && "Amount is required."}
+        />
 
-      <div>
-        <label htmlFor="notes" className="block text-sm font-medium">
-          Notes
-        </label>
-        <textarea id="notes" {...register("notes")} className="w-full border rounded px-3 py-2 mt-1" rows={3} />
-      </div>
+        <Textarea id="notes" label="Notes" {...register("notes")} rows={3} />
 
-      <div>
-        <label htmlFor="date" className="block text-sm font-medium">
-          Date
-        </label>
-        <input type="date" id="date" {...register("date", { required: true })} className="w-full border rounded px-3 py-2 mt-1" />
-      </div>
+        <Input id="date" type="date" label="Date" {...register("date", { required: true })} error={errors.date && "Date is required."} />
 
-      <div>
-        <label htmlFor="type" className="block text-sm font-medium">
-          Type
-        </label>
-        <select id="type" {...register("type", { required: true })} className="w-full border rounded px-3 py-2 mt-1">
+        <UiSelect id="type" label="Type" {...register("type", { required: true })} error={errors.type && "Please select a type."}>
           <option value="" disabled>
             Select a type
           </option>
@@ -134,15 +122,9 @@ export default function RecordOfferingForm({ offering }: { offering?: Offering }
               {!t.active ? " (inactive)" : ""}
             </option>
           ))}
-        </select>
-        {errors.type && <p className="text-sm text-red-600 mt-1">Please select a type.</p>}
-      </div>
+        </UiSelect>
 
-      <div>
-        <label htmlFor="baseId" className="block text-sm font-medium">
-          Base
-        </label>
-        <select id="baseId" {...register("baseId")} className="w-full border rounded px-3 py-2 mt-1">
+        <UiSelect id="baseId" label="Base" {...register("baseId")}>
           <option value="">Select a Base</option>
           <option value="cross-base">Cross Base</option>
           {bases.map((b) => (
@@ -150,14 +132,14 @@ export default function RecordOfferingForm({ offering }: { offering?: Offering }
               {b.name}
             </option>
           ))}
-        </select>
-      </div>
+        </UiSelect>
 
-      <div className="flex justify-end pt-2">
-        <button type="submit" disabled={isSubmitting} className="bg-cyan-600 text-white px-4 py-2 rounded hover:bg-cyan-700">
-          {isSubmitting ? (isEdit ? "Updating..." : "Recording...") : isEdit ? "Update Offering" : "Record Offering"}
-        </button>
-      </div>
-    </form>
+        <div className="flex justify-end pt-2">
+          <Button type="submit" disabled={isSubmitting} isLoading={isSubmitting}>
+            {isSubmitting ? (isEdit ? "Updating..." : "Recording...") : isEdit ? "Update Offering" : "Record Offering"}
+          </Button>
+        </div>
+      </form>
+    </Card>
   );
 }

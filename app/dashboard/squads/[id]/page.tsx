@@ -7,6 +7,10 @@ import { useEffect, useState } from "react";
 import EditGroupModal from "@/components/groups/EditGroupModal";
 import LineTrendChart from "@/components/charts/LineTrendChart";
 import StatTile from "@/components/charts/StatTile";
+import Card from "@/components/ui/Card";
+import Badge from "@/components/ui/Badge";
+import Avatar from "@/components/ui/Avatar";
+import Button from "@/components/ui/Button";
 
 type AttendanceTrendPoint = { activityId: string; activityName: string; date: string; rate: number | null };
 
@@ -72,32 +76,30 @@ export default function SquadDetailsPage() {
   return (
     <div className="max-w-5xl mx-auto p-8">
       {/* Squad Info Card */}
-      <div className="bg-white rounded-xl shadow-lg p-8 mb-8">
-        <h1 className="text-3xl font-extrabold mb-2 text-900">{squad.name}</h1>
-        <p className="text-gray-600 mb-4">{squad.description}</p>
-        <p className="text-gray-600 mb-4">
-          <span className="inline-block bg-blue-100 text-blue-700 px-2 py-1 rounded-full text-sm font-semibold">{squad.base?.name ?? "N/A"}</span>
+      <Card className="mb-8">
+        <h1 className="text-3xl font-extrabold mb-2 text-neutral-900">{squad.name}</h1>
+        <p className="text-neutral-600 mb-4">{squad.description}</p>
+        <p className="mb-4">
+          <Badge tone="accent">{squad.base?.name ?? "N/A"}</Badge>
         </p>
         <div className="mb-4">
           <h2 className="text-xl font-semibold mb-3">General Leading</h2>
-          <Link href={`/dashboard/generals/${squad.leader?.id}`} className="block hover:bg-gray-50 rounded-lg">
+          <Link href={`/dashboard/generals/${squad.leader?.id}`} className="block hover:bg-neutral-50 rounded-lg">
             <div className="flex items-center gap-3">
-              <div className="w-12 h-12 rounded-full bg-cyan-100 flex items-center justify-center text-2xl font-bold text-blue-700 shadow">
-                {squad.leader?.name?.[0] ?? "?"}
-              </div>
+              <Avatar name={squad.leader?.name ?? "?"} size="lg" />
               <div>
-                <p className="font-semibold text-cyan-900">{squad.leader?.name ?? "No leader assigned"}</p>
+                <p className="font-semibold text-neutral-900">{squad.leader?.name ?? "No leader assigned"}</p>
               </div>
             </div>
           </Link>
         </div>
         <div className="flex gap-4 justify-end">
           <EditGroupModal group={squad} label="Squad" onSuccess={fetchSquad} />
-          <button onClick={handleDelete} className="bg-red-600 hover:bg-red-700 text-white px-5 py-2 rounded-lg font-semibold shadow">
+          <Button variant="danger" onClick={handleDelete}>
             Delete
-          </button>
+          </Button>
         </div>
-      </div>
+      </Card>
 
       {/* Attendance Trend */}
       {(() => {
@@ -106,7 +108,7 @@ export default function SquadDetailsPage() {
         // understate real attendance.
         const recordedTrend = squad.attendanceTrend.filter((p) => p.rate !== null);
         return (
-          <div className="bg-white rounded-xl shadow-lg p-8 mb-8">
+          <Card className="mb-8">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-xl font-semibold">Attendance Trend</h2>
               <StatTile
@@ -122,70 +124,68 @@ export default function SquadDetailsPage() {
                 formatValue={(n) => `${n}%`}
               />
             ) : (
-              <p className="text-gray-500">No attendance data yet.</p>
+              <p className="text-neutral-500">No attendance data yet.</p>
             )}
-          </div>
+          </Card>
         );
       })()}
 
       {/* Main Content: Teens & Activities Side by Side */}
       <div className="flex flex-col md:flex-row gap-8">
         {/* Teens List Card */}
-        <div className="flex-1 bg-white rounded-xl shadow-lg p-8 mb-8 md:mb-0">
+        <Card className="flex-1 mb-8 md:mb-0">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-xl font-semibold">Teens in this Squad</h2>
-            <span className="inline-block bg-blue-100 text-blue-700 px-3 py-1 rounded-full text-sm font-semibold">
+            <Badge tone="accent">
               {squad.members?.length ?? 0} Teen{squad.members?.length === 1 ? "" : "s"}
-            </span>
+            </Badge>
           </div>
           {squad.members?.length ? (
-            <ul className="divide-y divide-gray-200">
+            <ul className="divide-y divide-neutral-200">
               {squad.members.map((teen: any) => (
-                <Link href={`/dashboard/lieutenants/${teen.teenId}`} key={teen.teenId} className="block hover:bg-blue-50 rounded-lg px-1">
+                <Link href={`/dashboard/lieutenants/${teen.teenId}`} key={teen.teenId} className="block hover:bg-accent-50 rounded-lg px-1">
                   <li className="flex items-center gap-4 py-3">
-                    <div className="w-8 h-8 rounded-full bg-cyan-50 flex items-center justify-center text-sm font-bold text-blue-700 shadow">
-                      {teen.teen.name?.[0] ?? "?"}
-                    </div>
+                    <Avatar name={teen.teen.name ?? "?"} size="sm" />
                     <div>
-                      <p className="font-medium text-blue-900 text-sm">{teen.teen.name}</p>
+                      <p className="font-medium text-neutral-900 text-sm">{teen.teen.name}</p>
                     </div>
                   </li>
                 </Link>
               ))}
             </ul>
           ) : (
-            <p className="text-gray-500">No teens assigned to this squad.</p>
+            <p className="text-neutral-500">No teens assigned to this squad.</p>
           )}
-        </div>
+        </Card>
 
         {/* Activities Card */}
-        <div className="flex-1 bg-white rounded-xl shadow-lg p-8">
+        <Card className="flex-1">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-xl font-semibold">Squad Activities</h2>
-            <span className="inline-block bg-blue-100 text-blue-700 px-3 py-1 rounded-full text-sm font-semibold">
+            <Badge tone="accent">
               {squad.activities?.length ?? 0} Activit{squad.activities?.length === 1 ? "y" : "ies"}
-            </span>
+            </Badge>
           </div>
           {squad.activities?.length ? (
-            <ul className="divide-y divide-gray-200">
+            <ul className="divide-y divide-neutral-200">
               {squad.activities
                 .slice()
                 .reverse()
                 .map((activity: any) => (
-                <Link href={`/dashboard/activities/${activity.id}`} key={activity.id} className="block hover:bg-blue-50 rounded-lg px-1">
+                <Link href={`/dashboard/activities/${activity.id}`} key={activity.id} className="block hover:bg-accent-50 rounded-lg px-1">
                   <li key={activity.id} className="py-3">
                     <div className="flex flex-col">
-                      <span className="font-semibold text-cyan-900">{activity.name}</span>
-                      <span className="text-xs text-gray-500">{formatDateUTC(activity.date, { month: "long", day: "numeric", year: "numeric" })}</span>
+                      <span className="font-semibold text-neutral-900">{activity.name}</span>
+                      <span className="text-xs text-neutral-500">{formatDateUTC(activity.date, { month: "long", day: "numeric", year: "numeric" })}</span>
                     </div>
                   </li>
                 </Link>
               ))}
             </ul>
           ) : (
-            <p className="text-gray-500">No activities for this squad.</p>
+            <p className="text-neutral-500">No activities for this squad.</p>
           )}
-        </div>
+        </Card>
       </div>
     </div>
   );

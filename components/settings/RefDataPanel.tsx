@@ -3,6 +3,10 @@
 import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import LoadingSpinner from "../common/LoadingSpinner";
+import Card from "@/components/ui/Card";
+import Button from "@/components/ui/Button";
+import Input from "@/components/ui/Input";
+import { Table, TableCell, TableContainer, TableHead, TableHeaderCell, TableRow } from "@/components/ui/Table";
 
 type RefDataItem = { id: string; key: string; label: string; sortOrder: number; active: boolean };
 
@@ -52,42 +56,42 @@ function EditRefDataRow({ item, onSuccess }: { item: RefDataItem; onSuccess: () 
 
   if (!editing) {
     return (
-      <tr className="border-t">
-        <td className="px-4 py-2">{item.label}</td>
-        <td className="px-4 py-2 text-gray-400">{item.key}</td>
-        <td className="px-4 py-2">{item.sortOrder}</td>
-        <td className="px-4 py-2">{item.active ? "Active" : "Inactive"}</td>
-        <td className="px-4 py-2 text-right space-x-2">
-          <button onClick={() => setEditing(true)} className="text-blue-600 hover:underline text-sm">
+      <TableRow>
+        <TableCell>{item.label}</TableCell>
+        <TableCell className="text-neutral-400">{item.key}</TableCell>
+        <TableCell>{item.sortOrder}</TableCell>
+        <TableCell>{item.active ? "Active" : "Inactive"}</TableCell>
+        <TableCell className="text-right space-x-2">
+          <button onClick={() => setEditing(true)} className="text-accent-600 hover:underline text-sm">
             Edit
           </button>
-          <button onClick={toggleActive} disabled={loading} className="text-amber-700 hover:underline text-sm">
+          <button onClick={toggleActive} disabled={loading} className="text-warning-700 hover:underline text-sm">
             {item.active ? "Deactivate" : "Activate"}
           </button>
-        </td>
-      </tr>
+        </TableCell>
+      </TableRow>
     );
   }
 
   return (
-    <tr className="border-t bg-blue-50">
-      <td className="px-4 py-2">
-        <input {...register("label", { required: true })} className="w-full border px-2 py-1 rounded" />
-      </td>
-      <td className="px-4 py-2 text-gray-400">{item.key}</td>
-      <td className="px-4 py-2">
-        <input type="number" {...register("sortOrder", { valueAsNumber: true })} className="w-20 border px-2 py-1 rounded" />
-      </td>
-      <td className="px-4 py-2">{item.active ? "Active" : "Inactive"}</td>
-      <td className="px-4 py-2 text-right space-x-2">
-        <button onClick={handleSubmit(save)} disabled={loading} className="text-green-700 hover:underline text-sm">
+    <TableRow className="bg-accent-50/40">
+      <TableCell>
+        <Input {...register("label", { required: true })} />
+      </TableCell>
+      <TableCell className="text-neutral-400">{item.key}</TableCell>
+      <TableCell>
+        <Input type="number" {...register("sortOrder", { valueAsNumber: true })} className="w-20" />
+      </TableCell>
+      <TableCell>{item.active ? "Active" : "Inactive"}</TableCell>
+      <TableCell className="text-right space-x-2">
+        <button onClick={handleSubmit(save)} disabled={loading} className="text-success-700 hover:underline text-sm">
           {loading ? "Saving..." : "Save"}
         </button>
-        <button onClick={() => setEditing(false)} className="text-gray-500 hover:underline text-sm">
+        <button onClick={() => setEditing(false)} className="text-neutral-500 hover:underline text-sm">
           Cancel
         </button>
-      </td>
-    </tr>
+      </TableCell>
+    </TableRow>
   );
 }
 
@@ -117,13 +121,10 @@ function AddRefDataForm({ category, onSuccess }: { category: string; onSuccess: 
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="mt-3 flex items-end gap-3">
-      <div>
-        <label className="block text-sm font-medium mb-1">New Value</label>
-        <input {...register("label", { required: true })} className="border px-3 py-2 rounded" placeholder="e.g. Prayer Meeting" />
-      </div>
-      <button type="submit" disabled={loading} className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 disabled:opacity-50">
+      <Input {...register("label", { required: true })} label="New Value" placeholder="e.g. Prayer Meeting" />
+      <Button type="submit" disabled={loading} isLoading={loading}>
         {loading ? "Adding..." : "Add"}
-      </button>
+      </Button>
     </form>
   );
 }
@@ -149,32 +150,32 @@ function RefDataCategoryTable({ category, title }: { category: string; title: st
   }, []);
 
   return (
-    <div className="shadow rounded p-2 sm:p-4 mb-6">
-      <h2 className="text-lg font-semibold mb-3">{title}</h2>
+    <Card className="mb-6">
+      <h2 className="text-lg font-semibold mb-3 text-neutral-900">{title}</h2>
       {loading ? (
         <LoadingSpinner />
       ) : (
-        <div className="overflow-x-auto">
-          <table className="w-full table-auto text-sm">
-            <thead>
-              <tr className="bg-gray-100 text-left">
-                <th className="px-4 py-2">Label</th>
-                <th className="px-4 py-2">Key</th>
-                <th className="px-4 py-2">Order</th>
-                <th className="px-4 py-2">Status</th>
-                <th className="px-4 py-2 text-right">Actions</th>
-              </tr>
-            </thead>
+        <TableContainer className="border-0 shadow-none">
+          <Table>
+            <TableHead>
+              <TableRow>
+                <TableHeaderCell>Label</TableHeaderCell>
+                <TableHeaderCell>Key</TableHeaderCell>
+                <TableHeaderCell>Order</TableHeaderCell>
+                <TableHeaderCell>Status</TableHeaderCell>
+                <TableHeaderCell className="text-right">Actions</TableHeaderCell>
+              </TableRow>
+            </TableHead>
             <tbody>
               {items.map((item) => (
                 <EditRefDataRow key={item.id} item={item} onSuccess={fetchItems} />
               ))}
             </tbody>
-          </table>
-        </div>
+          </Table>
+        </TableContainer>
       )}
       <AddRefDataForm category={category} onSuccess={fetchItems} />
-    </div>
+    </Card>
   );
 }
 

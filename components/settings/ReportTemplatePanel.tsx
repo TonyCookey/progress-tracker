@@ -2,6 +2,8 @@
 
 import { useEffect, useState } from "react";
 import LoadingSpinner from "../common/LoadingSpinner";
+import Card from "@/components/ui/Card";
+import Button from "@/components/ui/Button";
 
 const SECTION_LABELS: Record<string, string> = {
   theme: "Theme",
@@ -62,19 +64,24 @@ export default function ReportTemplatePanel() {
   if (loading) return <LoadingSpinner />;
 
   return (
-    <div className="shadow rounded p-4">
-      <p className="text-sm text-gray-500 mb-4">Choose which sections appear on the monthly report.</p>
+    <Card>
+      <p className="text-sm text-neutral-500 mb-4">Choose which sections appear on the monthly report.</p>
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         {Object.entries(SECTION_LABELS).map(([key, label]) => (
           <label key={key} className="flex items-center gap-2">
-            <input type="checkbox" checked={!!sections[key]} onChange={() => toggle(key)} className="h-4 w-4" />
-            <span className="text-sm">{label}</span>
+            <input
+              type="checkbox"
+              checked={!!sections[key]}
+              onChange={() => toggle(key)}
+              className="h-4 w-4 rounded border-neutral-300 text-accent-500 focus:ring-accent-400"
+            />
+            <span className="text-sm text-neutral-700">{label}</span>
           </label>
         ))}
       </div>
-      <button onClick={save} disabled={saving} className="mt-4 bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 disabled:opacity-50">
+      <Button onClick={save} disabled={saving} isLoading={saving} className="mt-4">
         {saving ? "Saving..." : "Save"}
-      </button>
-    </div>
+      </Button>
+    </Card>
   );
 }
