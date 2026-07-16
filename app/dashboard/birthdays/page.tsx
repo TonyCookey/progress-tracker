@@ -10,7 +10,7 @@ export default async function BirthdaysPage() {
 
   return (
     <RequireAuth>
-      <div className="p-6">
+      <div className="p-4 md:p-6">
         <PageHeader title="Upcoming Birthdays 🎉" />
         <BirthdayTabs generals={generals as any[]} teens={teens as any[]} />
       </div>

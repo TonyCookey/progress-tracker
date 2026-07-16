@@ -21,7 +21,7 @@ const Select = forwardRef<HTMLSelectElement, SelectProps>(({ label, error, hint,
         ref={ref}
         id={selectId}
         className={clsx(
-          "w-full border rounded-lg px-3 py-2 text-sm text-neutral-900 focus:outline-none focus:ring-2 focus:ring-accent-400 focus:border-accent-500 transition-colors bg-white",
+          "w-full border rounded-lg px-3 py-2 text-sm text-neutral-900 focus:outline-none focus:ring-2 focus:ring-accent-400 focus:border-accent-500 transition-colors bg-white min-h-11 md:min-h-0",
           error ? "border-danger-500" : "border-neutral-300",
           className,
         )}
@@ -51,7 +51,7 @@ export const selectStyles = {
     borderRadius: "0.5rem",
     borderColor: state.isFocused ? "#5c9153" : "#d3d0c9",
     boxShadow: state.isFocused ? "0 0 0 2px rgba(92,145,83,0.35)" : "none",
-    minHeight: "2.375rem",
+    minHeight: "2.75rem",
     "&:hover": { borderColor: "#5c9153" },
   }),
   option: (base: Record<string, unknown>, state: { isSelected: boolean; isFocused: boolean }) => ({

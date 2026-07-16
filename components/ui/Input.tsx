@@ -21,7 +21,7 @@ const Input = forwardRef<HTMLInputElement, InputProps>(({ label, error, hint, pi
         ref={ref}
         id={inputId}
         className={clsx(
-          "w-full border px-3 py-2 text-sm text-neutral-900 placeholder:text-neutral-400 focus:outline-none focus:ring-2 focus:ring-accent-400 focus:border-accent-500 transition-colors",
+          "w-full border px-3 py-2 text-sm text-neutral-900 placeholder:text-neutral-400 focus:outline-none focus:ring-2 focus:ring-accent-400 focus:border-accent-500 transition-colors min-h-11 md:min-h-0",
           pill ? "rounded-pill" : "rounded-lg",
           error ? "border-danger-500" : "border-neutral-300",
           className,

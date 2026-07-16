@@ -16,7 +16,7 @@ export default async function HouseholdsPage() {
 
   return (
     <RequireAuth>
-      <div className="p-6">
+      <div className="p-4 md:p-6">
         <PageHeader title="Households" actions={<CreateHouseholdModal bases={bases} />} />
 
         {households.length ? (

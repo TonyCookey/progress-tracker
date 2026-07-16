@@ -3,7 +3,8 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import clsx from "clsx";
-import { useState } from "react";
+import { useState, Fragment } from "react";
+import { Dialog, DialogPanel, Transition, TransitionChild } from "@headlessui/react";
 import {
   HomeIcon,
   UserGroupIcon,
@@ -95,24 +96,46 @@ export default function Sidebar() {
       </aside>
 
       {/* Sidebar drawer for mobile */}
-      {open && (
-        <>
-          {/* Overlay */}
-          <div className="fixed inset-0 bg-neutral-900/40 z-40 transition-opacity duration-200" onClick={() => setOpen(false)} />
-          <aside className="fixed top-0 left-0 w-64 h-full bg-white border-r border-neutral-200 shadow-softHover z-50 animate-slide-in">
-            <button
-              className="absolute top-4 right-3 text-neutral-500 hover:text-neutral-900 focus:outline-none"
-              onClick={() => setOpen(false)}
-              aria-label="Close sidebar"
+      <Transition show={open} as={Fragment}>
+        <Dialog as="div" className="relative z-50 md:hidden" onClose={() => setOpen(false)}>
+          <TransitionChild
+            as={Fragment}
+            enter="ease-out duration-200"
+            leave="ease-in duration-150"
+            enterFrom="opacity-0"
+            enterTo="opacity-100"
+            leaveFrom="opacity-100"
+            leaveTo="opacity-0"
+          >
+            <div className="fixed inset-0 bg-neutral-900/40" />
+          </TransitionChild>
+
+          <div className="fixed inset-0 flex">
+            <TransitionChild
+              as={Fragment}
+              enter="ease-out duration-200"
+              leave="ease-in duration-150"
+              enterFrom="-translate-x-full"
+              enterTo="translate-x-0"
+              leaveFrom="translate-x-0"
+              leaveTo="-translate-x-full"
             >
-              <svg className="h-6 w-6" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            </button>
-            {sidebarContent}
-          </aside>
-        </>
-      )}
+              <DialogPanel className="relative w-64 max-w-[85vw] h-full bg-white border-r border-neutral-200 shadow-softHover">
+                <button
+                  className="absolute top-4 right-3 text-neutral-500 hover:text-neutral-900 focus:outline-none min-h-11 min-w-11 flex items-center justify-center"
+                  onClick={() => setOpen(false)}
+                  aria-label="Close sidebar"
+                >
+                  <svg className="h-6 w-6" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+                {sidebarContent}
+              </DialogPanel>
+            </TransitionChild>
+          </div>
+        </Dialog>
+      </Transition>
     </>
   );
 }

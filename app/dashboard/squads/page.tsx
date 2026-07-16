@@ -17,7 +17,7 @@ export default async function SquadsPage() {
 
   return (
     <RequireAuth>
-      <div className="p-6">
+      <div className="p-4 md:p-6">
         <PageHeader title="Squads" actions={<CreateGroupModal bases={bases} leaders={leaders} type="SQUAD" />} />
 
         {squads.length ? (
