@@ -87,7 +87,8 @@ export default function UsersSettingsTable() {
 
   return (
     <Card>
-      <TableContainer className="border-0 shadow-none">
+      {/* Desktop Table */}
+      <TableContainer className="hidden md:block border-0 shadow-none">
         <Table>
           <TableHead>
             <TableRow>
@@ -131,6 +132,45 @@ export default function UsersSettingsTable() {
           </tbody>
         </Table>
       </TableContainer>
+      {/* Mobile Cards */}
+      <div className="md:hidden space-y-4">
+        {generals.map((general) => (
+          <Card key={general.id} padded className="p-4 flex flex-col gap-2">
+            <div className="flex items-center justify-between gap-2 mb-1">
+              <span className="font-medium text-sm break-words leading-snug text-neutral-900">{general.name}</span>
+              {general.deletedAt ? <Badge tone="danger">Inactive</Badge> : <Badge tone="success">Active</Badge>}
+            </div>
+            <div className="flex flex-wrap gap-4 text-sm mb-2 text-neutral-600">
+              <div>
+                <span className="font-semibold text-neutral-700">Email:</span> {general.email}
+              </div>
+              <div>
+                <span className="font-semibold text-neutral-700">Base:</span> {general.base?.name ?? "-"}
+              </div>
+              <div>
+                <span className="font-semibold text-neutral-700">Role:</span> {general.role}
+              </div>
+            </div>
+            <div className="flex flex-wrap items-center gap-2 mt-2">
+              <EditGeneralModal general={general} onSuccess={() => fetchGenerals(page)} />
+              <button
+                onClick={() => toggleActive(general)}
+                disabled={actioningId === general.id}
+                className="min-h-11 md:min-h-0 px-3 py-1 rounded-pill text-sm bg-warning-50 text-warning-700 hover:bg-warning-50/70 disabled:opacity-50"
+              >
+                {general.deletedAt ? "Activate" : "Deactivate"}
+              </button>
+              <button
+                onClick={() => sendReset(general)}
+                disabled={actioningId === general.id}
+                className="min-h-11 md:min-h-0 px-3 py-1 rounded-pill text-sm bg-accent-50 text-accent-700 hover:bg-accent-100 disabled:opacity-50"
+              >
+                Send Password Reset
+              </button>
+            </div>
+          </Card>
+        ))}
+      </div>
       <Pagination page={page} totalPages={totalPages} onChange={setPage} />
     </Card>
   );

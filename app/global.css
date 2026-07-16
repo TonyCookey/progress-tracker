@@ -26,3 +26,11 @@ body {
     opacity: 1;
   }
 }
+
+/* Touch-target bump for react-select controls on mobile only, matching
+   the min-h-11 md:min-h-0 pattern used by the native Input/Select/Button. */
+@media (max-width: 767px) {
+  .react-select__control {
+    min-height: 2.75rem !important;
+  }
+}

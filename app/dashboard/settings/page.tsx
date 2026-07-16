@@ -5,7 +5,7 @@ import PageHeader from "@/components/ui/PageHeader";
 export default function SettingsPage() {
   return (
     <RequireRole roles={["SUPERADMIN"]}>
-      <div className="p-6">
+      <div className="p-4 md:p-6">
         <PageHeader title="Settings" />
         <SettingsTabs />
       </div>

@@ -72,6 +72,68 @@ function EditBaseRow({ base, onSuccess }: { base: Base; onSuccess: () => void })
   );
 }
 
+function EditBaseCard({ base, onSuccess }: { base: Base; onSuccess: () => void }) {
+  const [editing, setEditing] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const { register, handleSubmit } = useForm({ defaultValues: { name: base.name, label: base.label || "" } });
+
+  const onSubmit = async (data: { name: string; label: string }) => {
+    setLoading(true);
+    try {
+      const res = await fetch(`/api/bases/${base.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      });
+      if (!res.ok) {
+        const text = await res.text();
+        alert(`Failed to update base: ${res.status} ${res.statusText} - ${text}`);
+        return;
+      }
+      setEditing(false);
+      onSuccess();
+    } catch (err) {
+      alert("Failed to update base");
+      console.error("Failed to update base", err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (!editing) {
+    return (
+      <Card padded className="p-4 flex flex-col gap-2">
+        <div>
+          <span className="font-semibold text-neutral-700">Name:</span> {base.name}
+        </div>
+        <div>
+          <span className="font-semibold text-neutral-700">Report Label:</span> {base.label || "-"}
+        </div>
+        <div className="flex justify-end mt-2">
+          <button onClick={() => setEditing(true)} className="min-h-11 md:min-h-0 px-3 flex items-center text-accent-600 hover:underline text-sm">
+            Edit
+          </button>
+        </div>
+      </Card>
+    );
+  }
+
+  return (
+    <Card padded className="p-4 flex flex-col gap-3 bg-accent-50/40">
+      <Input {...register("name", { required: true })} label="Name" />
+      <Input {...register("label")} label="Report Label" />
+      <div className="flex justify-end gap-4 mt-1">
+        <button onClick={handleSubmit(onSubmit)} disabled={loading} className="min-h-11 md:min-h-0 px-3 flex items-center text-success-700 hover:underline text-sm">
+          {loading ? "Saving..." : "Save"}
+        </button>
+        <button onClick={() => setEditing(false)} className="min-h-11 md:min-h-0 px-3 flex items-center text-neutral-500 hover:underline text-sm">
+          Cancel
+        </button>
+      </div>
+    </Card>
+  );
+}
+
 function AddBaseForm({ onSuccess }: { onSuccess: () => void }) {
   const [loading, setLoading] = useState(false);
   const { register, handleSubmit, reset } = useForm({ defaultValues: { name: "", label: "" } });
@@ -135,7 +197,8 @@ export default function BasesPanel() {
 
   return (
     <Card>
-      <TableContainer className="border-0 shadow-none">
+      {/* Desktop Table */}
+      <TableContainer className="hidden md:block border-0 shadow-none">
         <Table>
           <TableHead>
             <TableRow>
@@ -151,6 +214,12 @@ export default function BasesPanel() {
           </tbody>
         </Table>
       </TableContainer>
+      {/* Mobile Cards */}
+      <div className="md:hidden space-y-4">
+        {bases.map((base) => (
+          <EditBaseCard key={base.id} base={base} onSuccess={fetchBases} />
+        ))}
+      </div>
       <AddBaseForm onSuccess={fetchBases} />
     </Card>
   );

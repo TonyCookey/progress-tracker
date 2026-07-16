@@ -263,7 +263,7 @@ export default function MonthlyReportBuilder() {
           {/* Auto figures */}
           <Card>
             <h2 className="text-base font-semibold text-neutral-900 mb-4">Auto Figures (read-only)</h2>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 mb-4">
               <div>
                 <p className="text-sm text-neutral-500">Estimated Membership</p>
                 <p className="text-lg font-bold text-neutral-900">{auto.membership}</p>
@@ -327,7 +327,7 @@ export default function MonthlyReportBuilder() {
               </div>
               <div className="space-y-2">
                 {fields.map((field, idx) => (
-                  <div key={field.id} className="flex gap-2">
+                  <div key={field.id} className="flex flex-col sm:flex-row gap-2">
                     <Input
                       placeholder="Description (e.g. Bank Charges)"
                       {...register(`expenseItems.${idx}.description` as const)}
@@ -338,7 +338,7 @@ export default function MonthlyReportBuilder() {
                       step="0.01"
                       placeholder="Amount"
                       {...register(`expenseItems.${idx}.amount` as const)}
-                      className="w-40"
+                      className="w-full sm:w-40"
                     />
                     <Button type="button" variant="ghost" onClick={() => remove(idx)} className="text-danger-500 hover:bg-danger-50">
                       Remove

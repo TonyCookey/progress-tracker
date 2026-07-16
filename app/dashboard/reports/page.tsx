@@ -6,7 +6,7 @@ import PageHeader from "@/components/ui/PageHeader";
 export default function MonthlyReportPage() {
   return (
     <RequireAuth>
-      <div className="p-6">
+      <div className="p-4 md:p-6">
         <PageHeader title="Reports" />
         <ReportsAnalyticsOverview />
         <div className="mt-10 pt-10 border-t border-neutral-200">

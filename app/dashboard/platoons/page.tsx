@@ -17,7 +17,7 @@ export default async function PlatoonsPage() {
 
   return (
     <RequireAuth>
-      <div className="p-6">
+      <div className="p-4 md:p-6">
         <PageHeader title="Platoons" actions={<CreateGroupModal bases={bases} leaders={leaders} type="PLATOON" />} />
 
         {platoons.length ? (

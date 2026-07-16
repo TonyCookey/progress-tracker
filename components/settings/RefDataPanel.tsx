@@ -95,6 +95,93 @@ function EditRefDataRow({ item, onSuccess }: { item: RefDataItem; onSuccess: () 
   );
 }
 
+function EditRefDataCard({ item, onSuccess }: { item: RefDataItem; onSuccess: () => void }) {
+  const [editing, setEditing] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const { register, handleSubmit } = useForm({ defaultValues: { label: item.label, sortOrder: item.sortOrder } });
+
+  const save = async (data: { label: string; sortOrder: number }) => {
+    setLoading(true);
+    try {
+      const res = await fetch(`/api/refdata/${item.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      });
+      if (!res.ok) {
+        const text = await res.text();
+        alert(`Failed to update: ${res.status} ${res.statusText} - ${text}`);
+        return;
+      }
+      setEditing(false);
+      onSuccess();
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const toggleActive = async () => {
+    setLoading(true);
+    try {
+      const res = await fetch(`/api/refdata/${item.id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ active: !item.active }),
+      });
+      if (!res.ok) {
+        const text = await res.text();
+        alert(`Failed to update: ${res.status} ${res.statusText} - ${text}`);
+        return;
+      }
+      onSuccess();
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (!editing) {
+    return (
+      <Card padded className="p-4 flex flex-col gap-2">
+        <div className="flex items-center justify-between gap-2">
+          <span className="font-medium text-sm text-neutral-900">{item.label}</span>
+          <span className="text-xs text-neutral-400">{item.key}</span>
+        </div>
+        <div className="flex flex-wrap gap-4 text-sm text-neutral-600">
+          <div>
+            <span className="font-semibold text-neutral-700">Order:</span> {item.sortOrder}
+          </div>
+          <div>
+            <span className="font-semibold text-neutral-700">Status:</span> {item.active ? "Active" : "Inactive"}
+          </div>
+        </div>
+        <div className="flex flex-wrap gap-4 mt-2">
+          <button onClick={() => setEditing(true)} className="min-h-11 md:min-h-0 px-3 flex items-center text-accent-600 hover:underline text-sm">
+            Edit
+          </button>
+          <button onClick={toggleActive} disabled={loading} className="min-h-11 md:min-h-0 px-3 flex items-center text-warning-700 hover:underline text-sm">
+            {item.active ? "Deactivate" : "Activate"}
+          </button>
+        </div>
+      </Card>
+    );
+  }
+
+  return (
+    <Card padded className="p-4 flex flex-col gap-3 bg-accent-50/40">
+      <Input {...register("label", { required: true })} label="Label" />
+      <Input type="number" {...register("sortOrder", { valueAsNumber: true })} label="Order" />
+      <div className="flex justify-end gap-4 mt-1">
+        <button onClick={handleSubmit(save)} disabled={loading} className="min-h-11 md:min-h-0 px-3 flex items-center text-success-700 hover:underline text-sm">
+          {loading ? "Saving..." : "Save"}
+        </button>
+        <button onClick={() => setEditing(false)} className="min-h-11 md:min-h-0 px-3 flex items-center text-neutral-500 hover:underline text-sm">
+          Cancel
+        </button>
+      </div>
+    </Card>
+  );
+}
+
 function AddRefDataForm({ category, onSuccess }: { category: string; onSuccess: () => void }) {
   const [loading, setLoading] = useState(false);
   const { register, handleSubmit, reset } = useForm({ defaultValues: { label: "" } });
@@ -155,24 +242,33 @@ function RefDataCategoryTable({ category, title }: { category: string; title: st
       {loading ? (
         <LoadingSpinner />
       ) : (
-        <TableContainer className="border-0 shadow-none">
-          <Table>
-            <TableHead>
-              <TableRow>
-                <TableHeaderCell>Label</TableHeaderCell>
-                <TableHeaderCell>Key</TableHeaderCell>
-                <TableHeaderCell>Order</TableHeaderCell>
-                <TableHeaderCell>Status</TableHeaderCell>
-                <TableHeaderCell className="text-right">Actions</TableHeaderCell>
-              </TableRow>
-            </TableHead>
-            <tbody>
-              {items.map((item) => (
-                <EditRefDataRow key={item.id} item={item} onSuccess={fetchItems} />
-              ))}
-            </tbody>
-          </Table>
-        </TableContainer>
+        <>
+          {/* Desktop Table */}
+          <TableContainer className="hidden md:block border-0 shadow-none">
+            <Table>
+              <TableHead>
+                <TableRow>
+                  <TableHeaderCell>Label</TableHeaderCell>
+                  <TableHeaderCell>Key</TableHeaderCell>
+                  <TableHeaderCell>Order</TableHeaderCell>
+                  <TableHeaderCell>Status</TableHeaderCell>
+                  <TableHeaderCell className="text-right">Actions</TableHeaderCell>
+                </TableRow>
+              </TableHead>
+              <tbody>
+                {items.map((item) => (
+                  <EditRefDataRow key={item.id} item={item} onSuccess={fetchItems} />
+                ))}
+              </tbody>
+            </Table>
+          </TableContainer>
+          {/* Mobile Cards */}
+          <div className="md:hidden space-y-4">
+            {items.map((item) => (
+              <EditRefDataCard key={item.id} item={item} onSuccess={fetchItems} />
+            ))}
+          </div>
+        </>
       )}
       <AddRefDataForm category={category} onSuccess={fetchItems} />
     </Card>

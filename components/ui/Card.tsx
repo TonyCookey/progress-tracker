@@ -7,11 +7,12 @@ export interface CardProps extends HTMLAttributes<HTMLDivElement> {
 }
 
 export default function Card({ children, padded = true, className, ...props }: CardProps) {
+  const hasPaddingOverride = className ? /(^|\s)p[trblxy]?-/.test(className) : false;
   return (
     <div
       className={clsx(
         "bg-white border border-neutral-200 rounded-card shadow-soft",
-        padded && "p-6",
+        padded && !hasPaddingOverride && "p-6",
         className,
       )}
       {...props}
