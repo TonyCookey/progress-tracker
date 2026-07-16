@@ -26,7 +26,7 @@ export default function ConvertToTeenModal({ newConvertId, onSuccess }: { newCon
 
   return (
     <>
-      <button onClick={open} title="Convert to Teen" className="p-2 rounded hover:bg-success-50 transition">
+      <button onClick={open} title="Convert to Teen" className="p-2 rounded-pill hover:bg-success-50 transition">
         <UserPlusIcon className="w-5 h-5 text-success-700" />
       </button>
 

@@ -10,7 +10,7 @@ export default function EditNewConvertModal({ newConvert, onSuccess }: { newConv
 
   return (
     <>
-      <button onClick={() => setIsOpen(true)} title="Edit" className="p-2 rounded hover:bg-accent-50 transition">
+      <button onClick={() => setIsOpen(true)} title="Edit" className="p-2 rounded-pill hover:bg-accent-50 transition">
         <PencilIcon className="w-5 h-5 text-accent-600" />
       </button>
 

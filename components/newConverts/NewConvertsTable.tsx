@@ -14,6 +14,7 @@ import Pagination from "@/components/ui/Pagination";
 import Button from "@/components/ui/Button";
 import Input from "@/components/ui/Input";
 import Select from "@/components/ui/Select";
+import Card from "@/components/ui/Card";
 
 type NewConvert = {
   id: string;
@@ -81,7 +82,7 @@ export default function NewConvertsTable() {
 
   const conversionAction = (nc: NewConvert) =>
     nc.teenId ? (
-      <Link href={`/dashboard/lieutenants/${nc.teenId}`} title="View Teen" className="p-2 rounded hover:bg-accent-50 transition">
+      <Link href={`/dashboard/lieutenants/${nc.teenId}`} title="View Teen" className="p-2 rounded-pill hover:bg-accent-50 transition">
         <ArrowRightIcon className="w-5 h-5 text-accent-600" />
       </Link>
     ) : (
@@ -158,7 +159,7 @@ export default function NewConvertsTable() {
                         <EditNewConvertModal newConvert={nc} onSuccess={fetchData} />
                         {conversionAction(nc)}
                         {isSuperAdmin && (
-                          <button onClick={() => handleDelete(nc.id)} title="Delete" className="p-2 rounded hover:bg-danger-50 transition">
+                          <button onClick={() => handleDelete(nc.id)} title="Delete" className="p-2 rounded-pill hover:bg-danger-50 transition">
                             <TrashIcon className="w-5 h-5 text-danger-500" />
                           </button>
                         )}
@@ -172,8 +173,8 @@ export default function NewConvertsTable() {
           {/* Mobile Cards */}
           <div className="md:hidden space-y-4">
             {newConverts.map((nc) => (
-              <div key={nc.id} className="border border-neutral-200 rounded-card shadow-soft bg-white p-4 flex flex-col gap-2">
-                <span className="font-medium text-base">{nc.name}</span>
+              <Card key={nc.id} padded className="p-4 flex flex-col gap-2">
+                <span className="font-medium text-base text-neutral-900">{nc.name}</span>
                 <div className="flex flex-wrap gap-4 text-sm">
                   <div>
                     <span className="font-semibold">Gender:</span> {nc.gender ?? "-"}
@@ -195,12 +196,12 @@ export default function NewConvertsTable() {
                   <EditNewConvertModal newConvert={nc} onSuccess={fetchData} />
                   {conversionAction(nc)}
                   {isSuperAdmin && (
-                    <button onClick={() => handleDelete(nc.id)} title="Delete" className="p-2 rounded hover:bg-danger-50 transition">
+                    <button onClick={() => handleDelete(nc.id)} title="Delete" className="p-2 rounded-pill hover:bg-danger-50 transition">
                       <TrashIcon className="w-5 h-5 text-danger-500" />
                     </button>
                   )}
                 </div>
-              </div>
+              </Card>
             ))}
           </div>
         </div>

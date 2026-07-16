@@ -63,7 +63,7 @@ export default function ActivitiesTable() {
                     {activity.isCrossBase ? <Badge tone="success">Yes</Badge> : <Badge tone="warning">No</Badge>}
                   </TableCell>
                   <TableCell>
-                    <Link href={`/dashboard/activities/${activity.id}`}>
+                    <Link href={`/dashboard/activities/${activity.id}`} title="View" className="inline-flex p-2 rounded-pill hover:bg-accent-50 transition">
                       <EyeIcon className="w-5 h-5 text-accent-600" />
                     </Link>
                   </TableCell>
@@ -93,7 +93,7 @@ export default function ActivitiesTable() {
               </div>
             </div>
             <div className="flex mt-2 justify-end">
-              <Link href={`/dashboard/activities/${activity.id}`} title="View" className="p-2 rounded hover:bg-accent-100 transition">
+              <Link href={`/dashboard/activities/${activity.id}`} title="View" className="p-2 rounded-pill hover:bg-accent-50 transition">
                 <ArrowRightIcon className="w-5 h-5 text-accent-600" />
               </Link>
             </div>
