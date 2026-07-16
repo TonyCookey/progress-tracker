@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { requireSession, handleApiError } from "@/lib/auth";
 import { notDeleted } from "@/lib/softDelete";
+import { safeUserSelect } from "@/lib/users";
 
 export async function GET(req: Request) {
   try {
@@ -20,7 +21,7 @@ export async function GET(req: Request) {
         where,
         skip,
         take: limit,
-        include: { base: true },
+        select: safeUserSelect,
       }),
       prisma.user.count({ where }),
     ]);

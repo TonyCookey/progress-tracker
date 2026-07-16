@@ -23,7 +23,7 @@ export const authOptions: NextAuthOptions = {
           where: { email: credentials.email },
         });
 
-        if (!user || !user.password) return null;
+        if (!user || !user.password || user.deletedAt) return null;
 
         const isValid = await compare(credentials.password, user.password);
         if (!isValid) return null;
@@ -88,6 +88,14 @@ export async function requireSession(): Promise<Session> {
   if (!session?.user) {
     throw new ApiError(401, "Unauthorized");
   }
+
+  // A user deactivated after their JWT was issued must lose access immediately,
+  // not just be blocked from signing in again — re-check on every request.
+  const user = await prisma.user.findUnique({ where: { id: session.user.id }, select: { deletedAt: true } });
+  if (!user || user.deletedAt) {
+    throw new ApiError(401, "Unauthorized");
+  }
+
   return session;
 }
 

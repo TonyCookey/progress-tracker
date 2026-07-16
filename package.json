@@ -4,13 +4,14 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "prisma generate && prisma migrate deploy && next build",
+    "build": "prisma generate && prisma migrate deploy && npm run seed:refdata && next build",
     "start": "next start",
     "lint": "next lint",
     "prisma": "prisma",
     "seed": "ts-node prisma/seed.ts",
     "seed:admins": "ts-node prisma/admins.seed.ts",
     "seed:bases": "ts-node prisma/seeds/bases.seed.ts",
+    "seed:refdata": "ts-node prisma/seeds/refdata.seed.ts",
     "seed:squads": "ts-node prisma/squads.seed.ts"
   },
   "dependencies": {
@@ -36,6 +37,7 @@
     "react-dom": "^18.2.0",
     "react-hook-form": "^7.56.1",
     "react-select": "^5.10.1",
+    "resend": "^6.17.2",
     "zod": "^3.22.4"
   },
   "devDependencies": {
