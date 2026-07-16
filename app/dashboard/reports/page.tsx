@@ -10,7 +10,7 @@ export default function MonthlyReportPage() {
         <PageHeader title="Reports" />
         <ReportsAnalyticsOverview />
         <div className="mt-10 pt-10 border-t border-neutral-200">
-          <h2 className="text-xl font-semibold text-neutral-900 mb-6">Monthly Report Builder</h2>
+          <h2 className="text-lg font-semibold text-neutral-900 mb-6">Monthly Report Builder</h2>
           <MonthlyReportBuilder />
         </div>
       </div>

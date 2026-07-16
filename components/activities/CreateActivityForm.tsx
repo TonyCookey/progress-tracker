@@ -87,7 +87,7 @@ export default function CreateActivityForm() {
   return (
     <Card>
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-        <h1 className="text-xl font-semibold">Create Activity</h1>
+        <h1 className="text-lg font-semibold">Create Activity</h1>
         <Input id="title" label="Title" {...register("name", { required: true })} error={errors.name && "Title is required."} />
 
         <Textarea id="description" label="Description" {...register("description")} rows={3} />

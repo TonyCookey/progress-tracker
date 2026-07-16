@@ -151,7 +151,7 @@ function RefDataCategoryTable({ category, title }: { category: string; title: st
 
   return (
     <Card className="mb-6">
-      <h2 className="text-lg font-semibold mb-3 text-neutral-900">{title}</h2>
+      <h2 className="text-base font-semibold mb-3 text-neutral-900">{title}</h2>
       {loading ? (
         <LoadingSpinner />
       ) : (

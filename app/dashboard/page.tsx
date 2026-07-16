@@ -18,11 +18,11 @@ export default async function DashboardPage() {
     <RequireAuth>
       <div className="p-6">
         <PageHeader title="Dashboard" />
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
           {cards.map((card: DashboardCard) => (
             <Card key={card.label} className="hover:shadow-softHover transition-shadow">
               <p className="text-xs font-semibold uppercase tracking-wide text-neutral-500">{card.label}</p>
-              <p className="text-4xl font-extrabold mt-2 text-accent-700">{card.value}</p>
+              <p className="text-3xl font-extrabold mt-2 text-accent-700">{card.value}</p>
             </Card>
           ))}
         </div>

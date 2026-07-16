@@ -65,15 +65,15 @@ export default function ActivityDetailsPage({ params }: { params: { id: string }
       <div className="flex flex-col md:flex-row gap-8 mb-8">
         {/* Activity Details Card */}
         <Card className="space-y-4 flex-1">
-          <h2 className="text-3xl font-bold mb-2 text-accent-700">{activity?.name}</h2>
+          <h2 className="text-2xl font-bold mb-2 text-accent-700">{activity?.name}</h2>
           <p>{activity?.description}</p>
           <p>Date: {formatDate(activity?.date)}</p>
           <p>Base: {activity?.base?.name || "N/A"}</p>
         </Card>
         {/* Stats Card */}
         <Card className="flex-1 h-fit">
-          <h3 className="text-xl font-semibold mb-4">Activity Stats</h3>
-          <div className="space-y-2 text-lg">
+          <h3 className="text-lg font-semibold mb-4">Activity Stats</h3>
+          <div className="space-y-2 text-base">
             <div>
               <span className="text-neutral-500">Total Teens:</span>
               <span className="ml-2 font-bold text-accent-700">{totalTeens}</span>
@@ -93,7 +93,7 @@ export default function ActivityDetailsPage({ params }: { params: { id: string }
       {/* Attendance Table Card */}
       <Card className="p-4 sm:p-8">
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between mb-4">
-          <h3 className="text-xl font-semibold">Mark Attendance</h3>
+          <h3 className="text-lg font-semibold">Mark Attendance</h3>
           <Input
             type="text"
             placeholder="Search teens..."
@@ -145,7 +145,7 @@ export default function ActivityDetailsPage({ params }: { params: { id: string }
             <Card key={teen.id} padded className="flex flex-col gap-2">
               <div className="flex items-center gap-3 mb-2">
                 <Avatar name={teen.name} size="sm" />
-                <span className="font-medium text-base break-words leading-snug">{teen.name}</span>
+                <span className="font-medium text-sm break-words leading-snug">{teen.name}</span>
               </div>
               <div className="flex flex-wrap gap-4 text-sm mb-2">
                 <div>

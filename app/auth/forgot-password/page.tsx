@@ -31,7 +31,7 @@ export default function ForgotPasswordPage() {
     <GuestOnly>
       <div className="min-h-screen flex items-center justify-center bg-neutral-50 px-4">
         <Card className="w-full max-w-md">
-          <h2 className="text-2xl font-bold mb-4 text-center text-neutral-900">Forgot Password</h2>
+          <h2 className="text-xl font-bold mb-4 text-center text-neutral-900">Forgot Password</h2>
 
           {submitted ? (
             <p className="text-center text-neutral-600">If that email exists, a reset link has been sent. Please check your inbox.</p>

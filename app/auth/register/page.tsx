@@ -7,7 +7,7 @@ export default function RegisterPage() {
     <RequireRole roles={["SUPERADMIN"]}>
       <div className="min-h-screen flex items-center justify-center bg-neutral-50 px-4">
         <Card className="max-w-lg w-full p-8">
-          <h2 className="text-2xl font-semibold text-center mb-1 text-neutral-900">Create a Leader Account</h2>
+          <h2 className="text-xl font-semibold text-center mb-1 text-neutral-900">Create a Leader Account</h2>
           <RegisterForm />
         </Card>
       </div>

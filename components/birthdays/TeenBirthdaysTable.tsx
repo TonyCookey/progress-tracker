@@ -57,7 +57,7 @@ export default function TeenBirthdaysTable({ data }: { data: Lieutenant[] }) {
           <div key={teen.id} className="border border-neutral-200 rounded-card shadow-soft bg-white p-4 flex flex-col gap-2">
             <div className="flex items-center gap-3 mb-2">
               <Avatar name={teen.name} size="sm" />
-              <span className="font-medium text-base break-words leading-snug">{teen.name}</span>
+              <span className="font-medium text-sm break-words leading-snug">{teen.name}</span>
             </div>
             <div className="flex flex-wrap gap-4 text-sm mb-2">
               <div>

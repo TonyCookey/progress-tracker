@@ -262,23 +262,23 @@ export default function MonthlyReportBuilder() {
         <form className="space-y-6">
           {/* Auto figures */}
           <Card>
-            <h2 className="text-lg font-semibold text-neutral-900 mb-4">Auto Figures (read-only)</h2>
+            <h2 className="text-base font-semibold text-neutral-900 mb-4">Auto Figures (read-only)</h2>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
               <div>
                 <p className="text-sm text-neutral-500">Estimated Membership</p>
-                <p className="text-xl font-bold text-neutral-900">{auto.membership}</p>
+                <p className="text-lg font-bold text-neutral-900">{auto.membership}</p>
               </div>
               <div>
                 <p className="text-sm text-neutral-500">New Converts</p>
-                <p className="text-xl font-bold text-neutral-900">{auto.newConverts.count}</p>
+                <p className="text-lg font-bold text-neutral-900">{auto.newConverts.count}</p>
               </div>
               <div>
                 <p className="text-sm text-neutral-500">Offerings (Cash)</p>
-                <p className="text-xl font-bold text-neutral-900">{formatMoney(auto.offeringsTotal.cash)}</p>
+                <p className="text-lg font-bold text-neutral-900">{formatMoney(auto.offeringsTotal.cash)}</p>
               </div>
               <div>
                 <p className="text-sm text-neutral-500">Offerings (Transfer)</p>
-                <p className="text-xl font-bold text-neutral-900">{formatMoney(auto.offeringsTotal.online)}</p>
+                <p className="text-lg font-bold text-neutral-900">{formatMoney(auto.offeringsTotal.online)}</p>
               </div>
             </div>
             <div>
@@ -299,7 +299,7 @@ export default function MonthlyReportBuilder() {
 
           {/* Manual finance inputs */}
           <Card>
-            <h2 className="text-lg font-semibold text-neutral-900 mb-4">Finances (from bank statement)</h2>
+            <h2 className="text-base font-semibold text-neutral-900 mb-4">Finances (from bank statement)</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-4">
               <Input type="number" step="0.01" label="Opening Balance" {...register("openingBalance")} />
               <div>
@@ -356,14 +356,14 @@ export default function MonthlyReportBuilder() {
               </div>
               <div className="text-right">
                 <p className="text-sm text-neutral-500">Closing Balance</p>
-                <p className="text-xl font-bold text-neutral-900">{formatMoney(closingBalance)}</p>
+                <p className="text-lg font-bold text-neutral-900">{formatMoney(closingBalance)}</p>
               </div>
             </div>
           </Card>
 
           {/* Narrative */}
           <Card className="space-y-4">
-            <h2 className="text-lg font-semibold text-neutral-900 mb-2">Narrative</h2>
+            <h2 className="text-base font-semibold text-neutral-900 mb-2">Narrative</h2>
             <Input label="Theme" {...register("theme")} />
             <Textarea label="Executive Summary" {...register("executiveSummary")} rows={3} />
             <Textarea label="Issues" {...register("issues")} rows={2} />

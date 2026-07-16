@@ -129,12 +129,12 @@ export default function TeenDetailsPage() {
           {teen.imageKey ? (
             <LieutenantAvatar imageKey={teen.imageKey} alt={`${teen.name}'s profile`} size={80} />
           ) : (
-            <div className={`w-24 h-24 rounded-full ${color.avatar} flex items-center justify-center text-4xl font-bold text-white shadow`}>
+            <div className={`w-24 h-24 rounded-full ${color.avatar} flex items-center justify-center text-3xl font-bold text-white shadow`}>
               {teen.name?.[0] ?? "?"}
             </div>
           )}
           <div>
-            <h2 className={`text-3xl font-bold mb-2 ${color.name}`}>{teen.name}</h2>
+            <h2 className={`text-2xl font-bold mb-2 ${color.name}`}>{teen.name}</h2>
             <span className={`inline-block ${color.badge} text-white px-3 py-1 rounded-pill text-sm font-semibold mb-2`}>{teen.rank}</span>
             <p className="text-neutral-700 mb-1">
               <strong className="text-neutral-800">Gender:</strong> {teen.gender}
@@ -147,8 +147,8 @@ export default function TeenDetailsPage() {
 
         {/* Assignments Card */}
         <Card className="flex-1">
-          <h3 className={`text-xl font-semibold mb-4 ${color.header}`}>Assignments</h3>
-          <div className="space-y-2 text-lg">
+          <h3 className={`text-lg font-semibold mb-4 ${color.header}`}>Assignments</h3>
+          <div className="space-y-2 text-base">
             <p>
               <strong className="text-neutral-800">Base:</strong> <span className={color.assignment}>{teen.base.name}</span>
             </p>
@@ -201,7 +201,7 @@ export default function TeenDetailsPage() {
       {/* Pastoral Info Card */}
       <Card className="mb-8">
         <div className="flex items-center justify-between mb-4">
-          <h3 className={`text-xl font-semibold ${color.header}`}>Pastoral Info</h3>
+          <h3 className={`text-lg font-semibold ${color.header}`}>Pastoral Info</h3>
           <Badge tone={statusTone}>{teen.status ?? "ACTIVE"}</Badge>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-y-1">
@@ -230,8 +230,8 @@ export default function TeenDetailsPage() {
       {teen.household && (
         <Card className="mb-8">
           <div className="flex items-center justify-between mb-4">
-            <h3 className={`text-xl font-semibold ${color.header}`}>
-              Siblings <span className="text-neutral-500 font-normal text-base">({teen.household.name})</span>
+            <h3 className={`text-lg font-semibold ${color.header}`}>
+              Siblings <span className="text-neutral-500 font-normal text-sm">({teen.household.name})</span>
             </h3>
           </div>
           {teen.siblings?.length ? (
@@ -253,7 +253,7 @@ export default function TeenDetailsPage() {
 
       {/* Attendance */}
       <Card className="mb-8">
-        <h3 className={`text-xl font-semibold mb-4 ${color.header}`}>Attendance</h3>
+        <h3 className={`text-lg font-semibold mb-4 ${color.header}`}>Attendance</h3>
         {teen.attendance.length ? (
           <>
             <LineTrendChart

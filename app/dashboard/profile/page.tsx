@@ -31,7 +31,7 @@ export default function ProfilePage() {
 
   return (
     <div className="max-w-3xl mx-auto py-10 px-4">
-      <h2 className="text-3xl font-bold mb-8 text-neutral-900">My Profile</h2>
+      <h2 className="text-2xl font-bold mb-8 text-neutral-900">My Profile</h2>
 
       {user ? (
         <div>
@@ -42,11 +42,11 @@ export default function ProfilePage() {
             <div className="w-full space-y-4">
               <div>
                 <span className="block text-neutral-500 text-xs mb-1">Name</span>
-                <p className="text-lg font-semibold text-neutral-800">{user.name}</p>
+                <p className="text-base font-semibold text-neutral-800">{user.name}</p>
               </div>
               <div>
                 <span className="block text-neutral-500 text-xs mb-1">Email</span>
-                <p className="text-lg font-semibold text-neutral-800">{user.email}</p>
+                <p className="text-base font-semibold text-neutral-800">{user.email}</p>
               </div>
               <div>
                 <span className="block text-neutral-500 text-xs mb-1">Role</span>

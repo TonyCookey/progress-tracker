@@ -64,7 +64,7 @@ export default function HouseholdDetailsPage() {
   return (
     <div className="max-w-5xl mx-auto p-8">
       <Card className="mb-8">
-        <h1 className="text-3xl font-extrabold mb-2 text-neutral-900">{household.name}</h1>
+        <h1 className="text-2xl font-extrabold mb-2 text-neutral-900">{household.name}</h1>
         <p className="mb-4">
           <Badge tone="accent">{household.base?.name ?? "No Base"}</Badge>
         </p>
@@ -89,7 +89,7 @@ export default function HouseholdDetailsPage() {
 
       <Card>
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-xl font-semibold">Members</h2>
+          <h2 className="text-lg font-semibold">Members</h2>
           <Badge tone="accent">
             {household.teens?.length ?? 0} Member{household.teens?.length === 1 ? "" : "s"}
           </Badge>

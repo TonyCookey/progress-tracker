@@ -60,7 +60,7 @@ export default function ActivitiesTable() {
                   </TableCell>
                   <TableCell>{format(new Date(activity.date), "do MMM yyyy")}</TableCell>
                   <TableCell>
-                    {activity.isCrossBase ? <Badge tone="success">Yes</Badge> : <Badge tone="warning">No</Badge>}
+                    {activity.isCrossBase ? <Badge tone="accent">Cross Base</Badge> : (activity.base?.name ?? "-")}
                   </TableCell>
                   <TableCell>
                     <Link href={`/dashboard/activities/${activity.id}`} title="View" className="inline-flex p-2 rounded-pill hover:bg-accent-50 transition">
@@ -81,7 +81,7 @@ export default function ActivitiesTable() {
               <Badge tone="accent" className="mb-1">
                 {activity.type}
               </Badge>
-              <span className="block font-medium text-base break-words leading-snug mt-3 mb-1">{activity.name}</span>
+              <span className="block font-medium text-sm break-words leading-snug mt-3 mb-1">{activity.name}</span>
             </div>
             <div className="flex flex-wrap gap-4 text-sm">
               <div>
@@ -89,7 +89,7 @@ export default function ActivitiesTable() {
               </div>
               <div>
                 <span className="font-semibold">Base:</span>{" "}
-                {activity.base?.name ? <Badge tone="success">Yes</Badge> : <Badge tone="warning">No</Badge>}
+                {activity.isCrossBase ? <Badge tone="accent">Cross Base</Badge> : (activity.base?.name ?? "-")}
               </div>
             </div>
             <div className="flex mt-2 justify-end">

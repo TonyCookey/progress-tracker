@@ -77,13 +77,13 @@ export default function SquadDetailsPage() {
     <div className="max-w-5xl mx-auto p-8">
       {/* Squad Info Card */}
       <Card className="mb-8">
-        <h1 className="text-3xl font-extrabold mb-2 text-neutral-900">{squad.name}</h1>
+        <h1 className="text-2xl font-extrabold mb-2 text-neutral-900">{squad.name}</h1>
         <p className="text-neutral-600 mb-4">{squad.description}</p>
         <p className="mb-4">
           <Badge tone="accent">{squad.base?.name ?? "N/A"}</Badge>
         </p>
         <div className="mb-4">
-          <h2 className="text-xl font-semibold mb-3">General Leading</h2>
+          <h2 className="text-lg font-semibold mb-3">General Leading</h2>
           <Link href={`/dashboard/generals/${squad.leader?.id}`} className="block hover:bg-neutral-50 rounded-lg">
             <div className="flex items-center gap-3">
               <Avatar name={squad.leader?.name ?? "?"} size="lg" />
@@ -110,7 +110,7 @@ export default function SquadDetailsPage() {
         return (
           <Card className="mb-8">
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-xl font-semibold">Attendance Trend</h2>
+              <h2 className="text-lg font-semibold">Attendance Trend</h2>
               <StatTile
                 label="Average Attendance"
                 value={recordedTrend.length ? `${Math.round(recordedTrend.reduce((sum, p) => sum + p.rate!, 0) / recordedTrend.length)}%` : "N/A"}
@@ -135,7 +135,7 @@ export default function SquadDetailsPage() {
         {/* Teens List Card */}
         <Card className="flex-1 mb-8 md:mb-0">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-xl font-semibold">Teens in this Squad</h2>
+            <h2 className="text-lg font-semibold">Teens in this Squad</h2>
             <Badge tone="accent">
               {squad.members?.length ?? 0} Teen{squad.members?.length === 1 ? "" : "s"}
             </Badge>
@@ -161,7 +161,7 @@ export default function SquadDetailsPage() {
         {/* Activities Card */}
         <Card className="flex-1">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-xl font-semibold">Squad Activities</h2>
+            <h2 className="text-lg font-semibold">Squad Activities</h2>
             <Badge tone="accent">
               {squad.activities?.length ?? 0} Activit{squad.activities?.length === 1 ? "y" : "ies"}
             </Badge>

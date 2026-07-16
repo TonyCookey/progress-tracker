@@ -36,7 +36,7 @@ export default function LoginPage() {
       <div className="min-h-screen flex items-center justify-center bg-neutral-50 px-4">
         <Card className="w-full max-w-md">
           <form onSubmit={handleLogin}>
-            <h2 className="text-2xl font-bold mb-4 text-center text-neutral-900">Login</h2>
+            <h2 className="text-xl font-bold mb-4 text-center text-neutral-900">Login</h2>
 
             {error && <p className="text-danger-500 text-sm mb-3">{error}</p>}
 

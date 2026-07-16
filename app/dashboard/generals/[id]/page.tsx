@@ -102,7 +102,7 @@ export default function GeneralDetailsPage() {
         <Card className="flex-1 flex items-center gap-6">
           <Avatar name={general.name ?? "?"} size="lg" />
           <div>
-            <h2 className="text-3xl font-bold mb-2 text-neutral-900">{general.name}</h2>
+            <h2 className="text-2xl font-bold mb-2 text-neutral-900">{general.name}</h2>
             <Badge tone="accent" className="mb-2">
               {general.role}
             </Badge>
@@ -118,7 +118,7 @@ export default function GeneralDetailsPage() {
         {/* Assignments Card */}
         <Card className="flex-1">
           <h3 className="text-xs font-semibold uppercase tracking-wide text-neutral-500 mb-4">Assignments</h3>
-          <div className="space-y-2 text-base text-neutral-700">
+          <div className="space-y-2 text-sm text-neutral-700">
             <p>
               <strong className="text-neutral-800">Base:</strong> <span className="text-accent-700">{general.base.name}</span>
             </p>

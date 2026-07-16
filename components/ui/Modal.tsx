@@ -56,7 +56,7 @@ export default function Modal({
                   sizeClasses[size],
                 )}
               >
-                <DialogTitle className="text-lg font-semibold text-neutral-900 mb-4">{title}</DialogTitle>
+                <DialogTitle className="text-base font-semibold text-neutral-900 mb-4">{title}</DialogTitle>
                 {children}
               </DialogPanel>
             </TransitionChild>

@@ -143,7 +143,7 @@ export default function LieutenantTable() {
                 ) : (
                   <Avatar name={lt.name ?? "L"} size="sm" />
                 )}
-                <span className="font-medium text-base text-neutral-900">{lt.name}</span>
+                <span className="font-medium text-sm text-neutral-900">{lt.name}</span>
               </div>
               <div className="flex flex-wrap gap-4 text-sm text-neutral-600">
                 <div>

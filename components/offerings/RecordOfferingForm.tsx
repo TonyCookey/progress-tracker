@@ -98,7 +98,7 @@ export default function RecordOfferingForm({ offering }: { offering?: Offering }
   return (
     <Card>
       <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-        <h1 className="text-xl font-semibold">{isEdit ? "Edit Offering" : "Record Offering"}</h1>
+        <h1 className="text-lg font-semibold">{isEdit ? "Edit Offering" : "Record Offering"}</h1>
         <Input id="service" label="Service" {...register("service", { required: true })} error={errors.service && "Service is required."} />
         <Input
           id="amount"

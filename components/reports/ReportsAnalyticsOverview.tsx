@@ -75,7 +75,7 @@ export default function ReportsAnalyticsOverview() {
 
   return (
     <div className="space-y-6">
-      <h2 className="text-xl font-semibold text-neutral-900">Analytics Overview</h2>
+      <h2 className="text-lg font-semibold text-neutral-900">Analytics Overview</h2>
       <AnalyticsFilterBar bases={bases} isSuperAdmin={isSuperAdmin} value={filter} onChange={setFilter} />
 
       {loading && <p className="text-sm text-neutral-500">Loading charts...</p>}

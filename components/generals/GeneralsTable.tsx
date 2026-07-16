@@ -83,7 +83,7 @@ export default function GeneralsTable() {
               <Card key={general.id} padded className="p-4 flex flex-col gap-2">
                 <div className="flex items-center gap-3 mb-2">
                   <Avatar name={general.name ?? "G"} size="sm" />
-                  <span className="font-medium text-base break-words leading-snug text-neutral-900">{general.name}</span>
+                  <span className="font-medium text-sm break-words leading-snug text-neutral-900">{general.name}</span>
                 </div>
                 <div className="flex flex-wrap gap-4 text-sm mb-2 text-neutral-600">
                   <div>

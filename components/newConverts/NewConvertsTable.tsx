@@ -174,7 +174,7 @@ export default function NewConvertsTable() {
           <div className="md:hidden space-y-4">
             {newConverts.map((nc) => (
               <Card key={nc.id} padded className="p-4 flex flex-col gap-2">
-                <span className="font-medium text-base text-neutral-900">{nc.name}</span>
+                <span className="font-medium text-sm text-neutral-900">{nc.name}</span>
                 <div className="flex flex-wrap gap-4 text-sm">
                   <div>
                     <span className="font-semibold">Gender:</span> {nc.gender ?? "-"}

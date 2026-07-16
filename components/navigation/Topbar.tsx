@@ -25,8 +25,8 @@ export default function Topbar() {
     <div className="fixed top-0 left-0 md:left-64 right-0 h-16 bg-white border-b border-neutral-200 px-4 md:px-6 flex items-center justify-between z-20 transition-all">
       {/* Centered title for mobile, normal for desktop */}
       <div className="flex-1 flex items-center justify-center md:justify-start relative h-full">
-        <h1 className="absolute left-1/2 -translate-x-1/2 md:static md:translate-x-0 text-base md:text-lg font-semibold text-neutral-900 truncate max-w-[70vw] md:max-w-none text-center">
-          DA Church Tracker
+        <h1 className="absolute left-1/2 -translate-x-1/2 md:static md:translate-x-0 text-sm md:text-base font-semibold text-neutral-900 truncate max-w-[70vw] md:max-w-none text-center">
+          David's Army - Raising Giant Killers
         </h1>
       </div>
 

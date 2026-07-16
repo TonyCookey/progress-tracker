@@ -53,7 +53,7 @@ export default function Sidebar() {
   // Sidebar content
   const sidebarContent = (
     <div className="flex flex-col h-full">
-      <div className="px-6 py-6 text-xl font-extrabold text-neutral-900">DA Church Tracker</div>
+      <div className="px-6 py-6 text-lg font-extrabold text-neutral-900">DA Church Tracker</div>
       <div className="border-t border-neutral-200 mx-6 mb-2" />
       <nav className="mt-2 flex-1">
         {visibleLinks.map(({ href, label, icon }) => (
@@ -69,7 +69,7 @@ export default function Sidebar() {
             )}
           >
             {icon}
-            <span className="text-base">{label}</span>
+            <span className="text-sm">{label}</span>
           </Link>
         ))}
       </nav>

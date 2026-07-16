@@ -28,7 +28,7 @@ export default async function SquadsPage() {
                   <Card className="flex flex-col gap-2 hover:shadow-softHover transition-shadow">
                     <div className="flex items-center gap-3 mb-2">
                       <Avatar name={squad.name ?? "S"} size="md" />
-                      <h2 className="text-lg font-bold text-neutral-900">{squad.name}</h2>
+                      <h2 className="text-base font-bold text-neutral-900">{squad.name}</h2>
                     </div>
                     <div className="flex items-center gap-2 flex-wrap">
                       <Badge tone="success" size="sm">

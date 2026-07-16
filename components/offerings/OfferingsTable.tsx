@@ -156,8 +156,8 @@ export default function OfferingsTable() {
           {offerings.map((off: any) => (
             <Card key={off.id} padded className="flex flex-col gap-2">
               <div className="mb-2">
-                <span className="block font-medium text-base break-words leading-snug mb-1">{off.service}</span>
-                <span className="block font-bold text-success-700 text-lg mb-1">{formatMoney(Number(off.amount))}</span>
+                <span className="block font-medium text-sm break-words leading-snug mb-1">{off.service}</span>
+                <span className="block font-bold text-success-700 text-base mb-1">{formatMoney(Number(off.amount))}</span>
               </div>
               <div className="flex flex-wrap gap-4 text-sm mb-2">
                 <div>

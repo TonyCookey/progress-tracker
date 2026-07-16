@@ -77,13 +77,13 @@ export default function PlatoonDetailsPage() {
     <div className="max-w-5xl mx-auto p-8">
       {/* Platoon Info Card */}
       <Card className="mb-8">
-        <h1 className="text-3xl font-extrabold mb-2 text-neutral-900">{platoon.name}</h1>
+        <h1 className="text-2xl font-extrabold mb-2 text-neutral-900">{platoon.name}</h1>
         <p className="text-neutral-600 mb-4">{platoon.description}</p>
         <p className="mb-4">
           <Badge tone="accent">{platoon.base?.name ?? "N/A"}</Badge>
         </p>
         <div className="mb-4">
-          <h2 className="text-xl font-semibold mb-3">General Leading</h2>
+          <h2 className="text-lg font-semibold mb-3">General Leading</h2>
           <Link href={`/dashboard/generals/${platoon.leader?.id}`} className="block hover:bg-neutral-50 rounded-lg">
             <div className="flex items-center gap-3">
               <Avatar name={platoon.leader?.name ?? "?"} size="lg" />
@@ -110,7 +110,7 @@ export default function PlatoonDetailsPage() {
         return (
           <Card className="mb-8">
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-xl font-semibold">Attendance Trend</h2>
+              <h2 className="text-lg font-semibold">Attendance Trend</h2>
               <StatTile
                 label="Average Attendance"
                 value={recordedTrend.length ? `${Math.round(recordedTrend.reduce((sum, p) => sum + p.rate!, 0) / recordedTrend.length)}%` : "N/A"}
@@ -135,7 +135,7 @@ export default function PlatoonDetailsPage() {
         {/* Teens List Card */}
         <Card className="flex-1 mb-8 md:mb-0">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-xl font-semibold">Teens in this Platoon</h2>
+            <h2 className="text-lg font-semibold">Teens in this Platoon</h2>
             <Badge tone="accent">
               {platoon.teens?.length ?? 0} Teen{platoon.teens?.length === 1 ? "" : "s"}
             </Badge>
@@ -161,7 +161,7 @@ export default function PlatoonDetailsPage() {
         {/* Activities Card */}
         <Card className="flex-1">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-xl font-semibold">Platoon Activities</h2>
+            <h2 className="text-lg font-semibold">Platoon Activities</h2>
             <Badge tone="accent">
               {platoon.activities?.length ?? 0} Activit{platoon.activities?.length === 1 ? "y" : "ies"}
             </Badge>

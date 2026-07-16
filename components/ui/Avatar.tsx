@@ -3,7 +3,7 @@ import clsx from "clsx";
 const sizeClasses = {
   sm: "w-8 h-8 text-xs",
   md: "w-10 h-10 text-sm",
-  lg: "w-20 h-20 text-2xl",
+  lg: "w-20 h-20 text-xl",
 };
 
 function initialsOf(name: string) {
