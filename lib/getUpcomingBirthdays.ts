@@ -34,60 +34,60 @@ export async function getUpcomingBirthdays() {
   const nextGeneralBirthday = nextOccurrenceExpr(`u."dateOfBirth"`);
   const nextGeneralAnniversary = nextOccurrenceExpr(`u."anniversaryDate"`);
 
-  const teens = await prisma.$queryRawUnsafe(`
-    SELECT
-      t.id,
-      t.name,
-      t."dateOfBirth",
-      t."gender",
-      t."rank",
-      b.name AS "baseName",
-      (${nextTeenBirthday})::date AS "nextBirthday",
-      (${nextTeenBirthday}::date - CURRENT_DATE) AS "daysToNextBirthday"
-    FROM "Teen" t
-    JOIN "Base" b ON t."baseId" = b.id
-    WHERE
-      t."dateOfBirth" IS NOT NULL
-      AND t."deletedAt" IS NULL
-      AND (${nextTeenBirthday}::date - CURRENT_DATE) BETWEEN 0 AND 30
-    ORDER BY "nextBirthday"
-  `);
-
-  const generals = await prisma.$queryRawUnsafe(`
-    SELECT
-      u.id,
-      u.name,
-      u."dateOfBirth",
-      b.name AS "baseName",
-      (${nextGeneralBirthday})::date AS "nextBirthday",
-      (${nextGeneralBirthday}::date - CURRENT_DATE) AS "daysToNextBirthday"
-    FROM "User" u
-    JOIN "Base" b ON u."baseId" = b.id
-    WHERE
-      u."role" IN (${GENERAL_ROLES})
-      AND u."dateOfBirth" IS NOT NULL
-      AND u."deletedAt" IS NULL
-      AND (${nextGeneralBirthday}::date - CURRENT_DATE) BETWEEN 0 AND 30
-    ORDER BY "nextBirthday"
-  `);
-
-  const anniversaries = await prisma.$queryRawUnsafe(`
-    SELECT
-      u.id,
-      u.name,
-      u."anniversaryDate",
-      b.name AS "baseName",
-      (${nextGeneralAnniversary})::date AS "nextAnniversary",
-      (${nextGeneralAnniversary}::date - CURRENT_DATE) AS "daysToNextAnniversary"
-    FROM "User" u
-    JOIN "Base" b ON u."baseId" = b.id
-    WHERE
-      u."role" IN (${GENERAL_ROLES})
-      AND u."anniversaryDate" IS NOT NULL
-      AND u."deletedAt" IS NULL
-      AND (${nextGeneralAnniversary}::date - CURRENT_DATE) BETWEEN 0 AND 30
-    ORDER BY "nextAnniversary"
-  `);
+  const [teens, generals, anniversaries] = await Promise.all([
+    prisma.$queryRawUnsafe(`
+      SELECT
+        t.id,
+        t.name,
+        t."dateOfBirth",
+        t."gender",
+        t."rank",
+        b.name AS "baseName",
+        (${nextTeenBirthday})::date AS "nextBirthday",
+        (${nextTeenBirthday}::date - CURRENT_DATE) AS "daysToNextBirthday"
+      FROM "Teen" t
+      JOIN "Base" b ON t."baseId" = b.id
+      WHERE
+        t."dateOfBirth" IS NOT NULL
+        AND t."deletedAt" IS NULL
+        AND (${nextTeenBirthday}::date - CURRENT_DATE) BETWEEN 0 AND 30
+      ORDER BY "nextBirthday"
+    `),
+    prisma.$queryRawUnsafe(`
+      SELECT
+        u.id,
+        u.name,
+        u."dateOfBirth",
+        b.name AS "baseName",
+        (${nextGeneralBirthday})::date AS "nextBirthday",
+        (${nextGeneralBirthday}::date - CURRENT_DATE) AS "daysToNextBirthday"
+      FROM "User" u
+      JOIN "Base" b ON u."baseId" = b.id
+      WHERE
+        u."role" IN (${GENERAL_ROLES})
+        AND u."dateOfBirth" IS NOT NULL
+        AND u."deletedAt" IS NULL
+        AND (${nextGeneralBirthday}::date - CURRENT_DATE) BETWEEN 0 AND 30
+      ORDER BY "nextBirthday"
+    `),
+    prisma.$queryRawUnsafe(`
+      SELECT
+        u.id,
+        u.name,
+        u."anniversaryDate",
+        b.name AS "baseName",
+        (${nextGeneralAnniversary})::date AS "nextAnniversary",
+        (${nextGeneralAnniversary}::date - CURRENT_DATE) AS "daysToNextAnniversary"
+      FROM "User" u
+      JOIN "Base" b ON u."baseId" = b.id
+      WHERE
+        u."role" IN (${GENERAL_ROLES})
+        AND u."anniversaryDate" IS NOT NULL
+        AND u."deletedAt" IS NULL
+        AND (${nextGeneralAnniversary}::date - CURRENT_DATE) BETWEEN 0 AND 30
+      ORDER BY "nextAnniversary"
+    `),
+  ]);
 
   return { generals, teens, anniversaries };
 }

@@ -8,8 +8,10 @@ import Button from "@/components/ui/Button";
 import Avatar from "@/components/ui/Avatar";
 import { TableContainer, Table, TableHead, TableHeaderCell, TableRow, TableCell } from "@/components/ui/Table";
 import Pagination from "@/components/ui/Pagination";
+import { useToast } from "@/components/ui/Toast";
 
 export default function ActivityDetailsPage({ params }: { params: { id: string } }) {
+  const toast = useToast();
   const [activity, setActivity] = useState<any>(null);
   const [teens, setTeens] = useState<any[]>([]);
   const [attendance, setAttendance] = useState<{ [teenId: string]: boolean }>({});
@@ -41,13 +43,24 @@ export default function ActivityDetailsPage({ params }: { params: { id: string }
 
   // Attendance handler
   const handleMarkAttendance = async (teenId: string) => {
-    const newStatus = !attendance[teenId];
+    const previousStatus = attendance[teenId];
+    const newStatus = !previousStatus;
     setAttendance((prev) => ({ ...prev, [teenId]: newStatus }));
-    await fetch(`/api/activities/${params.id}/participation`, {
-      method: "PATCH",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ teenId, attended: newStatus }),
-    });
+    try {
+      const res = await fetch(`/api/activities/${params.id}/participation`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ teenId, attended: newStatus }),
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        setAttendance((prev) => ({ ...prev, [teenId]: previousStatus }));
+        toast.error(data.message ?? "Failed to update attendance");
+      }
+    } catch (err) {
+      setAttendance((prev) => ({ ...prev, [teenId]: previousStatus }));
+      toast.error("Failed to update attendance");
+    }
   };
 
   // Search and pagination
