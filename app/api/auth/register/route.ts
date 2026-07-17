@@ -11,7 +11,7 @@ export async function POST(req: Request) {
     await requireRole(["SUPERADMIN"]);
 
     const body = parseOrThrow(registerSchema, await req.json());
-    const { name, username, email, password, dateOfBirth, gender, role, baseName } = body;
+    const { name, username, email, password, dateOfBirth, anniversaryDate, gender, role, baseName } = body;
 
     const base = await prisma.base.findFirst({
       where: { name: baseName },
@@ -40,6 +40,7 @@ export async function POST(req: Request) {
         email,
         password: hashedPassword,
         dateOfBirth: dateOfBirth ? new Date(dateOfBirth) : undefined,
+        anniversaryDate: anniversaryDate ? new Date(anniversaryDate) : undefined,
         gender: gender || undefined,
         role,
         baseId: base.id,

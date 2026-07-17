@@ -381,9 +381,36 @@ same `lib/` functions, so there's one source of truth for each query.
   `groupId: null`, clearing the teen's platoon. Now fixed by renaming the form field to `platoonId`.
   If you add more editable relations, double-check the client field name matches the zod schema key,
   not just the Prisma column name.
-- **`/dashboard/events` is an empty stub** — redundant with Activities (events = activities) and
-  should be removed/merged. The Reports link is live (S3, relabeled "Monthly Report"). **Settings is
-  now fully built (S7)** — do not re-stub it or re-comment its sidebar link.
+- **`/dashboard/events` removed (S10)** — it was an empty stub, redundant with Activities (events =
+  activities); the page and any nav link are gone. The Reports link is live (S3, relabeled "Monthly
+  Report"). **Settings is now fully built (S7)** — do not re-stub it or re-comment its sidebar link.
+- **Report offerings total only summed `Cash`+`Online` (fixed S10)** — `lib/reports/monthly.ts`
+  computed `offeringsTotal.total` as `cash + online`, silently dropping offerings recorded under any
+  admin-added custom `type` (Settings → RefData `offering_type`). `total` now sums **all** offerings
+  for the base+month regardless of `type`; `cash`/`online` stay as the type-specific breakdown. Note:
+  `lib/analytics.ts`'s `splitCashOnline` (used by the offerings trend/by-service analytics) still has
+  the same `cash+online` pattern for its `total` and was **not** touched by S10 — same bug likely
+  applies there, watch for it.
+- **Attendance-taking list included soft-deleted/LEFT teens (fixed S10)** —
+  `app/api/activities/[id]/participation/route.ts` GET's `teenWhere` never filtered `deletedAt`/
+  `status`; a soft-deleted or LEFT teen could still be marked present. All three branches
+  (cross-base/group/base) now merge in `{ deletedAt: null, status: { not: "LEFT" } }`. This only
+  affects the **live** list — historical participation/analytics counts for already-deleted teens are
+  intentionally left untouched (see next bullet).
+- **New-vs-returning attendance ignored `baseId` for prior attendance (fixed S10)** —
+  `lib/analytics.ts`'s `getAttendanceTrend` scoped `activities` by `baseId` but `priorAttended` looked
+  across all bases, so a teen who attended at another base was wrongly counted "returning". Now
+  `priorAttended` is scoped by the same `baseId`. Historical Sunday-attendance counts and analytics
+  still intentionally include soft-deleted teens' past records — do not add `deletedAt` filters there.
+- **SUPERADMIN excluded from birthdays (fixed S10)** — `lib/getUpcomingBirthdays.ts`'s generals role
+  filter didn't list `SUPERADMIN`. Fixed via a shared `GENERAL_ROLES` constant
+  (`'SUPERADMIN','GENERAL','COLONEL','VOLUNTEER'`) used by both the birthdays and anniversaries
+  queries.
+- **Anniversaries feature (S10)** — sibling to Birthdays for Generals. `User.anniversaryDate`
+  (nullable `DateTime`), editable via register/`EditGeneralForm`. `getUpcomingBirthdays()` now also
+  returns `anniversaries`, computed by calling the same `nextOccurrenceExpr()` helper with
+  `u."anniversaryDate"` (same 0–30 day window / Feb 29 handling as birthdays). Surfaced as a third tab
+  in `BirthdaysTabs` (`GeneralAnniversariesTable`), generals only.
 - **RefData `key` must never be edited after creation (S7)** — `lib/reports/monthly.ts` hardcodes
   string matches on `"Sunday Service"`, `"Cash"`, `"Online"`; those are the literal seeded `key`
   values. `updateRefDataSchema` deliberately excludes `key`/`category` so the Settings UI can't touch
@@ -405,6 +432,11 @@ same `lib/` functions, so there's one source of truth for each query.
 - Money is `Decimal(12,2)` in Prisma; serialize carefully (Decimal → string/number) for the client.
 - Dates from forms arrive as strings; wrap in `new Date(...)` before writing.
 - Client components start with `"use client"`. Data pages often fetch their own API via `fetch`.
+- **User-facing errors/successes use toasts, not `alert()`** (S10) — call `useToast()` from
+  `components/ui/Toast.tsx` (`toast.success(...)`/`toast.error(...)`/`toast.info(...)`), never
+  `window.alert`. `ToastProvider` is mounted once in `app/layout.tsx`. If a success toast is
+  immediately followed by a client-side navigation (`router.push`/`window.location.href`), delay the
+  navigation by ~800ms (`setTimeout`) so the toast is visible before the page changes.
 - Images: never store URLs — store the R2 **object key** (`imageKey`) and mint presigned URLs on demand.
 - Keep the military metaphor consistent in **UI copy**; keep model/field names generic.
 

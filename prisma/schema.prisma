@@ -51,6 +51,7 @@ model User {
   email                String                 @unique
   password             String
   dateOfBirth          DateTime?
+  anniversaryDate      DateTime?
   gender               String?
   role                 UserRole
   baseId               String

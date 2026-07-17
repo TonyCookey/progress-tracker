@@ -7,10 +7,12 @@ import Card from "@/components/ui/Card";
 import Button from "@/components/ui/Button";
 import Input from "@/components/ui/Input";
 import { Table, TableCell, TableContainer, TableHead, TableHeaderCell, TableRow } from "@/components/ui/Table";
+import { useToast } from "@/components/ui/Toast";
 
 type Base = { id: string; name: string; label: string | null };
 
 function EditBaseRow({ base, onSuccess }: { base: Base; onSuccess: () => void }) {
+  const toast = useToast();
   const [editing, setEditing] = useState(false);
   const [loading, setLoading] = useState(false);
   const { register, handleSubmit } = useForm({ defaultValues: { name: base.name, label: base.label || "" } });
@@ -25,13 +27,14 @@ function EditBaseRow({ base, onSuccess }: { base: Base; onSuccess: () => void })
       });
       if (!res.ok) {
         const text = await res.text();
-        alert(`Failed to update base: ${res.status} ${res.statusText} - ${text}`);
+        toast.error(`Failed to update base: ${res.status} ${res.statusText} - ${text}`);
         return;
       }
       setEditing(false);
+      toast.success("Base updated successfully");
       onSuccess();
     } catch (err) {
-      alert("Failed to update base");
+      toast.error("Failed to update base");
       console.error("Failed to update base", err);
     } finally {
       setLoading(false);
@@ -73,6 +76,7 @@ function EditBaseRow({ base, onSuccess }: { base: Base; onSuccess: () => void })
 }
 
 function EditBaseCard({ base, onSuccess }: { base: Base; onSuccess: () => void }) {
+  const toast = useToast();
   const [editing, setEditing] = useState(false);
   const [loading, setLoading] = useState(false);
   const { register, handleSubmit } = useForm({ defaultValues: { name: base.name, label: base.label || "" } });
@@ -87,13 +91,14 @@ function EditBaseCard({ base, onSuccess }: { base: Base; onSuccess: () => void }
       });
       if (!res.ok) {
         const text = await res.text();
-        alert(`Failed to update base: ${res.status} ${res.statusText} - ${text}`);
+        toast.error(`Failed to update base: ${res.status} ${res.statusText} - ${text}`);
         return;
       }
       setEditing(false);
+      toast.success("Base updated successfully");
       onSuccess();
     } catch (err) {
-      alert("Failed to update base");
+      toast.error("Failed to update base");
       console.error("Failed to update base", err);
     } finally {
       setLoading(false);
@@ -135,6 +140,7 @@ function EditBaseCard({ base, onSuccess }: { base: Base; onSuccess: () => void }
 }
 
 function AddBaseForm({ onSuccess }: { onSuccess: () => void }) {
+  const toast = useToast();
   const [loading, setLoading] = useState(false);
   const { register, handleSubmit, reset } = useForm({ defaultValues: { name: "", label: "" } });
 
@@ -148,13 +154,14 @@ function AddBaseForm({ onSuccess }: { onSuccess: () => void }) {
       });
       if (!res.ok) {
         const text = await res.text();
-        alert(`Failed to create base: ${res.status} ${res.statusText} - ${text}`);
+        toast.error(`Failed to create base: ${res.status} ${res.statusText} - ${text}`);
         return;
       }
       reset();
+      toast.success("Base added successfully");
       onSuccess();
     } catch (err) {
-      alert("Failed to create base");
+      toast.error("Failed to create base");
       console.error("Failed to create base", err);
     } finally {
       setLoading(false);

@@ -12,6 +12,7 @@ import Input from "@/components/ui/Input";
 import Textarea from "@/components/ui/Textarea";
 import Button from "@/components/ui/Button";
 import Badge from "@/components/ui/Badge";
+import { useToast } from "@/components/ui/Toast";
 
 type Option = { id: string; name: string; label?: string | null };
 
@@ -55,6 +56,7 @@ function fromLines(value: unknown) {
 
 export default function MonthlyReportBuilder() {
   const { data: session } = useSession();
+  const toast = useToast();
   const user = session?.user;
   const isSuperAdmin = user?.role === "SUPERADMIN";
 
@@ -164,7 +166,7 @@ export default function MonthlyReportBuilder() {
   const saveDraft = async (data: FormData) => {
     const incompleteRow = cleanExpenseItems(data.expenseItems).find((item) => item.description === "");
     if (incompleteRow) {
-      alert("Each expense line item needs a description.");
+      toast.error("Each expense line item needs a description.");
       return null;
     }
     const res = await fetch("/api/reports/monthly", {
@@ -174,7 +176,7 @@ export default function MonthlyReportBuilder() {
     });
     if (!res.ok) {
       const text = await res.text();
-      alert(`Failed to save draft: ${res.status} ${res.statusText} - ${text}`);
+      toast.error(`Failed to save draft: ${res.status} ${res.statusText} - ${text}`);
       return null;
     }
     return res.json();
@@ -186,7 +188,7 @@ export default function MonthlyReportBuilder() {
       const report = await saveDraft(data);
       if (!report) return;
       setStatus(report.status);
-      alert("Draft saved");
+      toast.success("Draft saved");
     } finally {
       setSaving(false);
     }
@@ -206,7 +208,7 @@ export default function MonthlyReportBuilder() {
       });
       if (!res.ok) {
         const text = await res.text();
-        alert(`Failed to generate report: ${res.status} ${res.statusText} - ${text}`);
+        toast.error(`Failed to generate report: ${res.status} ${res.statusText} - ${text}`);
         return;
       }
       const blob = await res.blob();
@@ -217,6 +219,7 @@ export default function MonthlyReportBuilder() {
       document.body.appendChild(a);
       a.click();
       a.remove();
+      toast.success("Report generated successfully");
       window.URL.revokeObjectURL(url);
       setStatus("FINAL");
     } finally {

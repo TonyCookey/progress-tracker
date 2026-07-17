@@ -9,6 +9,7 @@ import Input from "@/components/ui/Input";
 import Textarea from "@/components/ui/Textarea";
 import UiSelect from "@/components/ui/Select";
 import Button from "@/components/ui/Button";
+import { useToast } from "@/components/ui/Toast";
 
 type Option = { id: string; name: string };
 type SquadOption = {
@@ -48,6 +49,7 @@ export default function RecordOfferingForm({ offering }: { offering?: Offering }
     },
   });
   const router = useRouter();
+  const toast = useToast();
 
   const [bases, setBases] = useState<Option[]>([]);
   const [offeringTypes, setOfferingTypes] = useState<RefDataOption[]>([]);
@@ -85,13 +87,15 @@ export default function RecordOfferingForm({ offering }: { offering?: Offering }
       });
       if (!res.ok) {
         console.error(`Failed to ${isEdit ? "update" : "create"} offering`, res);
-        alert(`Failed to ${isEdit ? "update" : "create"} offering`);
+        toast.error(`Failed to ${isEdit ? "update" : "create"} offering`);
         return;
       }
       reset();
+      toast.success(`Offering ${isEdit ? "updated" : "recorded"} successfully`);
       router.push("/dashboard/offerings");
     } catch (error) {
       console.error(`Failed to ${isEdit ? "update" : "create"} offering:`, error);
+      toast.error(`Failed to ${isEdit ? "update" : "create"} offering`);
     }
   };
 

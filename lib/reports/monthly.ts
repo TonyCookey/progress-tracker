@@ -55,6 +55,7 @@ export async function getMonthlyReport({ baseId, month, year }: { baseId: string
 
   const cash = offerings.filter((o) => o.type === "Cash").reduce((sum, o) => sum + Number(o.amount), 0);
   const online = offerings.filter((o) => o.type === "Online").reduce((sum, o) => sum + Number(o.amount), 0);
+  const total = offerings.reduce((sum, o) => sum + Number(o.amount), 0);
 
   return {
     baseId,
@@ -62,7 +63,7 @@ export async function getMonthlyReport({ baseId, month, year }: { baseId: string
     year,
     membership,
     sundayAttendance,
-    offeringsTotal: { cash, online, total: cash + online },
+    offeringsTotal: { cash, online, total },
     newConverts: {
       count: newConverts.length,
       list: newConverts.map((nc) => ({ id: nc.id, name: nc.name, date: nc.date.toISOString() })),

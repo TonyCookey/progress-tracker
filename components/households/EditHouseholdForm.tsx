@@ -6,6 +6,7 @@ import { useSyncSelectValue } from "@/lib/hooks/useSyncSelectValue";
 import Input from "@/components/ui/Input";
 import Select from "@/components/ui/Select";
 import Button from "@/components/ui/Button";
+import { useToast } from "@/components/ui/Toast";
 
 type FormData = {
   name: string;
@@ -35,6 +36,7 @@ export default function EditHouseholdForm({ household, onSuccess }: { household:
       baseId: household.baseId || "",
     },
   });
+  const toast = useToast();
   const [loading, setLoading] = useState(false);
   const [bases, setBases] = useState<Option[]>([]);
 
@@ -64,13 +66,14 @@ export default function EditHouseholdForm({ household, onSuccess }: { household:
       });
       if (!res.ok) {
         const text = await res.text();
-        alert(`Failed to update household: ${res.status} ${res.statusText} - ${text}`);
+        toast.error(`Failed to update household: ${res.status} ${res.statusText} - ${text}`);
         return;
       }
       reset();
+      toast.success("Household updated successfully");
       onSuccess();
     } catch (err) {
-      alert("Failed to update household");
+      toast.error("Failed to update household");
       console.error("Failed to update household", err);
     } finally {
       setLoading(false);

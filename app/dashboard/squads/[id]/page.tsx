@@ -11,6 +11,7 @@ import Card from "@/components/ui/Card";
 import Badge from "@/components/ui/Badge";
 import Avatar from "@/components/ui/Avatar";
 import Button from "@/components/ui/Button";
+import { useToast } from "@/components/ui/Toast";
 
 type AttendanceTrendPoint = { activityId: string; activityName: string; date: string; rate: number | null };
 
@@ -31,6 +32,7 @@ type Squad = {
 export default function SquadDetailsPage() {
   const { id } = useParams();
   const router = useRouter();
+  const toast = useToast();
   const [squad, setSquad] = useState(null as Squad | null);
 
   async function fetchSquad() {
@@ -64,11 +66,11 @@ export default function SquadDetailsPage() {
     const res = await fetch(`/api/groups/${squad.id}`, { method: "DELETE" });
     if (!res.ok) {
       const data = await res.json().catch(() => ({}));
-      alert(data.error || "Failed to delete squad");
+      toast.error(data.error || "Failed to delete squad");
       return;
     }
-    alert("Squad deleted successfully");
-    router.push("/dashboard/squads");
+    toast.success("Squad deleted successfully");
+    setTimeout(() => router.push("/dashboard/squads"), 800);
   };
 
   if (!squad) return <LoadingSpinner />;

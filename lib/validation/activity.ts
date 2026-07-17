@@ -1,5 +1,11 @@
 import { z } from "zod";
 
+export const markParticipationSchema = z.object({
+  teenId: z.string().min(1, "teenId is required"),
+  attended: z.boolean(),
+  notes: z.string().optional().nullable(),
+});
+
 export const createActivitySchema = z.object({
   name: z.string().min(1, "Name is required"),
   description: z.string().optional().nullable(),

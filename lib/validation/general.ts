@@ -6,6 +6,7 @@ export const updateGeneralSchema = z.object({
   username: z.string().min(1, "Username is required"),
   email: z.string().email("Invalid email"),
   dateOfBirth: optionalDate(),
+  anniversaryDate: optionalDate(),
   gender: z.string().optional().nullable(),
   role: z.enum(["SUPERADMIN", "GENERAL", "COLONEL", "VOLUNTEER"]),
   baseId: z.string().min(1, "Base is required"),

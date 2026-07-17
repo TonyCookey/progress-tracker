@@ -7,6 +7,7 @@ import Card from "@/components/ui/Card";
 import Badge from "@/components/ui/Badge";
 import Pagination from "@/components/ui/Pagination";
 import { Table, TableCell, TableContainer, TableHead, TableHeaderCell, TableRow } from "@/components/ui/Table";
+import { useToast } from "@/components/ui/Toast";
 
 interface General {
   id: string;
@@ -18,6 +19,7 @@ interface General {
 }
 
 export default function UsersSettingsTable() {
+  const toast = useToast();
   const [generals, setGenerals] = useState<General[]>([]);
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
@@ -53,12 +55,13 @@ export default function UsersSettingsTable() {
       });
       if (!res.ok) {
         const text = await res.text();
-        alert(`Failed to update status: ${res.status} ${res.statusText} - ${text}`);
+        toast.error(`Failed to update status: ${res.status} ${res.statusText} - ${text}`);
         return;
       }
+      toast.success("Status updated successfully");
       fetchGenerals(page);
     } catch (err) {
-      alert("Failed to update status");
+      toast.error("Failed to update status");
       console.error("Failed to update status", err);
     } finally {
       setActioningId(null);
@@ -71,12 +74,12 @@ export default function UsersSettingsTable() {
       const res = await fetch(`/api/generals/${general.id}/send-reset`, { method: "POST" });
       if (!res.ok) {
         const text = await res.text();
-        alert(`Failed to send reset email: ${res.status} ${res.statusText} - ${text}`);
+        toast.error(`Failed to send reset email: ${res.status} ${res.statusText} - ${text}`);
         return;
       }
-      alert(`Password reset email sent to ${general.email}`);
+      toast.success(`Password reset email sent to ${general.email}`);
     } catch (err) {
-      alert("Failed to send reset email");
+      toast.error("Failed to send reset email");
       console.error("Failed to send reset email", err);
     } finally {
       setActioningId(null);

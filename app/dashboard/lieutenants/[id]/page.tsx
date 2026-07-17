@@ -17,6 +17,7 @@ import Badge from "@/components/ui/Badge";
 import Button from "@/components/ui/Button";
 import Avatar from "@/components/ui/Avatar";
 import type { BadgeTone } from "@/components/ui/Badge";
+import { useToast } from "@/components/ui/Toast";
 
 type AttendanceRecord = {
   activityId: string;
@@ -76,6 +77,7 @@ function getColorClasses(gender: string) {
 
 export default function TeenDetailsPage() {
   const { id } = useParams();
+  const toast = useToast();
   const [teen, setTeen] = useState(null as Teen | null);
 
   async function fetchTeen() {
@@ -110,10 +112,11 @@ export default function TeenDetailsPage() {
 
     if (!res.ok) {
       console.error("Failed to delete lieutenant");
+      toast.error("Failed to delete lieutenant");
       return;
     }
-    alert("Lieutenant deleted successfully");
-    window.location.href = "/dashboard/lieutenants";
+    toast.success("Lieutenant deleted successfully");
+    setTimeout(() => (window.location.href = "/dashboard/lieutenants"), 800);
   };
 
   if (!teen) return <LoadingSpinner />;

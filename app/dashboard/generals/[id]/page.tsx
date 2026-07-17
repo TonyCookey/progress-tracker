@@ -15,6 +15,7 @@ import Card from "@/components/ui/Card";
 import Badge from "@/components/ui/Badge";
 import Button from "@/components/ui/Button";
 import Avatar from "@/components/ui/Avatar";
+import { useToast } from "@/components/ui/Toast";
 
 type TeachingRecord = {
   activityId: string;
@@ -42,6 +43,7 @@ type General = {
 export default function GeneralDetailsPage() {
   const { id } = useParams();
   const { data: session } = useSession();
+  const toast = useToast();
   const [general, setGeneral] = useState(null as General | null);
   const [showPasswordModal, setShowPasswordModal] = useState(false);
 
@@ -86,11 +88,11 @@ export default function GeneralDetailsPage() {
     if (!res.ok) {
       const data = await res.json().catch(() => null);
       console.error("Failed to delete general", data);
-      alert(data?.message ?? "Failed to delete general");
+      toast.error(data?.message ?? "Failed to delete general");
       return;
     }
-    alert("General deleted successfully");
-    window.location.href = "/dashboard/generals";
+    toast.success("General deleted successfully");
+    setTimeout(() => (window.location.href = "/dashboard/generals"), 800);
   };
 
   if (!general) return <LoadingSpinner />;

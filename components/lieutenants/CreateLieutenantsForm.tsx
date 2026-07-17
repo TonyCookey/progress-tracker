@@ -8,6 +8,7 @@ import { compressImage } from "@/lib/compressImage";
 import Input from "@/components/ui/Input";
 import UISelect, { selectStyles } from "@/components/ui/Select";
 import Button from "@/components/ui/Button";
+import { useToast } from "@/components/ui/Toast";
 
 type FormData = {
   name: string;
@@ -36,6 +37,7 @@ type SquadOption = {
 
 export default function CreateLieutenantForm({ onSuccess }: { onSuccess: () => void }) {
   const { register, handleSubmit, reset, control } = useForm<FormData>();
+  const toast = useToast();
   const [loading, setLoading] = useState(false);
   const [bases, setBases] = useState<Option[]>([]);
   const [squads, setSquads] = useState<Option[]>([]);
@@ -136,7 +138,7 @@ export default function CreateLieutenantForm({ onSuccess }: { onSuccess: () => v
       if (!res.ok) {
         const text = await res.text();
         console.error("Failed to create lieutenant", res.status, res.statusText, text);
-        alert(`Failed to create lieutenant: ${res.status} ${res.statusText} - ${text}`);
+        toast.error(`Failed to create lieutenant: ${res.status} ${res.statusText} - ${text}`);
         return;
       }
 
@@ -150,10 +152,12 @@ export default function CreateLieutenantForm({ onSuccess }: { onSuccess: () => v
         await uploadTeenImage(compressed, lieutenant.id);
       }
       reset();
+      toast.success("Lieutenant created successfully");
       onSuccess();
     } catch (err) {
       console.error("Failed to create lieutenant", err);
       console.log("Error details:", err instanceof Error ? err.message : err);
+      toast.error("Failed to create lieutenant");
     } finally {
       setLoading(false);
     }

@@ -6,6 +6,7 @@ import { useSyncSelectValue } from "@/lib/hooks/useSyncSelectValue";
 import Input from "@/components/ui/Input";
 import Select from "@/components/ui/Select";
 import Button from "@/components/ui/Button";
+import { useToast } from "@/components/ui/Toast";
 
 type FormData = {
   name: string;
@@ -13,6 +14,7 @@ type FormData = {
   email: string;
   gender: string;
   dateOfBirth: string;
+  anniversaryDate: string;
   baseId: string;
   role: string;
 };
@@ -22,6 +24,7 @@ type Base = { id: string; name: string };
 type General = FormData & { id: string };
 
 export default function EditGeneralForm({ general, onSuccess }: { general: General; onSuccess: () => void }) {
+  const toast = useToast();
   const { register, handleSubmit, reset, setValue } = useForm<FormData>({
     defaultValues: {
       name: general.name || "",
@@ -29,6 +32,7 @@ export default function EditGeneralForm({ general, onSuccess }: { general: Gener
       email: general.email || "",
       gender: general.gender || "Male",
       dateOfBirth: general.dateOfBirth ? new Date(general.dateOfBirth).toISOString().slice(0, 10) : "",
+      anniversaryDate: general.anniversaryDate ? new Date(general.anniversaryDate).toISOString().slice(0, 10) : "",
       baseId: general.baseId || "",
       role: general.role || "GENERAL",
     },
@@ -42,6 +46,7 @@ export default function EditGeneralForm({ general, onSuccess }: { general: Gener
     setValue("email", general.email || "");
     setValue("gender", general.gender || "Male");
     setValue("dateOfBirth", general.dateOfBirth ? new Date(general.dateOfBirth).toISOString().slice(0, 10) : "");
+    setValue("anniversaryDate", general.anniversaryDate ? new Date(general.anniversaryDate).toISOString().slice(0, 10) : "");
     setValue("baseId", general.baseId || "");
     setValue("role", general.role || "GENERAL");
   }, [general, setValue]);
@@ -67,13 +72,14 @@ export default function EditGeneralForm({ general, onSuccess }: { general: Gener
       });
       if (!res.ok) {
         const text = await res.text();
-        alert(`Failed to update general: ${res.status} ${res.statusText} - ${text}`);
+        toast.error(`Failed to update general: ${res.status} ${res.statusText} - ${text}`);
         return;
       }
       reset();
+      toast.success("General updated successfully");
       onSuccess();
     } catch (err) {
-      alert("Failed to update general");
+      toast.error("Failed to update general");
       console.error("Failed to update general", err);
     } finally {
       setLoading(false);
@@ -95,6 +101,8 @@ export default function EditGeneralForm({ general, onSuccess }: { general: Gener
         </Select>
 
         <Input label="Date of Birth" type="date" {...register("dateOfBirth")} />
+
+        <Input label="Anniversary Date" type="date" {...register("anniversaryDate")} />
 
         <Select label="Base" {...register("baseId", { required: true })}>
           <option value="">Select a base</option>

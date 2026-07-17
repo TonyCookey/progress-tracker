@@ -130,7 +130,7 @@ export async function getAttendanceTrend({
   // Every teen who had an attended participation before this range, so "new" can be
   // told apart from "returning" without an N+1 query per activity.
   const priorAttended = await prisma.activityParticipation.findMany({
-    where: { attended: true, activity: { date: { lt: from } } },
+    where: { attended: true, activity: { baseId: baseId ?? undefined, date: { lt: from } } },
     select: { teenId: true },
   });
   const everAttendedBefore = new Set(priorAttended.map((p) => p.teenId));

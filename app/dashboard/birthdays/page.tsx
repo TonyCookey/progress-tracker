@@ -6,13 +6,13 @@ import PageHeader from "@/components/ui/PageHeader";
 export const dynamic = "force-dynamic";
 
 export default async function BirthdaysPage() {
-  const { generals, teens } = await getUpcomingBirthdays();
+  const { generals, teens, anniversaries } = await getUpcomingBirthdays();
 
   return (
     <RequireAuth>
       <div className="p-4 md:p-6">
         <PageHeader title="Upcoming Birthdays 🎉" />
-        <BirthdayTabs generals={generals as any[]} teens={teens as any[]} />
+        <BirthdayTabs generals={generals as any[]} teens={teens as any[]} anniversaries={anniversaries as any[]} />
       </div>
     </RequireAuth>
   );

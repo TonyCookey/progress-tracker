@@ -14,6 +14,7 @@ type RegisterFormInputs = {
   password: string;
   confirmPassword: string;
   dateOfBirth?: string;
+  anniversaryDate?: string;
   gender?: string;
   role: string;
   baseName: string;
@@ -72,6 +73,8 @@ export default function RegisterForm() {
       <Input label="Email" type="email" {...register("email", { required: true })} error={errors.email && "Email is required"} />
 
       <Input label="Date of Birth" type="date" {...register("dateOfBirth")} />
+
+      <Input label="Anniversary Date" type="date" {...register("anniversaryDate")} />
 
       <Select label="Gender" {...register("gender")}>
         <option value="">Select Gender</option>

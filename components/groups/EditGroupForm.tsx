@@ -8,6 +8,7 @@ import Input from "@/components/ui/Input";
 import UiSelect, { selectStyles } from "@/components/ui/Select";
 import Textarea from "@/components/ui/Textarea";
 import Button from "@/components/ui/Button";
+import { useToast } from "@/components/ui/Toast";
 
 type FormData = {
   name: string;
@@ -39,6 +40,7 @@ export default function EditGroupForm({ group, onSuccess }: { group: Group; onSu
       supportIds: group.supportIds || [],
     },
   });
+  const toast = useToast();
   const [loading, setLoading] = useState(false);
   const [bases, setBases] = useState<Option[]>([]);
   const [generals, setGenerals] = useState<Option[]>([]);
@@ -73,13 +75,14 @@ export default function EditGroupForm({ group, onSuccess }: { group: Group; onSu
       });
       if (!res.ok) {
         const text = await res.text();
-        alert(`Failed to update group: ${res.status} ${res.statusText} - ${text}`);
+        toast.error(`Failed to update group: ${res.status} ${res.statusText} - ${text}`);
         return;
       }
       reset();
+      toast.success("Group updated successfully");
       onSuccess();
     } catch (err) {
-      alert("Failed to update group");
+      toast.error("Failed to update group");
       console.error("Failed to update group", err);
     } finally {
       setLoading(false);

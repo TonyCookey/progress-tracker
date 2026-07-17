@@ -15,6 +15,7 @@ import Button from "@/components/ui/Button";
 import Input from "@/components/ui/Input";
 import Select from "@/components/ui/Select";
 import Card from "@/components/ui/Card";
+import { useToast } from "@/components/ui/Toast";
 
 type NewConvert = {
   id: string;
@@ -32,6 +33,7 @@ type NewConvert = {
 
 export default function NewConvertsTable() {
   const { data: session } = useSession();
+  const toast = useToast();
   const user = session?.user;
   const isSuperAdmin = user?.role === "SUPERADMIN";
   const [newConverts, setNewConverts] = useState<NewConvert[]>([]);
@@ -72,9 +74,10 @@ export default function NewConvertsTable() {
     if (!confirm("Delete this new convert record?")) return;
     const res = await fetch(`/api/new-converts/${id}`, { method: "DELETE" });
     if (!res.ok) {
-      alert("Failed to delete new convert");
+      toast.error("Failed to delete new convert");
       return;
     }
+    toast.success("New convert deleted successfully");
     fetchData();
   };
 
