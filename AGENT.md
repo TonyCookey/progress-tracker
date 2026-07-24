@@ -63,7 +63,11 @@ language are military**. Do not confuse them.
 ```
 app/
   api/                        # All backend route handlers (REST-ish)
-    activities/               # Activities CRUD + [id]/participation (attendance)
+    activities/               # Activities CRUD + [id]/participation (teen attendance),
+                               # [id]/teacher-participation (general/teacher attendance, S12 A1)
+    analytics/                # attendance (+/dropoff, byType), offerings (trend/service/type/
+                               # perAttendee), growth (+statusSnapshot), groups (+teachingRates,
+                               # S12 C6), demographics, new-converts — all base-scoped (§9)
     auth/[...nextauth]/       # NextAuth handler (authOptions is INLINE here — see §8)
     auth/register/            # Leader (User) registration
     auth/forgot-password/     # Self-service reset request (S7, public)
@@ -127,7 +131,9 @@ See `prisma/schema.prisma` for the source of truth. Key points:
   S7, see below), `date`, `isCrossBase`, optional Base, connected Groups, teen attendance + teacher
   attendance, soft-delete via `deletedAt` (no edit/delete UI yet).
 - **ActivityParticipation**: unique `(activityId, teenId)`, `attended` bool, notes.
-- **TeacherParticipation**: unique `(activityId, userId)`, `attended`, role, notes.
+- **TeacherParticipation**: unique `(activityId, userId)`, `attended`, role, notes. Write path added
+  S12 (A1) — `app/api/activities/[id]/teacher-participation/route.ts` (GET/PATCH), mirroring the teen
+  participation route; UI is the "Generals" section on `/dashboard/activities/[id]`.
 - **Offering**: `amount` Decimal(12,2), `date`, `service`, `type` (`"Cash"` | `"Online"`, options
   now sourced from `RefData` category `offering_type`, S7), `isCrossBase`, optional Base, notes,
   soft-delete via `deletedAt`. **Canonical `type` values are the literal strings `"Cash"` and
@@ -366,7 +372,10 @@ same `lib/` functions, so there's one source of truth for each query.
   data logic directly. Must be fixed alongside API auth (S0) or these pages 401.
 - **Offering `type` values** are the free strings `"Cash"` and `"Online"` ("Online" = online/transfer,
   labeled "Transfer" in the UI). Don't rename stored values without a backfill.
-- **`DashboardChart.tsx` is built but never imported** — no charts render anywhere yet.
+- **`GroupBreakdownChart.tsx` was built but never mounted, and `getMembershipGrowth`'s
+  `statusSnapshot` was fetched and discarded — both fixed S12 (B1/B2)**: `ReportsAnalyticsOverview`
+  now calls `/api/analytics/groups` and renders platoon sizes + attendance-by-platoon via
+  `GroupBreakdownChart`; `DashboardCharts` renders `statusSnapshot` via the new `DonutChart.tsx`.
 - **Async `<select>` options + react-hook-form `setValue`/`defaultValues` (fixed S2, watch for
   recurrence)**: when a select's `<option>` list is populated from an API call *after* mount, calling
   `setValue`/setting `defaultValue` before that fetch resolves silently fails — the browser can't

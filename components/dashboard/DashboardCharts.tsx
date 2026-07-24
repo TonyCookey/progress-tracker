@@ -5,14 +5,17 @@ import { useSession } from "next-auth/react";
 import AnalyticsFilterBar, { AnalyticsFilterValue, BaseOption } from "@/components/analytics/AnalyticsFilterBar";
 import LineTrendChart from "@/components/charts/LineTrendChart";
 import BarComparisonChart from "@/components/charts/BarComparisonChart";
+import DonutChart from "@/components/charts/DonutChart";
+import StatTile from "@/components/charts/StatTile";
 import { formatMonthLabel } from "@/lib/formatDate";
 import { formatMoney } from "@/lib/formatMoney";
 import Card from "@/components/ui/Card";
 
 type OfferingsTrendPoint = { month: string; cash: number; online: number; total: number };
 type OfferingsByBasePoint = { baseId: string; baseName: string; month: string; cash: number; online: number; total: number };
-type AttendancePoint = { date: string; attended: number };
+type AttendancePoint = { date: string; attended: number; rate: number | null };
 type GrowthPoint = { month: string; added: number };
+type StatusSnapshotPoint = { status: string; count: number };
 
 function defaultFilter(baseId: string): AnalyticsFilterValue {
   const now = new Date();
@@ -35,6 +38,8 @@ export default function DashboardCharts() {
   const [offeringsByBase, setOfferingsByBase] = useState<OfferingsByBasePoint[]>([]);
   const [attendance, setAttendance] = useState<AttendancePoint[]>([]);
   const [growth, setGrowth] = useState<GrowthPoint[]>([]);
+  const [statusSnapshot, setStatusSnapshot] = useState<StatusSnapshotPoint[]>([]);
+  const [averageRate, setAverageRate] = useState<number | null>(null);
 
   useEffect(() => {
     if (isSuperAdmin) {
@@ -62,8 +67,16 @@ export default function DashboardCharts() {
       .then(([offerings, attendanceRes, growthRes]) => {
         setOfferingsTrend(offerings.trend ?? []);
         setOfferingsByBase(offerings.byBase ?? []);
-        setAttendance((attendanceRes.points ?? []).map((p: { date: string; attended: number }) => ({ date: p.date, attended: p.attended })));
+        setAttendance(
+          (attendanceRes.points ?? []).map((p: { date: string; attended: number; rate: number | null }) => ({
+            date: p.date,
+            attended: p.attended,
+            rate: p.rate,
+          })),
+        );
+        setAverageRate(attendanceRes.summary?.averageRate ?? null);
         setGrowth(growthRes.trend ?? []);
+        setStatusSnapshot(growthRes.statusSnapshot ?? []);
       })
       .finally(() => setLoading(false));
   }, [isSuperAdmin, filter.baseId, filter.from, filter.to]);
@@ -94,11 +107,17 @@ export default function DashboardCharts() {
 
         <Card>
           <h3 className="text-xs font-semibold uppercase tracking-wide text-neutral-500 mb-3">Attendance Trend</h3>
-          <LineTrendChart
-            title="Attendance per activity"
-            labels={attendance.map((p) => new Date(p.date).toLocaleDateString(undefined, { month: "short", day: "numeric" }))}
-            series={[{ name: "Attended", data: attendance.map((p) => p.attended) }]}
-          />
+          <StatTile label="Avg attendance rate" value={averageRate !== null ? `${averageRate}%` : "N/A"} />
+          <div className="mt-3">
+            <LineTrendChart
+              title="Attendance per activity, count and rate"
+              labels={attendance.map((p) => new Date(p.date).toLocaleDateString(undefined, { month: "short", day: "numeric" }))}
+              series={[
+                { name: "Attended", data: attendance.map((p) => p.attended) },
+                { name: "Rate", data: attendance.map((p) => p.rate), axis: "right", formatValue: (n) => `${n}%` },
+              ]}
+            />
+          </div>
         </Card>
 
         <Card>
@@ -109,6 +128,17 @@ export default function DashboardCharts() {
             series={[{ name: "Added", data: growth.map((p) => p.added) }]}
           />
         </Card>
+
+        {statusSnapshot.length > 0 && (
+          <Card>
+            <h3 className="text-xs font-semibold uppercase tracking-wide text-neutral-500 mb-3">Teen Status Breakdown</h3>
+            <DonutChart
+              title="Teens by status"
+              labels={statusSnapshot.map((s) => s.status)}
+              data={statusSnapshot.map((s) => s.count)}
+            />
+          </Card>
+        )}
 
         {showBaseComparison && (
           <Card>

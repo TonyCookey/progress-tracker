@@ -19,7 +19,7 @@ export function resolveDateRange(input: { from?: Date; to?: Date }) {
 }
 
 export const offeringsQuerySchema = dateRangeSchema.extend({
-  by: z.enum(["month", "service"]).optional(),
+  by: z.enum(["month", "service", "type", "perAttendee"]).optional(),
   groupByBase: z
     .string()
     .optional()

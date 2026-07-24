@@ -1,5 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { notDeleted } from "@/lib/softDelete";
+import { normalizeGender } from "@/lib/normalizeGender";
+import { calculateAge } from "@/lib/calculateAge";
 
 export type DateRange = { baseId?: string | null; from: Date; to: Date };
 
@@ -107,6 +109,68 @@ export async function getOfferingsByService({ baseId, from, to }: DateRange): Pr
   return [...top, other];
 }
 
+export type OfferingsByTypePoint = { type: string; total: number };
+
+// Real Offering.type values (including admin-added RefData types), with a bucket
+// for null/legacy rows - replaces the old Cash/Online-only assumption (S11-B1).
+export async function getOfferingsByType({ baseId, from, to }: DateRange): Promise<OfferingsByTypePoint[]> {
+  const offerings = await prisma.offering.findMany({
+    where: { baseId: baseId ?? undefined, date: { gte: from, lt: to }, ...notDeleted(false) },
+    select: { amount: true, type: true },
+  });
+
+  const byType = new Map<string, number>();
+  for (const o of offerings) {
+    const key = o.type ?? "Unspecified";
+    byType.set(key, (byType.get(key) ?? 0) + Number(o.amount));
+  }
+
+  return Array.from(byType.entries())
+    .map(([type, total]) => ({ type, total }))
+    .sort((a, b) => b.total - a.total);
+}
+
+export type OfferingPerAttendeePoint = { month: string; total: number; sundayAttendance: number; perAttendee: number | null };
+
+// total offerings / Sunday-service attendance per month - "Sunday Service" is the
+// canonical Activity.type used for weekly attendance (lib/reports/monthly.ts).
+// Months with zero attendance get a null point, not a division by zero.
+export async function getOfferingPerAttendee({ baseId, from, to }: DateRange): Promise<OfferingPerAttendeePoint[]> {
+  const [offerings, activities] = await Promise.all([
+    prisma.offering.findMany({
+      where: { baseId: baseId ?? undefined, date: { gte: from, lt: to }, ...notDeleted(false) },
+      select: { amount: true, type: true, date: true },
+    }),
+    prisma.activity.findMany({
+      where: { baseId: baseId ?? undefined, type: "Sunday Service", date: { gte: from, lt: to }, ...notDeleted(false) },
+      include: { teenParticipation: { where: { attended: true }, select: { id: true } } },
+    }),
+  ]);
+
+  const totalByMonth = new Map<string, number>();
+  for (const o of offerings) {
+    const key = monthKey(o.date);
+    totalByMonth.set(key, (totalByMonth.get(key) ?? 0) + Number(o.amount));
+  }
+
+  const attendanceByMonth = new Map<string, number>();
+  for (const a of activities) {
+    const key = monthKey(a.date);
+    attendanceByMonth.set(key, (attendanceByMonth.get(key) ?? 0) + a.teenParticipation.length);
+  }
+
+  return enumerateMonths(from, to).map((month) => {
+    const total = totalByMonth.get(month) ?? 0;
+    const sundayAttendance = attendanceByMonth.get(month) ?? 0;
+    return {
+      month,
+      total,
+      sundayAttendance,
+      perAttendee: sundayAttendance > 0 ? Math.round((total / sundayAttendance) * 100) / 100 : null,
+    };
+  });
+}
+
 export type AttendanceTrendPoint = {
   activityId: string;
   date: string;
@@ -114,21 +178,40 @@ export type AttendanceTrendPoint = {
   attended: number;
   newCount: number;
   returningCount: number;
+  rosterSize: number;
+  rate: number | null;
 };
+
+const activeTeenFilter = { deletedAt: null, status: { not: "LEFT" as const } };
 
 export async function getAttendanceTrend({
   baseId,
   activityType,
   from,
   to,
-}: DateRange & { activityType?: string }): Promise<{ points: AttendanceTrendPoint[]; summary: { average: number; total: number } }> {
+}: DateRange & { activityType?: string }): Promise<{
+  points: AttendanceTrendPoint[];
+  summary: { average: number; total: number; averageRate: number | null };
+}> {
   const activities = await prisma.activity.findMany({
     where: { baseId: baseId ?? undefined, type: activityType ?? undefined, date: { gte: from, lt: to }, ...notDeleted(false) },
     include: { teenParticipation: { where: { attended: true }, select: { teenId: true } } },
     orderBy: { date: "asc" },
   });
 
-  if (!activities.length) return { points: [], summary: { average: 0, total: 0 } };
+  if (!activities.length) return { points: [], summary: { average: 0, total: 0, averageRate: null } };
+
+  // Base-level roster denominator (v1) - active teen count per base, plus a global
+  // count for cross-base activities (baseId null), computed once for the whole range.
+  const baseIdsInScope = Array.from(new Set(activities.map((a) => a.baseId).filter((id): id is string => !!id)));
+  const hasCrossBase = activities.some((a) => !a.baseId);
+  const [rosterByBase, globalRoster] = await Promise.all([
+    baseIdsInScope.length
+      ? prisma.teen.groupBy({ by: ["baseId"], where: { baseId: { in: baseIdsInScope }, ...activeTeenFilter }, _count: { _all: true } })
+      : [],
+    hasCrossBase ? prisma.teen.count({ where: activeTeenFilter }) : 0,
+  ]);
+  const rosterSizeByBase = new Map(rosterByBase.map((r) => [r.baseId, r._count._all]));
 
   // Every teen who had an attended participation before this range, so "new" can be
   // told apart from "returning" without an N+1 query per activity.
@@ -151,18 +234,49 @@ export async function getAttendanceTrend({
       else newCount++;
       seenInRange.add(p.teenId);
     }
+    const rosterSize = activity.baseId ? (rosterSizeByBase.get(activity.baseId) ?? 0) : globalRoster;
+    const attended = activity.teenParticipation.length;
     points.push({
       activityId: activity.id,
       date: activity.date.toISOString(),
       type: activity.type,
-      attended: activity.teenParticipation.length,
+      attended,
       newCount,
       returningCount,
+      rosterSize,
+      rate: rosterSize > 0 ? Math.round((attended / rosterSize) * 1000) / 10 : null,
     });
   }
 
   const total = points.reduce((sum, p) => sum + p.attended, 0);
-  return { points, summary: { average: Math.round((total / points.length) * 10) / 10, total } };
+  const ratedPoints = points.filter((p) => p.rate !== null);
+  const averageRate = ratedPoints.length
+    ? Math.round((ratedPoints.reduce((sum, p) => sum + (p.rate as number), 0) / ratedPoints.length) * 10) / 10
+    : null;
+  return { points, summary: { average: Math.round((total / points.length) * 10) / 10, total, averageRate } };
+}
+
+export type AttendanceByTypePoint = { type: string; average: number; activityCount: number };
+
+// Average attendance per Activity.type for the period - types come from the data
+// itself (RefData keys are admin-editable, never hardcode a type list).
+export async function getAttendanceByType({ baseId, from, to }: DateRange): Promise<AttendanceByTypePoint[]> {
+  const activities = await prisma.activity.findMany({
+    where: { baseId: baseId ?? undefined, date: { gte: from, lt: to }, ...notDeleted(false) },
+    include: { teenParticipation: { where: { attended: true }, select: { id: true } } },
+  });
+
+  const byType = new Map<string, { total: number; count: number }>();
+  for (const activity of activities) {
+    const entry = byType.get(activity.type) ?? { total: 0, count: 0 };
+    entry.total += activity.teenParticipation.length;
+    entry.count += 1;
+    byType.set(activity.type, entry);
+  }
+
+  return Array.from(byType.entries())
+    .map(([type, { total, count }]) => ({ type, average: Math.round((total / count) * 10) / 10, activityCount: count }))
+    .sort((a, b) => b.average - a.average);
 }
 
 export type AttendanceDropoff = {
@@ -285,4 +399,111 @@ export async function getGroupBreakdown({ baseId, from, to }: DateRange): Promis
     squads: squads.map((g) => ({ groupId: g.id, name: g.name, teenCount: g._count.members })),
     attendanceByPlatoon: platoons.map((g) => ({ groupId: g.id, name: g.name, attended: attendedByPlatoonId.get(g.id) ?? 0 })),
   };
+}
+
+export type TeenDemographics = {
+  genderBreakdown: { gender: string; count: number }[];
+  ageBreakdown: { bucket: string; count: number }[];
+  totalActive: number;
+};
+
+// "unknown" is strictly for a missing DOB - a known age outside the expected
+// 10-18 teen range gets its own bucket (under-10 / 19+) rather than being folded
+// into "unknown", which would conflate a real age with missing data.
+const AGE_BUCKETS = ["under 10", "10-12", "13-15", "16-18", "19+", "unknown"] as const;
+
+function ageBucket(dateOfBirth: Date | null): (typeof AGE_BUCKETS)[number] {
+  if (!dateOfBirth) return "unknown";
+  const age = calculateAge(dateOfBirth);
+  if (age < 10) return "under 10";
+  if (age <= 12) return "10-12";
+  if (age <= 15) return "13-15";
+  if (age <= 18) return "16-18";
+  return "19+";
+}
+
+// Over active teens for the base - counts must sum to the active roster, and
+// unknown-DOB teens get their own bucket rather than being silently dropped.
+export async function getTeenDemographics({ baseId }: { baseId?: string | null }): Promise<TeenDemographics> {
+  const teens = await prisma.teen.findMany({
+    where: { baseId: baseId ?? undefined, ...activeTeenFilter, ...notDeleted(false) },
+    select: { gender: true, dateOfBirth: true },
+  });
+
+  const byGender = new Map<string, number>();
+  const byAge = new Map<string, number>();
+  for (const teen of teens) {
+    const gender = normalizeGender(teen.gender);
+    byGender.set(gender, (byGender.get(gender) ?? 0) + 1);
+    const bucket = ageBucket(teen.dateOfBirth);
+    byAge.set(bucket, (byAge.get(bucket) ?? 0) + 1);
+  }
+
+  return {
+    genderBreakdown: Array.from(byGender.entries()).map(([gender, count]) => ({ gender, count })),
+    ageBreakdown: AGE_BUCKETS.filter((b) => byAge.has(b)).map((bucket) => ({ bucket, count: byAge.get(bucket) ?? 0 })),
+    totalActive: teens.length,
+  };
+}
+
+export type NewConvertFunnel = {
+  trend: { month: string; count: number }[];
+  total: number;
+  followedUp: number;
+  becameTeen: number;
+  followUpRate: number | null;
+  conversionRate: number | null;
+};
+
+// baseId null records (cross-base converts) only appear in the all-bases view,
+// same rule as every other analytics endpoint (S11-A4).
+export async function getNewConvertFunnel({ baseId, from, to }: DateRange): Promise<NewConvertFunnel> {
+  const converts = await prisma.newConvert.findMany({
+    where: { baseId: baseId ?? undefined, date: { gte: from, lt: to }, ...notDeleted(false) },
+    select: { date: true, followedUp: true, becameTeen: true },
+  });
+
+  const byMonth = new Map<string, number>();
+  for (const c of converts) {
+    const key = monthKey(c.date);
+    byMonth.set(key, (byMonth.get(key) ?? 0) + 1);
+  }
+  const trend = enumerateMonths(from, to).map((month) => ({ month, count: byMonth.get(month) ?? 0 }));
+
+  const total = converts.length;
+  const followedUp = converts.filter((c) => c.followedUp).length;
+  const becameTeen = converts.filter((c) => c.becameTeen).length;
+
+  return {
+    trend,
+    total,
+    followedUp,
+    becameTeen,
+    followUpRate: total > 0 ? Math.round((followedUp / total) * 100) : null,
+    conversionRate: total > 0 ? Math.round((becameTeen / total) * 100) : null,
+  };
+}
+
+export type TeachingRatePoint = { userId: string; name: string; taught: number; scheduled: number; rate: number };
+
+// Per-general taught/scheduled rate for the period, from TeacherParticipation -
+// names via safeUserSelect-style fields only (no password/etc).
+export async function getTeachingRateComparison({ baseId, from, to }: DateRange): Promise<TeachingRatePoint[]> {
+  const records = await prisma.teacherParticipation.findMany({
+    where: { activity: { baseId: baseId ?? undefined, date: { gte: from, lt: to }, ...notDeleted(false) } },
+    select: { attended: true, user: { select: { id: true, name: true, deletedAt: true } } },
+  });
+
+  const byUser = new Map<string, { name: string; taught: number; scheduled: number }>();
+  for (const r of records) {
+    if (r.user.deletedAt) continue;
+    const entry = byUser.get(r.user.id) ?? { name: r.user.name, taught: 0, scheduled: 0 };
+    entry.scheduled += 1;
+    if (r.attended) entry.taught += 1;
+    byUser.set(r.user.id, entry);
+  }
+
+  return Array.from(byUser.entries())
+    .map(([userId, { name, taught, scheduled }]) => ({ userId, name, taught, scheduled, rate: Math.round((taught / scheduled) * 100) }))
+    .sort((a, b) => b.rate - a.rate);
 }

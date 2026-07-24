@@ -22,6 +22,11 @@ export default function ActivityDetailsPage({ params }: { params: { id: string }
   const [page, setPage] = useState(1);
   const pageSize = 10;
 
+  const [generals, setGenerals] = useState<any[]>([]);
+  const [generalAttendance, setGeneralAttendance] = useState<{ [userId: string]: boolean }>({});
+  const [generalSearch, setGeneralSearch] = useState("");
+  const [generalPage, setGeneralPage] = useState(1);
+
   // Fetch activity details
   useEffect(() => {
     fetch(`/api/activities/${params.id}`)
@@ -41,6 +46,20 @@ export default function ActivityDetailsPage({ params }: { params: { id: string }
           att[t.id] = t.attended;
         });
         setAttendance(att);
+      });
+  }, [params.id]);
+
+  // Fetch generals and their teaching participation
+  useEffect(() => {
+    fetch(`/api/activities/${params.id}/teacher-participation`)
+      .then((res) => res.json())
+      .then((data) => {
+        setGenerals(data);
+        const att: { [userId: string]: boolean } = {};
+        data.forEach((g: any) => {
+          att[g.id] = g.attended;
+        });
+        setGeneralAttendance(att);
       });
   }, [params.id]);
 
@@ -66,10 +85,37 @@ export default function ActivityDetailsPage({ params }: { params: { id: string }
     }
   };
 
+  // Generals attendance handler
+  const handleMarkGeneralAttendance = async (userId: string) => {
+    const previousStatus = generalAttendance[userId];
+    const newStatus = !previousStatus;
+    setGeneralAttendance((prev) => ({ ...prev, [userId]: newStatus }));
+    try {
+      const res = await fetch(`/api/activities/${params.id}/teacher-participation`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId, attended: newStatus }),
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        setGeneralAttendance((prev) => ({ ...prev, [userId]: previousStatus }));
+        toast.error(data.message ?? "Failed to update attendance");
+      }
+    } catch (err) {
+      setGeneralAttendance((prev) => ({ ...prev, [userId]: previousStatus }));
+      toast.error("Failed to update attendance");
+    }
+  };
+
   // Search and pagination
   const filteredTeens = teens.filter((t) => t.name.toLowerCase().includes(search.toLowerCase()));
   const paginatedTeens = filteredTeens.slice((page - 1) * pageSize, page * pageSize);
   const totalPages = Math.ceil(filteredTeens.length / pageSize);
+
+  const filteredGenerals = generals.filter((g) => g.name.toLowerCase().includes(generalSearch.toLowerCase()));
+  const paginatedGenerals = filteredGenerals.slice((generalPage - 1) * pageSize, generalPage * pageSize);
+  const totalGeneralPages = Math.ceil(filteredGenerals.length / pageSize);
+  const generalPresentCount = Object.values(generalAttendance).filter(Boolean).length;
 
   // Stats
   const totalTeens = teens.length;
@@ -213,6 +259,86 @@ export default function ActivityDetailsPage({ params }: { params: { id: string }
         </div>
         {/* Pagination */}
         <Pagination page={page} totalPages={totalPages} onChange={setPage} />
+      </Card>
+
+      {/* Generals Attendance Table Card */}
+      <Card className="p-4 sm:p-8 mt-8">
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between mb-4">
+          <h3 className="text-lg font-semibold">
+            Generals <span className="ml-2 text-sm font-normal text-neutral-500">({generalPresentCount} present)</span>
+          </h3>
+          <Input
+            type="text"
+            placeholder="Search generals..."
+            value={generalSearch}
+            onChange={(e) => {
+              setGeneralSearch(e.target.value);
+              setGeneralPage(1);
+            }}
+            className="sm:w-64"
+          />
+        </div>
+        {/* Desktop Table */}
+        <div className="hidden md:block">
+          <TableContainer>
+            <Table>
+              <TableHead>
+                <tr>
+                  <TableHeaderCell>Name</TableHeaderCell>
+                  <TableHeaderCell>Role</TableHeaderCell>
+                  <TableHeaderCell className="text-center">Attendance</TableHeaderCell>
+                </tr>
+              </TableHead>
+              <tbody>
+                {paginatedGenerals.map((general) => (
+                  <TableRow key={general.id}>
+                    <TableCell className="flex items-center gap-3">
+                      <Avatar name={general.name} size="sm" />
+                      <span className="font-medium">{general.name}</span>
+                    </TableCell>
+                    <TableCell>{general.role}</TableCell>
+                    <TableCell className="text-center">
+                      <Button
+                        size="sm"
+                        variant={generalAttendance[general.id] ? "primary" : "secondary"}
+                        onClick={() => handleMarkGeneralAttendance(general.id)}
+                      >
+                        {generalAttendance[general.id] ? "Present" : "Mark Present"}
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </tbody>
+            </Table>
+          </TableContainer>
+        </div>
+        {/* Mobile Cards */}
+        <div className="md:hidden space-y-4">
+          {paginatedGenerals.map((general) => (
+            <Card key={general.id} padded className="flex flex-col gap-2">
+              <div className="flex items-center gap-3 mb-2">
+                <Avatar name={general.name} size="sm" />
+                <span className="font-medium text-sm break-words leading-snug">{general.name}</span>
+              </div>
+              <div className="flex flex-wrap gap-4 text-sm mb-2">
+                <div>
+                  <span className="font-semibold">Role:</span> {general.role}
+                </div>
+              </div>
+              <div className="flex mt-2">
+                <Button
+                  className="w-full"
+                  variant={generalAttendance[general.id] ? "primary" : "secondary"}
+                  onClick={() => handleMarkGeneralAttendance(general.id)}
+                >
+                  {generalAttendance[general.id] ? "Present" : "Mark Present"}
+                </Button>
+              </div>
+            </Card>
+          ))}
+        </div>
+        {/* Pagination */}
+        <Pagination page={generalPage} totalPages={totalGeneralPages} onChange={setGeneralPage} />
       </Card>
     </div>
   );

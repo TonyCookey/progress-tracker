@@ -5,11 +5,22 @@ import { useSession } from "next-auth/react";
 import Link from "next/link";
 import AnalyticsFilterBar, { AnalyticsFilterValue, BaseOption } from "@/components/analytics/AnalyticsFilterBar";
 import BarComparisonChart from "@/components/charts/BarComparisonChart";
+import LineTrendChart from "@/components/charts/LineTrendChart";
+import GroupBreakdownChart from "@/components/charts/GroupBreakdownChart";
+import DonutChart from "@/components/charts/DonutChart";
 import StatTile from "@/components/charts/StatTile";
 import Card from "@/components/ui/Card";
 
-type AttendancePoint = { date: string; newCount: number; returningCount: number };
+type AttendancePoint = { date: string; newCount: number; returningCount: number; attended: number; rate: number | null };
 type Dropoff = { priorCount: number; currentCount: number; droppedOffCount: number; droppedOffTeens: { id: string; name: string }[] };
+type GroupBreakdown = {
+  platoons: { groupId: string; name: string; teenCount: number }[];
+  squads: { groupId: string; name: string; teenCount: number }[];
+  attendanceByPlatoon: { groupId: string; name: string; attended: number }[];
+  teachingRates: { userId: string; name: string; taught: number; scheduled: number; rate: number }[];
+};
+type AttendanceByType = { type: string; average: number; activityCount: number };
+type Demographics = { genderBreakdown: { gender: string; count: number }[]; ageBreakdown: { bucket: string; count: number }[]; totalActive: number };
 
 function defaultFilter(baseId: string): AnalyticsFilterValue {
   const now = new Date();
@@ -28,8 +39,11 @@ export default function ReportsAnalyticsOverview() {
   const [bases, setBases] = useState<BaseOption[]>([]);
   const [filter, setFilter] = useState<AnalyticsFilterValue>(() => defaultFilter(""));
   const [points, setPoints] = useState<AttendancePoint[]>([]);
-  const [summary, setSummary] = useState({ average: 0, total: 0 });
+  const [summary, setSummary] = useState<{ average: number; total: number; averageRate: number | null }>({ average: 0, total: 0, averageRate: null });
   const [dropoff, setDropoff] = useState<Dropoff | null>(null);
+  const [groups, setGroups] = useState<GroupBreakdown | null>(null);
+  const [byType, setByType] = useState<AttendanceByType[]>([]);
+  const [demographics, setDemographics] = useState<Demographics | null>(null);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
@@ -52,15 +66,23 @@ export default function ReportsAnalyticsOverview() {
     dropoffParams.set("periodStart", filter.from);
     dropoffParams.set("periodEnd", filter.to);
 
+    const demographicsParams = new URLSearchParams();
+    if (filter.baseId) demographicsParams.set("baseId", filter.baseId);
+
     setLoading(true);
     Promise.all([
       fetch(`/api/analytics/attendance?${params}`).then((r) => r.json()),
       fetch(`/api/analytics/attendance/dropoff?${dropoffParams}`).then((r) => r.json()),
+      fetch(`/api/analytics/groups?${params}`).then((r) => r.json()),
+      fetch(`/api/analytics/demographics?${demographicsParams}`).then((r) => r.json()),
     ])
-      .then(([attendance, dropoffRes]) => {
+      .then(([attendance, dropoffRes, groupsRes, demographicsRes]) => {
         setPoints(attendance.points ?? []);
-        setSummary(attendance.summary ?? { average: 0, total: 0 });
+        setSummary(attendance.summary ?? { average: 0, total: 0, averageRate: null });
+        setByType(attendance.byType ?? []);
         setDropoff(dropoffRes);
+        setGroups(groupsRes);
+        setDemographics(demographicsRes);
       })
       .finally(() => setLoading(false));
   }, [isSuperAdmin, filter.baseId, filter.from, filter.to]);
@@ -82,6 +104,7 @@ export default function ReportsAnalyticsOverview() {
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <StatTile label="Average attendance" value={summary.average} />
+        <StatTile label="Avg attendance rate" value={summary.averageRate !== null ? `${summary.averageRate}%` : "N/A"} />
         <StatTile label="New this period" value={totals.newCount} />
         <StatTile label="Returning this period" value={totals.returningCount} />
         <StatTile label="Dropped off" value={dropoff?.droppedOffCount ?? 0} />
@@ -98,6 +121,79 @@ export default function ReportsAnalyticsOverview() {
           ]}
         />
       </Card>
+
+      <Card>
+        <h3 className="text-xs font-semibold uppercase tracking-wide text-neutral-500 mb-3">Attendance Count vs Rate</h3>
+        <LineTrendChart
+          title="Attendance per activity, count and rate"
+          labels={points.map((p) => new Date(p.date).toLocaleDateString(undefined, { month: "short", day: "numeric" }))}
+          series={[
+            { name: "Attended", data: points.map((p) => p.attended) },
+            { name: "Rate", data: points.map((p) => p.rate), axis: "right", formatValue: (n) => `${n}%` },
+          ]}
+        />
+      </Card>
+
+      {byType.length > 0 && (
+        <Card>
+          <h3 className="text-xs font-semibold uppercase tracking-wide text-neutral-500 mb-3">Attendance by Activity Type</h3>
+          <BarComparisonChart
+            title="Average attendance per activity type"
+            labels={byType.map((t) => t.type)}
+            series={[{ name: "Average attendance", data: byType.map((t) => t.average) }]}
+            horizontal
+          />
+        </Card>
+      )}
+
+      {demographics && demographics.totalActive > 0 && (
+        <Card>
+          <h3 className="text-xs font-semibold uppercase tracking-wide text-neutral-500 mb-3">Teen Demographics ({demographics.totalActive} active)</h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <DonutChart
+              title="Gender split"
+              labels={demographics.genderBreakdown.map((g) => g.gender)}
+              data={demographics.genderBreakdown.map((g) => g.count)}
+            />
+            <BarComparisonChart
+              title="Age distribution"
+              labels={demographics.ageBreakdown.map((a) => a.bucket)}
+              series={[{ name: "Teens", data: demographics.ageBreakdown.map((a) => a.count) }]}
+            />
+          </div>
+        </Card>
+      )}
+
+      {groups && (groups.platoons.length > 0 || groups.squads.length > 0) && (
+        <Card>
+          <h3 className="text-xs font-semibold uppercase tracking-wide text-neutral-500 mb-3">Groups</h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <GroupBreakdownChart
+              title="Platoon roster sizes"
+              labels={groups.platoons.map((g) => g.name)}
+              data={groups.platoons.map((g) => g.teenCount)}
+            />
+            <GroupBreakdownChart
+              title="Attendance by platoon"
+              labels={groups.attendanceByPlatoon.map((g) => g.name)}
+              data={groups.attendanceByPlatoon.map((g) => g.attended)}
+            />
+          </div>
+        </Card>
+      )}
+
+      {groups && groups.teachingRates.length > 0 && (
+        <Card>
+          <h3 className="text-xs font-semibold uppercase tracking-wide text-neutral-500 mb-3">Teaching Rate by General</h3>
+          <BarComparisonChart
+            title="Teaching attendance rate by general"
+            labels={groups.teachingRates.map((g) => g.name)}
+            series={[{ name: "Teaching rate", data: groups.teachingRates.map((g) => g.rate) }]}
+            formatValue={(n) => `${n}%`}
+            horizontal
+          />
+        </Card>
+      )}
 
       <Card>
         <h3 className="text-xs font-semibold uppercase tracking-wide text-neutral-500 mb-3">Dropped Off ({dropoff?.droppedOffCount ?? 0})</h3>

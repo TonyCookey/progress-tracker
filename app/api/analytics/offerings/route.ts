@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { requireSession, assertBaseAccess, handleApiError } from "@/lib/auth";
-import { getOfferingsTrend, getOfferingsTrendByBase, getOfferingsByService } from "@/lib/analytics";
+import { getOfferingsTrend, getOfferingsTrendByBase, getOfferingsByService, getOfferingsByType, getOfferingPerAttendee } from "@/lib/analytics";
 import { offeringsQuerySchema, resolveDateRange } from "@/lib/validation/analytics";
 import { parseOrThrow } from "@/lib/validation/parse";
 
@@ -19,6 +19,16 @@ export async function GET(req: Request) {
     if (query.by === "service") {
       const byService = await getOfferingsByService({ baseId, from, to });
       return NextResponse.json({ byService });
+    }
+
+    if (query.by === "type") {
+      const byType = await getOfferingsByType({ baseId, from, to });
+      return NextResponse.json({ byType });
+    }
+
+    if (query.by === "perAttendee") {
+      const perAttendee = await getOfferingPerAttendee({ baseId, from, to });
+      return NextResponse.json({ perAttendee });
     }
 
     const trend = await getOfferingsTrend({ baseId, from, to });
