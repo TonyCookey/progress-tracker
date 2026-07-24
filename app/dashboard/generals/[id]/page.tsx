@@ -15,6 +15,7 @@ import Card from "@/components/ui/Card";
 import Badge from "@/components/ui/Badge";
 import Button from "@/components/ui/Button";
 import Avatar from "@/components/ui/Avatar";
+import PersonAvatar from "@/components/ui/PersonAvatar";
 import { useToast } from "@/components/ui/Toast";
 
 type TeachingRecord = {
@@ -34,6 +35,7 @@ type General = {
   dateOfBirth: string;
   baseId: string;
   base: { id: string; name: string };
+  imageKey?: string | null;
   leadingGroups?: { id: string; name: string; type: string; teenCount: number }[];
   supportingGroups?: { group: { id: string; name: string; type: string; teenCount: number } }[];
   teaching: TeachingRecord[];
@@ -102,7 +104,11 @@ export default function GeneralDetailsPage() {
       <div className="flex flex-col md:flex-row gap-6 mb-8">
         {/* Profile Card */}
         <Card className="flex-1 flex items-center gap-6">
-          <Avatar name={general.name ?? "?"} size="lg" />
+          {general.imageKey ? (
+            <PersonAvatar imageKey={general.imageKey} alt={`${general.name}'s profile`} size={80} />
+          ) : (
+            <Avatar name={general.name ?? "?"} size="lg" />
+          )}
           <div>
             <h2 className="text-2xl font-bold mb-2 text-neutral-900">{general.name}</h2>
             <Badge tone="accent" className="mb-2">

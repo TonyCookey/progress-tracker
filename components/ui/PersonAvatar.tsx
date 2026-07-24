@@ -6,7 +6,7 @@ type Props = {
   size?: number;
 };
 
-export default function LieutenantAvatar({ imageKey, alt = "Lieutenant", size = 80 }: Props) {
+export default function PersonAvatar({ imageKey, alt = "Photo", size = 80 }: Props) {
   const [url, setUrl] = useState<string | null>(null);
 
   useEffect(() => {

@@ -7,12 +7,14 @@ import Link from "next/link";
 import { Table, TableContainer, TableHead, TableHeaderCell, TableRow, TableCell } from "@/components/ui/Table";
 import Pagination from "@/components/ui/Pagination";
 import Avatar from "@/components/ui/Avatar";
+import PersonAvatar from "@/components/ui/PersonAvatar";
 import Card from "@/components/ui/Card";
 
 interface General {
   id: string;
   name: string;
   email: string;
+  imageKey?: string | null;
   base: {
     name: string;
   };
@@ -62,7 +64,11 @@ export default function GeneralsTable() {
                 {generals.map((general) => (
                   <TableRow key={general.id}>
                     <TableCell className="flex items-center gap-3">
-                      <Avatar name={general.name ?? "G"} size="sm" />
+                      {general.imageKey ? (
+                        <PersonAvatar imageKey={general.imageKey} alt={`${general.name}'s profile`} size={32} />
+                      ) : (
+                        <Avatar name={general.name ?? "G"} size="sm" />
+                      )}
                       <span className="font-medium text-neutral-900">{general.name}</span>
                     </TableCell>
                     <TableCell>{general.email}</TableCell>

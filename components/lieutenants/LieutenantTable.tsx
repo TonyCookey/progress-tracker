@@ -4,7 +4,7 @@ import { useSession } from "next-auth/react";
 import { EyeIcon, ArrowPathIcon, ArrowRightIcon } from "@heroicons/react/24/outline";
 import { calculateAge } from "@/lib/calculateAge";
 import { useRouter } from "next/navigation";
-import LieutenantAvatar from "./AvatarImage";
+import PersonAvatar from "@/components/ui/PersonAvatar";
 import { Table, TableContainer, TableHead, TableHeaderCell, TableRow, TableCell } from "@/components/ui/Table";
 import Pagination from "@/components/ui/Pagination";
 import Avatar from "@/components/ui/Avatar";
@@ -131,7 +131,7 @@ export default function LieutenantTable() {
                 <TableRow key={lt.id}>
                   <TableCell className="flex items-center gap-3">
                     {lt.imageKey ? (
-                      <LieutenantAvatar imageKey={lt.imageKey} alt={`${lt.name}'s profile`} size={32} />
+                      <PersonAvatar imageKey={lt.imageKey} alt={`${lt.name}'s profile`} size={32} />
                     ) : (
                       <Avatar name={lt.name ?? "L"} size="sm" />
                     )}
@@ -165,7 +165,7 @@ export default function LieutenantTable() {
             <Card key={lt.id} padded className="p-4 flex flex-col gap-2">
               <div className="flex items-center gap-3 mb-2">
                 {lt.imageKey ? (
-                  <LieutenantAvatar imageKey={lt.imageKey} alt={`${lt.name}'s profile`} size={32} />
+                  <PersonAvatar imageKey={lt.imageKey} alt={`${lt.name}'s profile`} size={32} />
                 ) : (
                   <Avatar name={lt.name ?? "L"} size="sm" />
                 )}
