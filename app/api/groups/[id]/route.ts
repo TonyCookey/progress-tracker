@@ -4,6 +4,8 @@ import { requireSession, requireRole, assertBaseAccess, handleApiError } from "@
 import { updateGroupSchema } from "@/lib/validation/group";
 import { parseOrThrow } from "@/lib/validation/parse";
 import { notDeleted } from "@/lib/softDelete";
+import { safeUserSelect } from "@/lib/users";
+import { assertUsersInBase } from "@/lib/validateBaseRefs";
 
 export async function GET(req: Request, { params }: { params: { id: string } }) {
   try {
@@ -19,9 +21,9 @@ export async function GET(req: Request, { params }: { params: { id: string } }) 
         teens: { where: notDeleted(includeArchived) },
         base: true,
         activities: { where: notDeleted(includeArchived), orderBy: { date: "asc" } },
-        leader: true,
+        leader: { select: safeUserSelect },
         members: { where: { teen: notDeleted(includeArchived) }, include: { teen: true } },
-        support: { where: { user: notDeleted(includeArchived) }, include: { user: true } },
+        support: { where: { user: notDeleted(includeArchived) }, include: { user: { select: safeUserSelect } } },
       },
     });
 
@@ -70,6 +72,9 @@ export async function PUT(req: Request, { params }: { params: { id: string } }) 
 
     assertBaseAccess(session, existingGroup.baseId);
     assertBaseAccess(session, data.baseId);
+
+    await assertUsersInBase(data.leaderId ? [data.leaderId] : [], data.baseId, "leaderId");
+    await assertUsersInBase(data.supportIds ?? [], data.baseId, "supportIds");
 
     const updatedGroup = await prisma.group.update({
       where: { id: params.id },

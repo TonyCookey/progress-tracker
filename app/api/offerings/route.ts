@@ -10,8 +10,10 @@ export async function GET(req: Request) {
     await requireSession();
 
     const { searchParams } = new URL(req.url);
-    const page = parseInt(searchParams.get("page") ?? "1");
-    const limit = parseInt(searchParams.get("limit") ?? "10");
+    const pageParam = parseInt(searchParams.get("page") ?? "1");
+    const limitParam = parseInt(searchParams.get("limit") ?? "10");
+    const page = Number.isFinite(pageParam) && pageParam > 0 ? pageParam : 1;
+    const limit = Number.isFinite(limitParam) ? Math.min(Math.max(limitParam, 1), 100) : 10;
     const search = searchParams.get("search")?.toLowerCase() ?? "";
     const baseId = searchParams.get("baseId") ?? "";
     const includeArchived = searchParams.get("includeArchived") === "true";

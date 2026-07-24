@@ -2,6 +2,7 @@
 
 import { formatDate } from "@/lib/formatDate";
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import Card from "@/components/ui/Card";
 import Input from "@/components/ui/Input";
 import Button from "@/components/ui/Button";
@@ -12,7 +13,9 @@ import { useToast } from "@/components/ui/Toast";
 
 export default function ActivityDetailsPage({ params }: { params: { id: string } }) {
   const toast = useToast();
+  const router = useRouter();
   const [activity, setActivity] = useState<any>(null);
+  const [deleting, setDeleting] = useState(false);
   const [teens, setTeens] = useState<any[]>([]);
   const [attendance, setAttendance] = useState<{ [teenId: string]: boolean }>({});
   const [search, setSearch] = useState("");
@@ -72,13 +75,44 @@ export default function ActivityDetailsPage({ params }: { params: { id: string }
   const totalTeens = teens.length;
   const presentCount = Object.values(attendance).filter(Boolean).length;
 
+  const handleDelete = async () => {
+    if (!confirm("Delete this activity? Its attendance history will be preserved but it will disappear from lists and analytics.")) {
+      return;
+    }
+    setDeleting(true);
+    try {
+      const res = await fetch(`/api/activities/${params.id}`, { method: "DELETE" });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        toast.error(data.error ?? "Failed to delete activity");
+        return;
+      }
+      toast.success("Activity deleted");
+      setTimeout(() => router.push("/dashboard/activities"), 800);
+    } catch (err) {
+      toast.error("Failed to delete activity");
+    } finally {
+      setDeleting(false);
+    }
+  };
+
   return (
     <div className="max-w-5xl mx-auto py-10 px-4">
       {/* Top Section: Activity Details & Stats Side by Side */}
       <div className="flex flex-col md:flex-row gap-8 mb-8">
         {/* Activity Details Card */}
         <Card className="space-y-4 flex-1">
-          <h2 className="text-2xl font-bold mb-2 text-accent-700">{activity?.name}</h2>
+          <div className="flex items-start justify-between gap-4">
+            <h2 className="text-2xl font-bold mb-2 text-accent-700">{activity?.name}</h2>
+            <div className="flex gap-2 shrink-0">
+              <Button size="sm" variant="secondary" onClick={() => router.push(`/dashboard/activities/${params.id}/edit`)}>
+                Edit
+              </Button>
+              <Button size="sm" variant="danger" onClick={handleDelete} isLoading={deleting}>
+                Delete
+              </Button>
+            </div>
+          </div>
           <p>{activity?.description}</p>
           <p>Date: {formatDate(activity?.date)}</p>
           <p>Base: {activity?.base?.name || "N/A"}</p>

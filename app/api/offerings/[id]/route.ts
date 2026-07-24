@@ -53,7 +53,12 @@ export async function PUT(req: Request, { params }: { params: { id: string } }) 
 
 export async function DELETE(_req: Request, { params }: { params: { id: string } }) {
   try {
-    await requireRole(["SUPERADMIN", "GENERAL"]);
+    const session = await requireRole(["SUPERADMIN", "GENERAL"]);
+
+    const offering = await prisma.offering.findUnique({ where: { id: params.id } });
+    if (!offering) return NextResponse.json({ error: "Offering not found" }, { status: 404 });
+
+    assertBaseAccess(session, offering.isCrossBase ? null : offering.baseId);
 
     await prisma.offering.update({
       where: { id: params.id },

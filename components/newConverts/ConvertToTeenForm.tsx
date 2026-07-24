@@ -79,7 +79,7 @@ export default function ConvertToTeenForm({ newConvert, onSuccess }: { newConver
     try {
       const baseId = isSuperAdmin ? data.baseId : (session?.user?.baseId ?? data.baseId);
 
-      const teenRes = await fetch("/api/lieutenants", {
+      const res = await fetch(`/api/new-converts/${newConvert.id}/convert`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -91,37 +91,13 @@ export default function ConvertToTeenForm({ newConvert, onSuccess }: { newConver
           groupId: data.groupId || undefined,
         }),
       });
-      if (!teenRes.ok) {
-        const text = await teenRes.text();
-        toast.error(`Failed to create teen: ${teenRes.status} ${teenRes.statusText} - ${text}`);
-        return;
-      }
-      const teen = await teenRes.json();
-
-      const linkRes = await fetch(`/api/new-converts/${newConvert.id}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          name: newConvert.name,
-          gender: newConvert.gender,
-          phone: newConvert.phone,
-          dateOfBirth: newConvert.dateOfBirth,
-          baseId: newConvert.baseId,
-          date: newConvert.date,
-          activityId: newConvert.activityId,
-          invitedBy: newConvert.invitedBy,
-          followedUp: newConvert.followedUp,
-          notes: newConvert.notes,
-          becameTeen: true,
-          teenId: teen.id,
-        }),
-      });
-      if (!linkRes.ok) {
-        const text = await linkRes.text();
-        toast.error(
-          `Teen was created, but linking it back to the New Convert record failed: ${linkRes.status} ${linkRes.statusText} - ${text}. ` +
-            `You can link it manually by editing the New Convert entry.`,
-        );
+      if (!res.ok) {
+        const text = await res.text();
+        if (res.status === 409) {
+          toast.error("This new convert has already been converted to a teen");
+        } else {
+          toast.error(`Failed to convert to teen: ${res.status} ${res.statusText} - ${text}`);
+        }
         return;
       }
 

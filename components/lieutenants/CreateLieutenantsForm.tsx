@@ -25,6 +25,7 @@ type FormData = {
   guardianPhone: string;
   dateJoined: string;
   status: string;
+  rank: string;
 };
 type Option = {
   id: string;
@@ -133,7 +134,7 @@ export default function CreateLieutenantForm({ onSuccess }: { onSuccess: () => v
       const res = await fetch("/api/lieutenants", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...data, rank: "LIEUTENANT", householdId: data.householdId || null }),
+        body: JSON.stringify({ ...data, householdId: data.householdId || null }),
       });
       if (!res.ok) {
         const text = await res.text();
@@ -175,6 +176,11 @@ export default function CreateLieutenantForm({ onSuccess }: { onSuccess: () => v
         </UISelect>
 
         <Input label="Date of Birth" type="date" {...register("dateOfBirth", { required: true })} />
+
+        <UISelect label="Rank" {...register("rank")} defaultValue="LIEUTENANT">
+          <option value="LIEUTENANT">Lieutenant</option>
+          <option value="CAPTAIN">Captain</option>
+        </UISelect>
 
         <UISelect label="Base" {...register("baseId", { required: true })}>
           <option value="">Select a base</option>

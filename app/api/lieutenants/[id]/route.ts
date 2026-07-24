@@ -4,6 +4,7 @@ import { requireSession, requireRole, assertBaseAccess, handleApiError } from "@
 import { updateTeenSchema } from "@/lib/validation/teen";
 import { parseOrThrow } from "@/lib/validation/parse";
 import { notDeleted } from "@/lib/softDelete";
+import { assertGroupsInBase } from "@/lib/validateBaseRefs";
 
 export async function GET(req: Request, { params }: { params: { id: string } }) {
   try {
@@ -81,6 +82,9 @@ export async function PUT(req: Request, { params }: { params: { id: string } }) 
     // edit another base's teen, and can't move a teen into a base they don't own.
     assertBaseAccess(session, existingTeen.baseId);
     assertBaseAccess(session, data.baseId);
+
+    await assertGroupsInBase(data.platoonId ? [data.platoonId] : [], data.baseId, "platoonId");
+    await assertGroupsInBase(data.squadIds ?? [], data.baseId, "squadIds");
 
     const updatedTeen = await prisma.teen.update({
       where: { id: params.id },

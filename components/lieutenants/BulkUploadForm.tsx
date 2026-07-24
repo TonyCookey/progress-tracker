@@ -6,8 +6,9 @@ import Input from "@/components/ui/Input";
 import Button from "@/components/ui/Button";
 
 type UploadResult = {
-  inserted: number;
-  skipped: number;
+  inserted?: number;
+  invalid?: number;
+  skipped: string[];
   message: string;
 };
 
@@ -78,8 +79,9 @@ export default function BulkTeenUploadForm() {
         {result && (
           <div className="text-sm text-success-700 bg-success-50 p-3 rounded-lg">
             <p>{result.message}</p>
-            <p>Inserted: {result.inserted}</p>
-            <p>Skipped: {result.skipped}</p>
+            {typeof result.inserted === "number" && <p>Inserted: {result.inserted}</p>}
+            <p>Skipped as duplicates: {result.skipped.length}</p>
+            {result.skipped.length > 0 && <p className="text-xs text-success-600 mt-1">{result.skipped.join(", ")}</p>}
           </div>
         )}
 

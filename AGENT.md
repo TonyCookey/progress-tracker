@@ -384,13 +384,22 @@ same `lib/` functions, so there's one source of truth for each query.
 - **`/dashboard/events` removed (S10)** — it was an empty stub, redundant with Activities (events =
   activities); the page and any nav link are gone. The Reports link is live (S3, relabeled "Monthly
   Report"). **Settings is now fully built (S7)** — do not re-stub it or re-comment its sidebar link.
-- **Report offerings total only summed `Cash`+`Online` (fixed S10)** — `lib/reports/monthly.ts`
-  computed `offeringsTotal.total` as `cash + online`, silently dropping offerings recorded under any
-  admin-added custom `type` (Settings → RefData `offering_type`). `total` now sums **all** offerings
-  for the base+month regardless of `type`; `cash`/`online` stay as the type-specific breakdown. Note:
-  `lib/analytics.ts`'s `splitCashOnline` (used by the offerings trend/by-service analytics) still has
-  the same `cash+online` pattern for its `total` and was **not** touched by S10 — same bug likely
-  applies there, watch for it.
+- **Report offerings total only summed `Cash`+`Online` (fixed S10, and again in S11 for the sibling)**
+  — `lib/reports/monthly.ts` computed `offeringsTotal.total` as `cash + online`, silently dropping
+  offerings recorded under any admin-added custom `type` (Settings → RefData `offering_type`). `total`
+  now sums **all** offerings for the base+month regardless of `type`; `cash`/`online` stay as the
+  type-specific breakdown. `lib/analytics.ts`'s `splitCashOnline` (offerings trend/by-service/by-base
+  analytics) had the identical bug — fixed in S11 the same way.
+- **Every `User`-returning query must select through `safeUserSelect` (`lib/users.ts`)** — bare
+  `include: { leader: true }` / `{ user: true }` on a Group's leader/support relation leaked the
+  bcrypt `password` hash (plus email/DOB) to any authenticated caller (fixed S11, A1). Before adding
+  any new query that returns `User` rows (directly or nested via a relation), select through
+  `safeUserSelect` instead of a bare include — `grep -rn "leader: true\|user: true\|users: true" app
+  lib` should stay clean.
+- **Analytics base-scoping decision (S11, A4)**: non-SUPERADMIN callers of `app/api/analytics/**` are
+  always scoped to their own base — a missing `baseId` query param defaults to
+  `session.user.baseId` rather than falling through to an all-bases aggregate. SUPERADMIN keeps the
+  all-bases view when `baseId` is omitted. Apply the same default in any new analytics route.
 - **Attendance-taking list included soft-deleted/LEFT teens (fixed S10)** —
   `app/api/activities/[id]/participation/route.ts` GET's `teenWhere` never filtered `deletedAt`/
   `status`; a soft-deleted or LEFT teen could still be marked present. All three branches

@@ -5,6 +5,7 @@ import { requireSession, assertBaseAccess, handleApiError } from "@/lib/auth";
 import { createTeenSchema } from "@/lib/validation/teen";
 import { parseOrThrow } from "@/lib/validation/parse";
 import { notDeleted } from "@/lib/softDelete";
+import { assertGroupsInBase } from "@/lib/validateBaseRefs";
 
 export async function POST(req: Request) {
   try {
@@ -13,6 +14,9 @@ export async function POST(req: Request) {
     assertBaseAccess(session, body.baseId);
 
     const { name, gender, dateOfBirth, baseId, rank, groupId, squadIds = [] } = body;
+
+    await assertGroupsInBase(groupId ? [groupId] : [], baseId, "groupId");
+    await assertGroupsInBase(squadIds, baseId, "squadIds");
 
     const teen = await prisma.teen.create({
       data: {
@@ -49,16 +53,19 @@ export async function GET(req: Request) {
     await requireSession();
 
     const { searchParams } = new URL(req.url);
-    const page = parseInt(searchParams.get("page") ?? "1");
-    const limit = parseInt(searchParams.get("limit") ?? "10");
+    const pageParam = parseInt(searchParams.get("page") ?? "1");
+    const limitParam = parseInt(searchParams.get("limit") ?? "10");
+    const page = Number.isFinite(pageParam) && pageParam > 0 ? pageParam : 1;
+    const limit = Number.isFinite(limitParam) ? Math.min(Math.max(limitParam, 1), 100) : 10;
     const search = searchParams.get("search")?.toLowerCase() ?? "";
     const baseId = searchParams.get("baseId") ?? "";
+    const rank = searchParams.get("rank");
     const includeArchived = searchParams.get("includeArchived") === "true";
 
     const skip = (page - 1) * limit;
 
     const where = {
-      rank: "LIEUTENANT" as const,
+      rank: (rank === "LIEUTENANT" || rank === "CAPTAIN" ? rank : undefined) as "LIEUTENANT" | "CAPTAIN" | undefined,
       baseId: baseId ? baseId : undefined,
       name: {
         contains: search,
