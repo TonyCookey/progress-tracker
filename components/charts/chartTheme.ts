@@ -26,6 +26,7 @@ export function registerChartJs() {
 
 export type ChartColors = {
   series: string[];
+  twoSeries: string[];
   grid: string;
   axisText: string;
   tooltipBg: string;
@@ -39,6 +40,7 @@ export type ChartColors = {
 // (e.g. "Cash" is always slot 1), not array position from the API response.
 const LIGHT: ChartColors = {
   series: ["#4a8f43", "#1baf7a", "#eda100", "#008300", "#4a3aa7", "#e34948", "#e87ba4", "#eb6834"],
+  twoSeries: ["#2563eb", "#ef4444"],
   grid: "#e1e0d9",
   axisText: "#898781",
   tooltipBg: "#fcfcfb",
@@ -49,6 +51,7 @@ const LIGHT: ChartColors = {
 
 const DARK: ChartColors = {
   series: ["#6fae66", "#199e70", "#c98500", "#008300", "#9085e9", "#e66767", "#d55181", "#d95926"],
+  twoSeries: ["#60a5fa", "#f87171"],
   grid: "#2c2c2a",
   axisText: "#898781",
   tooltipBg: "#1a1a19",
@@ -56,6 +59,14 @@ const DARK: ChartColors = {
   tooltipBorder: "rgba(255,255,255,0.10)",
   surface: "#1a1a19",
 };
+
+export function getSeriesColor(colors: ChartColors, index: number, totalSeries: number) {
+  if (totalSeries === 2) {
+    return colors.twoSeries[index % colors.twoSeries.length];
+  }
+
+  return colors.series[index % colors.series.length];
+}
 
 export function useChartColors(): ChartColors {
   const [isDark, setIsDark] = useState(false);

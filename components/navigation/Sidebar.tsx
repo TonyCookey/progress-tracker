@@ -34,7 +34,7 @@ const links = [
   { href: "/dashboard/birthdays", label: "Birthdays", icon: <CakeIcon className="h-6 w-6" /> },
   { href: "/dashboard/new-converts", label: "New Converts", icon: <UserPlusIcon className="h-6 w-6" />, role: ["SUPERADMIN", "GENERAL"] },
   { href: "/dashboard/reports", label: "Monthly Report", icon: <ChartPieIcon className="h-6 w-6" />, role: ["SUPERADMIN", "GENERAL"] },
-  { href: "/dashboard/lieutenants/bulk-upload", label: "Bulk Upload", icon: <UploadCloud className="h-6 w-6" />, role: "SUPERADMIN" },
+  // { href: "/dashboard/lieutenants/bulk-upload", label: "Bulk Upload", icon: <UploadCloud className="h-6 w-6" />, role: "SUPERADMIN" },
   { href: "/dashboard/settings", label: "Settings", icon: <Cog6ToothIcon className="h-6 w-6" />, role: "SUPERADMIN" },
 ];
 

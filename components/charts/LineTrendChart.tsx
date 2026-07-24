@@ -2,7 +2,7 @@
 
 import { useMemo } from "react";
 import { Line } from "react-chartjs-2";
-import { registerChartJs, useChartColors, baseChartOptions, seriesFill } from "./chartTheme";
+import { registerChartJs, useChartColors, baseChartOptions, seriesFill, getSeriesColor } from "./chartTheme";
 import ChartLegend from "./ChartLegend";
 import ChartFrame from "./ChartFrame";
 
@@ -32,22 +32,26 @@ export default function LineTrendChart({
   const data = useMemo(
     () => ({
       labels,
-      datasets: series.map((s, i) => ({
-        label: s.name,
-        data: s.data,
-        yAxisID: s.axis === "right" ? "y1" : "y",
-        borderColor: colors.series[i % colors.series.length],
-        backgroundColor: seriesFill(colors.series[i % colors.series.length]),
-        borderWidth: 2,
-        pointRadius: 4,
-        pointHoverRadius: 5,
-        pointBackgroundColor: colors.series[i % colors.series.length],
-        pointBorderColor: colors.surface,
-        pointBorderWidth: 2,
-        fill: series.length === 1,
-        tension: 0.25,
-        spanGaps: true,
-      })),
+      datasets: series.map((s, i) => {
+        const seriesColor = getSeriesColor(colors, i, series.length);
+
+        return {
+          label: s.name,
+          data: s.data,
+          yAxisID: s.axis === "right" ? "y1" : "y",
+          borderColor: seriesColor,
+          backgroundColor: seriesFill(seriesColor),
+          borderWidth: 2,
+          pointRadius: 4,
+          pointHoverRadius: 5,
+          pointBackgroundColor: seriesColor,
+          pointBorderColor: colors.surface,
+          pointBorderWidth: 2,
+          fill: series.length === 1,
+          tension: 0.25,
+          spanGaps: true,
+        };
+      }),
     }),
     [labels, series, colors],
   );
@@ -60,13 +64,13 @@ export default function LineTrendChart({
         ...base.scales,
         ...(hasRightAxis
           ? {
-              y1: {
-                position: "right" as const,
-                beginAtZero: true,
-                grid: { display: false },
-                ticks: { color: colors.axisText },
-              },
-            }
+            y1: {
+              position: "right" as const,
+              beginAtZero: true,
+              grid: { display: false },
+              ticks: { color: colors.axisText },
+            },
+          }
           : {}),
       },
       plugins: {
@@ -95,7 +99,7 @@ export default function LineTrendChart({
 
   return (
     <div>
-      <ChartLegend series={series} colors={colors.series} />
+      <ChartLegend series={series} colors={series.length === 2 ? colors.twoSeries : colors.series} />
       <ChartFrame title={title} height={height}>
         <Line data={data} options={options} aria-hidden="true" />
       </ChartFrame>

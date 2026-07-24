@@ -2,7 +2,7 @@
 
 import { useMemo } from "react";
 import { Bar } from "react-chartjs-2";
-import { registerChartJs, useChartColors, commonTooltipOptions, baseChartOptions } from "./chartTheme";
+import { registerChartJs, useChartColors, commonTooltipOptions, baseChartOptions, getSeriesColor } from "./chartTheme";
 import ChartLegend from "./ChartLegend";
 import ChartFrame from "./ChartFrame";
 import type { ChartSeries } from "./LineTrendChart";
@@ -30,7 +30,7 @@ export default function StackedBarChart({
       datasets: series.map((s, i) => ({
         label: s.name,
         data: s.data,
-        backgroundColor: colors.series[i % colors.series.length],
+        backgroundColor: getSeriesColor(colors, i, series.length),
         maxBarThickness: 24,
         categoryPercentage: 0.7,
         barPercentage: 0.9,
@@ -56,7 +56,7 @@ export default function StackedBarChart({
 
   return (
     <div>
-      <ChartLegend series={series} colors={colors.series} />
+      <ChartLegend series={series} colors={series.length === 2 ? colors.twoSeries : colors.series} />
       <ChartFrame title={title} height={height}>
         <Bar data={data} options={options} aria-hidden="true" />
       </ChartFrame>
