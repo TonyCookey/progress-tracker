@@ -18,3 +18,10 @@ export function parseOrThrow<S extends ZodTypeAny>(schema: S, data: unknown): z.
 export function optionalDate() {
   return z.preprocess((val) => (val === "" || val === null ? undefined : val), z.coerce.date().optional());
 }
+
+// Optional id/relation field from a <select>: a "None"/unselected option submits "",
+// which would fail a bare z.string().min(1). Treat "" the same as omitted so an optional
+// relation (e.g. platoon) can genuinely be left unset instead of 400-ing the whole form.
+export function optionalId() {
+  return z.preprocess((val) => (val === "" ? undefined : val), z.string().min(1).optional().nullable());
+}
