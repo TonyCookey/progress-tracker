@@ -4,7 +4,7 @@ import { useForm, Controller } from "react-hook-form";
 import { useState, useEffect } from "react";
 import Select from "react-select";
 import CreateImageField from "../input/CreateImageField";
-import { compressImage } from "@/lib/compressImage";
+import { uploadTeenImage } from "@/lib/uploadTeenImage";
 import Input from "@/components/ui/Input";
 import UISelect, { selectStyles } from "@/components/ui/Select";
 import Button from "@/components/ui/Button";
@@ -74,60 +74,6 @@ export default function CreateLieutenantForm({ onSuccess }: { onSuccess: () => v
     fetchHouseholds();
   }, []);
 
-  const uploadTeenImage = async (imageFile: File, lieutenantId: string) => {
-    try {
-      // 1. get signed upload URL
-      const res = await fetch("/api/lieutenants/upload-url", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ lieutenantId, fileType: imageFile.type }),
-      });
-
-      if (!res.ok) {
-        const text = await res.text();
-        throw new Error(`Failed to get upload URL: ${res.status} ${res.statusText} - ${text}`);
-      }
-
-      const { url, key } = await res.json();
-      console.log("Got upload URL");
-
-      if (imageFile) {
-        const compressed = await compressImage(imageFile);
-        await uploadTeenImage(compressed, lieutenantId);
-      }
-
-      // 2. upload directly to R2 (this can fail due to CORS or invalid signature)
-      const uploadRes = await fetch(url, {
-        method: "PUT",
-        body: imageFile,
-        headers: { "Content-Type": imageFile.type },
-      });
-
-      if (!uploadRes.ok) {
-        const text = await uploadRes.text();
-        throw new Error(`Failed to upload image to storage: ${uploadRes.status} ${uploadRes.statusText} - ${text}`);
-      }
-      console.log("Image uploaded to R2");
-
-      // 3. save key in DB
-      const saveRes = await fetch("/api/lieutenants/save-image", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ lieutenantId, key }),
-      });
-
-      if (!saveRes.ok) {
-        const text = await saveRes.text();
-        throw new Error(`Failed to save image key: ${saveRes.status} ${saveRes.statusText} - ${text}`);
-      }
-      console.log("Image key saved in DB");
-    } catch (err) {
-      console.error("uploadTeenImage error:", err);
-      // rethrow so caller can show an alert or handle it
-      throw err;
-    }
-  };
-
   const onSubmit = async (data: FormData) => {
     setLoading(true);
     try {
@@ -144,20 +90,16 @@ export default function CreateLieutenantForm({ onSuccess }: { onSuccess: () => v
       }
 
       const lieutenant = await res.json();
-      console.log("Uploading image for lieutenant");
 
       // Only attempt to upload if we have an image and a lieutenant ID
       if (imageFile && lieutenant.id) {
-        // Compress the image before uploading - 800KB Max
-        const compressed = await compressImage(imageFile);
-        await uploadTeenImage(compressed, lieutenant.id);
+        await uploadTeenImage(imageFile, lieutenant.id);
       }
       reset();
       toast.success("Lieutenant created successfully");
       onSuccess();
     } catch (err) {
       console.error("Failed to create lieutenant", err);
-      console.log("Error details:", err instanceof Error ? err.message : err);
       toast.error("Failed to create lieutenant");
     } finally {
       setLoading(false);
