@@ -11,6 +11,15 @@ import { TableContainer, Table, TableHead, TableHeaderCell, TableRow, TableCell 
 import Pagination from "@/components/ui/Pagination";
 import { useToast } from "@/components/ui/Toast";
 
+type GeneralAttendee = {
+  id: string;
+  name: string;
+  role: string;
+  attended: boolean;
+  participationId: string | null;
+  teachingRole: string | null;
+};
+
 export default function ActivityDetailsPage({ params }: { params: { id: string } }) {
   const toast = useToast();
   const router = useRouter();
@@ -22,7 +31,7 @@ export default function ActivityDetailsPage({ params }: { params: { id: string }
   const [page, setPage] = useState(1);
   const pageSize = 10;
 
-  const [generals, setGenerals] = useState<any[]>([]);
+  const [generals, setGenerals] = useState<GeneralAttendee[]>([]);
   const [generalAttendance, setGeneralAttendance] = useState<{ [userId: string]: boolean }>({});
   const [generalSearch, setGeneralSearch] = useState("");
   const [generalPage, setGeneralPage] = useState(1);
@@ -56,7 +65,7 @@ export default function ActivityDetailsPage({ params }: { params: { id: string }
       .then((data) => {
         setGenerals(data);
         const att: { [userId: string]: boolean } = {};
-        data.forEach((g: any) => {
+        data.forEach((g: GeneralAttendee) => {
           att[g.id] = g.attended;
         });
         setGeneralAttendance(att);

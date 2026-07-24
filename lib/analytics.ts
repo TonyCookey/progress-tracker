@@ -182,7 +182,12 @@ export type AttendanceTrendPoint = {
   rate: number | null;
 };
 
-const activeTeenFilter = { deletedAt: null, status: { not: "LEFT" as const } };
+// "Active roster" for analytics denominators (attendance rate, demographics) is
+// strictly status ACTIVE — the same definition the monthly report uses for
+// membership (lib/reports/monthly.ts) and drop-off below, so the headline numbers
+// reconcile. This is deliberately narrower than the participation route's live
+// "who can be marked" list, which admits non-LEFT teens.
+const activeTeenFilter = { deletedAt: null, status: "ACTIVE" as const };
 
 export async function getAttendanceTrend({
   baseId,

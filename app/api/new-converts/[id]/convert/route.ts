@@ -31,6 +31,10 @@ export async function POST(req: Request, { params }: { params: { id: string } })
       const createdTeen = await tx.teen.create({
         data: {
           ...teenData,
+          // Match the normal teen-create default so a converted teen isn't left
+          // with a null dateJoined (which would drop them from the membership-
+          // growth trend, which filters on dateJoined).
+          dateJoined: teenData.dateJoined ?? new Date(),
           squadMemberships: {
             create: squadIds.map((id: string) => ({ group: { connect: { id } } })),
           },

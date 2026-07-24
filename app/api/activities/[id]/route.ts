@@ -4,6 +4,7 @@ import { requireSession, requireRole, assertBaseAccess, handleApiError } from "@
 import { createActivitySchema } from "@/lib/validation/activity";
 import { parseOrThrow } from "@/lib/validation/parse";
 import { notDeleted } from "@/lib/softDelete";
+import { assertGroupsInBase, assertGroupsExist } from "@/lib/validateBaseRefs";
 
 export async function GET(req: Request, { params }: { params: { id: string } }) {
   try {
@@ -48,6 +49,11 @@ export async function PUT(req: Request, { params }: { params: { id: string } }) 
     const groupIds: string[] = [];
     if (platoonId) groupIds.push(platoonId);
     if (Array.isArray(squadIds)) groupIds.push(...squadIds);
+
+    // A base-scoped activity may only attach its own base's groups; a cross-base
+    // activity may span groups from any base, so just check they exist.
+    if (baseId) await assertGroupsInBase(groupIds, baseId, "groupIds");
+    else await assertGroupsExist(groupIds, "groupIds");
 
     const updatedActivity = await prisma.activity.update({
       where: { id: params.id },
