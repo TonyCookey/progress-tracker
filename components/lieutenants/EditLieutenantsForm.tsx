@@ -26,6 +26,7 @@ type FormData = {
   guardianPhone: string;
   dateJoined: string;
   status: string;
+  rank: string;
 };
 
 type Base = {
@@ -60,6 +61,7 @@ export default function EditLieutenantForm({ lieutenant, onSuccess }: { lieutena
       guardianPhone: lieutenant.guardianPhone || "",
       dateJoined: lieutenant.dateJoined ? new Date(lieutenant.dateJoined).toISOString().slice(0, 10) : "",
       status: lieutenant.status || "ACTIVE",
+      rank: lieutenant.rank || "LIEUTENANT",
     },
   });
   const [loading, setLoading] = useState(false);
@@ -85,6 +87,7 @@ export default function EditLieutenantForm({ lieutenant, onSuccess }: { lieutena
     setValue("guardianPhone", lieutenant.guardianPhone || "");
     setValue("dateJoined", lieutenant.dateJoined ? new Date(lieutenant.dateJoined).toISOString().slice(0, 10) : "");
     setValue("status", lieutenant.status || "ACTIVE");
+    setValue("rank", lieutenant.rank || "LIEUTENANT");
     setPreviewUrl(lieutenant.imageUrl || "");
   }, [lieutenant]);
 
@@ -171,7 +174,7 @@ export default function EditLieutenantForm({ lieutenant, onSuccess }: { lieutena
       const res = await fetch(`/api/lieutenants/${lieutenant.id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...data, rank: "LIEUTENANT", householdId: data.householdId || null }),
+        body: JSON.stringify({ ...data, householdId: data.householdId || null }),
       });
       if (!res.ok) {
         const text = await res.text();
@@ -206,6 +209,11 @@ export default function EditLieutenantForm({ lieutenant, onSuccess }: { lieutena
         </UISelect>
 
         <Input label="Date of Birth" type="date" {...register("dateOfBirth", { required: true })} />
+
+        <UISelect label="Rank" {...register("rank")}>
+          <option value="LIEUTENANT">Lieutenant</option>
+          <option value="CAPTAIN">Captain</option>
+        </UISelect>
 
         <UISelect label="Base" {...register("baseId", { required: true })}>
           <option value="">Select a base</option>

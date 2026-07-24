@@ -22,7 +22,10 @@ function enumerateMonths(from: Date, to: Date) {
 function splitCashOnline(offerings: { amount: unknown; type: string | null }[]) {
   const cash = offerings.filter((o) => o.type === "Cash").reduce((sum, o) => sum + Number(o.amount), 0);
   const online = offerings.filter((o) => o.type === "Online").reduce((sum, o) => sum + Number(o.amount), 0);
-  return { cash, online, total: cash + online };
+  // total = every offering in the bucket regardless of type, so custom
+  // admin-added RefData types aren't silently dropped (sibling of S10-A1).
+  const total = offerings.reduce((sum, o) => sum + Number(o.amount), 0);
+  return { cash, online, total };
 }
 
 export type OfferingsTrendPoint = { month: string; cash: number; online: number; total: number };
@@ -130,7 +133,10 @@ export async function getAttendanceTrend({
   // Every teen who had an attended participation before this range, so "new" can be
   // told apart from "returning" without an N+1 query per activity.
   const priorAttended = await prisma.activityParticipation.findMany({
-    where: { attended: true, activity: { baseId: baseId ?? undefined, date: { lt: from } } },
+    where: {
+      attended: true,
+      activity: { baseId: baseId ?? undefined, type: activityType ?? undefined, date: { lt: from }, ...notDeleted(false) },
+    },
     select: { teenId: true },
   });
   const everAttendedBefore = new Set(priorAttended.map((p) => p.teenId));

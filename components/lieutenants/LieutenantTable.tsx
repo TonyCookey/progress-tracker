@@ -20,6 +20,7 @@ export default function LieutenantTable() {
   const [total, setTotal] = useState(0);
   const [search, setSearch] = useState("");
   const [baseId, setBaseId] = useState(user?.baseId);
+  const [rank, setRank] = useState("");
   const [bases, setBases] = useState([]);
 
   useEffect(() => {
@@ -33,8 +34,11 @@ export default function LieutenantTable() {
   }, [isSuperAdmin, user?.baseId]);
 
   const limit = 10;
-  const fetchData = async (page: number, search: string, baseId: any) => {
-    const res = await fetch(`/api/lieutenants?page=${page}&limit=${limit}&search=${search}&baseId=${baseId}`, { cache: "no-store" });
+  const fetchData = async (page: number, search: string, baseId: any, rank: string) => {
+    const res = await fetch(
+      `/api/lieutenants?page=${page}&limit=${limit}&search=${search}&baseId=${baseId}&rank=${rank}`,
+      { cache: "no-store" },
+    );
     const { data, total } = await res.json();
     setLieutenants(data);
     setTotal(total);
@@ -42,9 +46,9 @@ export default function LieutenantTable() {
 
   useEffect(() => {
     if (baseId) {
-      fetchData(page, search, baseId);
+      fetchData(page, search, baseId, rank);
     }
-  }, [page, search, baseId]);
+  }, [page, search, baseId, rank]);
   const handleView = (id: string) => {
     // Redirect to the lieutenant detail page
     router.push(`/dashboard/lieutenants/${id}`);
@@ -81,11 +85,23 @@ export default function LieutenantTable() {
             }}
             className="border border-neutral-300 px-3 py-2 rounded-lg w-full sm:w-64 text-sm text-neutral-900 placeholder:text-neutral-400 focus:outline-none focus:ring-2 focus:ring-accent-400 focus:border-accent-500 transition-colors"
           />
+          <select
+            className="border border-neutral-300 rounded-lg px-3 py-2 text-sm text-neutral-900 focus:outline-none focus:ring-2 focus:ring-accent-400 focus:border-accent-500 transition-colors bg-white"
+            value={rank}
+            onChange={(e) => {
+              setRank(e.target.value);
+              setPage(1);
+            }}
+          >
+            <option value="">All ranks</option>
+            <option value="LIEUTENANT">Lieutenant</option>
+            <option value="CAPTAIN">Captain</option>
+          </select>
           <button
             onClick={() => {
               setPage(1);
               setSearch("");
-              fetchData(1, search, baseId);
+              fetchData(1, search, baseId, rank);
             }}
             className="flex items-center px-4 py-2 bg-accent-50 text-accent-700 rounded-pill sm:mx-2 hover:bg-accent-100 w-full sm:w-auto justify-center transition-colors"
           >
@@ -103,6 +119,7 @@ export default function LieutenantTable() {
             <TableHead>
               <tr>
                 <TableHeaderCell>Name</TableHeaderCell>
+                <TableHeaderCell>Rank</TableHeaderCell>
                 <TableHeaderCell>Gender</TableHeaderCell>
                 <TableHeaderCell>Age</TableHeaderCell>
                 <TableHeaderCell>Base</TableHeaderCell>
@@ -119,6 +136,15 @@ export default function LieutenantTable() {
                       <Avatar name={lt.name ?? "L"} size="sm" />
                     )}
                     <span className="font-medium text-neutral-900">{lt.name}</span>
+                  </TableCell>
+                  <TableCell>
+                    <span
+                      className={`px-2 py-0.5 rounded-pill text-xs font-medium ${
+                        lt.rank === "CAPTAIN" ? "bg-accent-100 text-accent-700" : "bg-neutral-100 text-neutral-600"
+                      }`}
+                    >
+                      {lt.rank === "CAPTAIN" ? "Captain" : "Lieutenant"}
+                    </span>
                   </TableCell>
                   <TableCell>{lt.gender}</TableCell>
                   <TableCell>{calculateAge(lt.dateOfBirth)} yrs</TableCell>
@@ -144,6 +170,13 @@ export default function LieutenantTable() {
                   <Avatar name={lt.name ?? "L"} size="sm" />
                 )}
                 <span className="font-medium text-sm text-neutral-900">{lt.name}</span>
+                <span
+                  className={`px-2 py-0.5 rounded-pill text-xs font-medium ${
+                    lt.rank === "CAPTAIN" ? "bg-accent-100 text-accent-700" : "bg-neutral-100 text-neutral-600"
+                  }`}
+                >
+                  {lt.rank === "CAPTAIN" ? "Captain" : "Lieutenant"}
+                </span>
               </div>
               <div className="flex flex-wrap gap-4 text-sm text-neutral-600">
                 <div>

@@ -97,6 +97,13 @@ export async function PUT(req: Request, { params }: { params: { id: string } }) 
       }
     }
 
+    const duplicate = await prisma.user.findFirst({
+      where: { id: { not: params.id }, OR: [{ email: data.email }, { username: data.username }] },
+    });
+    if (duplicate) {
+      return NextResponse.json({ message: "Email or username already in use" }, { status: 400 });
+    }
+
     const updatedGeneral = await prisma.user.update({
       where: { id: params.id },
       data: {

@@ -1,18 +1,30 @@
 import { NextRequest, NextResponse } from "next/server";
 import { PutObjectCommand } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
+import { z } from "zod";
 import { r2 } from "@/lib/r2";
+import { prisma } from "@/lib/prisma";
 import { nanoid } from "nanoid";
-import { requireSession, handleApiError } from "@/lib/auth";
+import { requireSession, assertBaseAccess, handleApiError } from "@/lib/auth";
+import { parseOrThrow } from "@/lib/validation/parse";
+
+const uploadUrlSchema = z.object({
+  lieutenantId: z.string().min(1, "lieutenantId is required"),
+  fileType: z.enum(["image/jpeg", "image/png", "image/webp"], {
+    errorMap: () => ({ message: "Unsupported file type" }),
+  }),
+});
 
 export async function POST(req: NextRequest) {
   try {
-    await requireSession();
-    const { lieutenantId, fileType } = await req.json();
+    const session = await requireSession();
+    const { lieutenantId, fileType } = parseOrThrow(uploadUrlSchema, await req.json());
 
-    if (!lieutenantId) {
-      return NextResponse.json({ error: "Missing ID" }, { status: 400 });
+    const teen = await prisma.teen.findUnique({ where: { id: lieutenantId } });
+    if (!teen) {
+      return NextResponse.json({ error: "Teen not found" }, { status: 404 });
     }
+    assertBaseAccess(session, teen.baseId);
 
     const key = `lieutenant/${lieutenantId}/${nanoid()}.jpg`;
 

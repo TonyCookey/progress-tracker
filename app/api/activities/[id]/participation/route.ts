@@ -64,7 +64,7 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
     const activityId = params.id;
     const { teenId, attended, notes } = parseOrThrow(markParticipationSchema, await req.json());
 
-    const activity = await prisma.activity.findUnique({ where: { id: activityId } });
+    const activity = await prisma.activity.findUnique({ where: { id: activityId }, include: { groups: true } });
     if (!activity) {
       return NextResponse.json({ error: "Activity not found" }, { status: 404 });
     }
@@ -81,6 +81,24 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
     // an already-recorded entry for a teen who has since left/been removed.
     if (!existing && (!teen || teen.deletedAt || teen.status === "LEFT")) {
       throw new ApiError(400, "Teen is not active", { teenId: ["Teen is not active"] });
+    }
+
+    // Prevent marking a teen present at an activity outside its scope (e.g. a
+    // Bravo teen at an Alpha service). Cross-base activities admit any teen;
+    // group-scoped activities admit only teens in one of those groups.
+    if (!existing && teen && !activity.isCrossBase) {
+      const groupIds = activity.groups.map((g) => g.id);
+      let inScope: boolean;
+      if (groupIds.length > 0) {
+        inScope =
+          (!!teen.groupId && groupIds.includes(teen.groupId)) ||
+          (await prisma.groupMember.count({ where: { teenId, groupId: { in: groupIds } } })) > 0;
+      } else {
+        inScope = teen.baseId === activity.baseId;
+      }
+      if (!inScope) {
+        throw new ApiError(400, "Teen is not in this activity's scope", { teenId: ["Teen is not in this activity's scope"] });
+      }
     }
 
     let participation;

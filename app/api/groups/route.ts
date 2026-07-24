@@ -5,6 +5,7 @@ import { getGroups } from "@/lib/groups";
 import { requireSession, assertBaseAccess, handleApiError } from "@/lib/auth";
 import { createGroupSchema } from "@/lib/validation/group";
 import { parseOrThrow } from "@/lib/validation/parse";
+import { assertUsersInBase } from "@/lib/validateBaseRefs";
 
 export async function GET(req: Request) {
   try {
@@ -26,6 +27,9 @@ export async function POST(req: Request) {
     const session = await requireSession();
     const { name, description, baseId, type, leaderId, supportIds } = parseOrThrow(createGroupSchema, await req.json());
     assertBaseAccess(session, baseId);
+
+    await assertUsersInBase([leaderId], baseId, "leaderId");
+    await assertUsersInBase(supportIds ?? [], baseId, "supportIds");
 
     const group = await prisma.group.create({
       data: {

@@ -35,17 +35,32 @@ export async function POST(req: Request) {
       gender?: string;
     }>;
 
+    const existingTeens = await prisma.teen.findMany({
+      where: { baseId, deletedAt: null },
+      select: { name: true },
+    });
+    const existingNames = new Set(existingTeens.map((t) => t.name.trim().toLowerCase()));
+
     const teensToCreate = [] as Prisma.TeenCreateManyInput[];
-    let skipped = 0;
+    const skippedRows: string[] = [];
+    let invalidCount = 0;
 
     for (const row of rows) {
       if (!row.name || !row.gender) {
-        skipped++;
+        invalidCount++;
         continue;
       }
 
+      const name = row.name.trim();
+      const key = name.toLowerCase();
+      if (existingNames.has(key)) {
+        skippedRows.push(name);
+        continue;
+      }
+      existingNames.add(key);
+
       teensToCreate.push({
-        name: row.name.trim(),
+        name,
         gender: normalizeGender(row.gender),
         rank: "LIEUTENANT",
         baseId,
@@ -53,18 +68,18 @@ export async function POST(req: Request) {
     }
 
     if (teensToCreate.length === 0) {
-      return NextResponse.json({ message: "No valid rows to insert" }, { status: 200 });
+      return NextResponse.json({ message: "No valid rows to insert", skipped: skippedRows });
     }
 
     const result = await prisma.teen.createMany({
       data: teensToCreate,
-      skipDuplicates: true,
     });
 
     return NextResponse.json({
       message: "Bulk upload completed",
       inserted: result.count,
-      skipped,
+      invalid: invalidCount,
+      skipped: skippedRows,
     });
   } catch (error) {
     return handleApiError(error);

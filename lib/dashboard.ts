@@ -5,8 +5,10 @@ export async function getDashboardCards() {
 
   const [
     teensCount,
-    generalsCount,
-    leadersCount,
+    allUsersCount,
+    superadminCount,
+    generalRoleCount,
+    colonelCount,
     volunteersCount,
     activitiesCount,
     squadsCount,
@@ -17,8 +19,10 @@ export async function getDashboardCards() {
   ] = await Promise.all([
     prisma.teen.count({ where: { deletedAt: null } }),
 
-    prisma.user.count({ where: { role: "GENERAL", deletedAt: null } }),
     prisma.user.count({ where: { deletedAt: null } }),
+    prisma.user.count({ where: { role: "SUPERADMIN", deletedAt: null } }),
+    prisma.user.count({ where: { role: "GENERAL", deletedAt: null } }),
+    prisma.user.count({ where: { role: "COLONEL", deletedAt: null } }),
     prisma.user.count({ where: { role: "VOLUNTEER", deletedAt: null } }),
 
     prisma.activity.count({ where: { deletedAt: null } }),
@@ -39,9 +43,12 @@ export async function getDashboardCards() {
 
   return [
     { label: "Total Lieutenants", value: teensCount },
-    { label: "Total Generals", value: generalsCount },
-    { label: "Total Leaders", value: leadersCount },
-    { label: "Total Volunteers", value: volunteersCount },
+    // "Generals" (UI term) = all active Users, any role — see AGENT.md §2.
+    { label: "Total Generals", value: allUsersCount },
+    { label: "Role: Superadmin", value: superadminCount },
+    { label: "Role: General", value: generalRoleCount },
+    { label: "Role: Colonel", value: colonelCount },
+    { label: "Role: Volunteer", value: volunteersCount },
 
     { label: "Total Activities", value: activitiesCount },
 

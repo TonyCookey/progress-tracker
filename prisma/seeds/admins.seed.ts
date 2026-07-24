@@ -4,6 +4,10 @@ const bcrypt = require("bcrypt");
 const prisma = new PrismaClient();
 
 async function main() {
+  if (!process.env.ADMIN_PASSWORD) {
+    throw new Error("ADMIN_PASSWORD env var is required to seed admins");
+  }
+
   // --- Find Bases ---
 
   const alpha = await prisma.base.findFirst({ where: { name: "Alpha" } });
