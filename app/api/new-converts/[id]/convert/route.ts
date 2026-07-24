@@ -4,6 +4,7 @@ import { requireSession, assertBaseAccess, handleApiError, ApiError } from "@/li
 import { createTeenSchema } from "@/lib/validation/teen";
 import { parseOrThrow } from "@/lib/validation/parse";
 import { notDeleted } from "@/lib/softDelete";
+import { assertGroupsInBase } from "@/lib/validateBaseRefs";
 
 export async function POST(req: Request, { params }: { params: { id: string } }) {
   try {
@@ -20,6 +21,9 @@ export async function POST(req: Request, { params }: { params: { id: string } })
 
     assertBaseAccess(session, newConvert.isCrossBase ? null : newConvert.baseId);
     assertBaseAccess(session, data.baseId);
+
+    await assertGroupsInBase(data.groupId ? [data.groupId] : [], data.baseId, "groupId");
+    await assertGroupsInBase(data.squadIds ?? [], data.baseId, "squadIds");
 
     const { squadIds = [], ...teenData } = data;
 

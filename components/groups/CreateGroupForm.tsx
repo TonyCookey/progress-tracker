@@ -1,7 +1,7 @@
 "use client";
 
 import { useForm } from "react-hook-form";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Input from "@/components/ui/Input";
 import Select from "@/components/ui/Select";
 import Textarea from "@/components/ui/Textarea";
@@ -20,10 +20,22 @@ export default function CreateGroupForm({ bases, leaders, type, onClose }: { bas
   const {
     register,
     handleSubmit,
+    watch,
+    setValue,
     formState: { errors },
   } = useForm<FormValues>();
   const toast = useToast();
   const [loading, setLoading] = useState(false);
+
+  const selectedBaseId = watch("baseId");
+  // Only generals from the chosen base can lead/support it (enforced server-side too) —
+  // scope the dropdowns so a mismatched pick can't be made in the first place.
+  const baseLeaders = selectedBaseId ? leaders.filter((l) => l.baseId === selectedBaseId) : leaders;
+
+  useEffect(() => {
+    setValue("leaderId", "");
+    setValue("supportIds", []);
+  }, [selectedBaseId, setValue]);
 
   const onSubmit = async (data: FormValues) => {
     setLoading(true);
@@ -63,14 +75,14 @@ export default function CreateGroupForm({ bases, leaders, type, onClose }: { bas
         <option value="" disabled>
           Select General
         </option>
-        {leaders.map((user) => (
+        {baseLeaders.map((user) => (
           <option key={user.id} value={user.id}>
             {user.name}
           </option>
         ))}
       </Select>
       <Select label="Supporting Members" multiple {...register("supportIds")}>
-        {leaders.map((user) => (
+        {baseLeaders.map((user) => (
           <option key={user.id} value={user.id}>
             {user.name}
           </option>

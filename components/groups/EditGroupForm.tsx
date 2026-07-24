@@ -1,7 +1,7 @@
 "use client";
 
 import { useForm, Controller } from "react-hook-form";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Select from "react-select";
 import { useSyncSelectValue } from "@/lib/hooks/useSyncSelectValue";
 import Input from "@/components/ui/Input";
@@ -18,7 +18,7 @@ type FormData = {
   supportIds: string[];
 };
 
-type Option = { id: string; name: string };
+type Option = { id: string; name: string; baseId?: string };
 type SupportOption = { value: string; label: string };
 
 type Group = FormData & { id: string; type: "PLATOON" | "SQUAD" };
@@ -30,6 +30,7 @@ export default function EditGroupForm({ group, onSuccess }: { group: Group; onSu
     reset,
     control,
     setValue,
+    watch,
     formState: { errors },
   } = useForm<FormData>({
     defaultValues: {
@@ -65,6 +66,23 @@ export default function EditGroupForm({ group, onSuccess }: { group: Group; onSu
   useSyncSelectValue(bases, setValue, "baseId", group.baseId || "");
   useSyncSelectValue(generals, setValue, "leaderId", group.leaderId || "");
 
+  const selectedBaseId = watch("baseId");
+  // Only generals from the chosen base can lead/support it (enforced server-side too) —
+  // scope the dropdowns so a mismatched pick can't be made in the first place.
+  const baseGenerals = selectedBaseId ? generals.filter((g) => g.baseId === selectedBaseId) : generals;
+
+  // Skip the very first run so loading the form doesn't clear the group's existing
+  // leader/support selections — only reset them once the user actively changes base.
+  const skipNextBaseReset = useRef(true);
+  useEffect(() => {
+    if (skipNextBaseReset.current) {
+      skipNextBaseReset.current = false;
+      return;
+    }
+    setValue("leaderId", "");
+    setValue("supportIds", []);
+  }, [selectedBaseId, setValue]);
+
   const onSubmit = async (data: FormData) => {
     setLoading(true);
     try {
@@ -89,7 +107,7 @@ export default function EditGroupForm({ group, onSuccess }: { group: Group; onSu
     }
   };
 
-  const supportOptions: SupportOption[] = generals.map((g) => ({ value: g.id, label: g.name }));
+  const supportOptions: SupportOption[] = baseGenerals.map((g) => ({ value: g.id, label: g.name }));
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="mt-4">
@@ -111,7 +129,7 @@ export default function EditGroupForm({ group, onSuccess }: { group: Group; onSu
 
         <UiSelect label="Leader (General)" {...register("leaderId", { required: true })} error={errors.leaderId && "Leader is required"}>
           <option value="">Select a leader</option>
-          {generals.map((general) => (
+          {baseGenerals.map((general) => (
             <option key={general.id} value={general.id}>
               {general.name}
             </option>

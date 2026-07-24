@@ -71,7 +71,7 @@ export default function CreateActivityForm() {
       const res = await fetch("/api/activities", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...data, squadIds: data.squadIds?.map((s: Option) => s.id) }),
+        body: JSON.stringify(data),
       });
       if (!res.ok) {
         console.error("Failed to create activity", res.statusText);
