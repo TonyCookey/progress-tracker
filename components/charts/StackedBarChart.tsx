@@ -15,12 +15,14 @@ export default function StackedBarChart({
   series,
   formatValue,
   height = 280,
+  colorPalette = "default",
 }: {
   title: string;
   labels: string[];
   series: ChartSeries[];
   formatValue?: (n: number) => string;
   height?: number;
+  colorPalette?: "default" | "demographic";
 }) {
   const colors = useChartColors();
 
@@ -30,13 +32,13 @@ export default function StackedBarChart({
       datasets: series.map((s, i) => ({
         label: s.name,
         data: s.data,
-        backgroundColor: getSeriesColor(colors, i, series.length),
+        backgroundColor: getSeriesColor(colors, i, series.length, colorPalette),
         maxBarThickness: 24,
         categoryPercentage: 0.7,
         barPercentage: 0.9,
       })),
     }),
-    [labels, series, colors],
+    [labels, series, colors, colorPalette],
   );
 
   const options = useMemo(
@@ -56,7 +58,10 @@ export default function StackedBarChart({
 
   return (
     <div>
-      <ChartLegend series={series} colors={series.length === 2 ? colors.twoSeries : colors.series} />
+      <ChartLegend
+        series={series}
+        colors={series.length === 2 ? (colorPalette === "demographic" ? colors.demographicSeries : colors.twoSeries) : colors.series}
+      />
       <ChartFrame title={title} height={height}>
         <Bar data={data} options={options} aria-hidden="true" />
       </ChartFrame>

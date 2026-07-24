@@ -154,6 +154,7 @@ export default function ReportsAnalyticsOverview() {
               title="Gender split"
               labels={demographics.genderBreakdown.map((g) => g.gender)}
               data={demographics.genderBreakdown.map((g) => g.count)}
+              colorPalette="demographic"
             />
             <BarComparisonChart
               title="Age distribution"

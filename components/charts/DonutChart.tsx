@@ -14,12 +14,14 @@ export default function DonutChart({
   data,
   formatValue,
   height = 220,
+  colorPalette = "default",
 }: {
   title: string;
   labels: string[];
   data: number[];
   formatValue?: (n: number) => string;
   height?: number;
+  colorPalette?: "default" | "demographic";
 }) {
   const colors = useChartColors();
 
@@ -29,13 +31,16 @@ export default function DonutChart({
       datasets: [
         {
           data,
-          backgroundColor: labels.map((_, i) => colors.series[i % colors.series.length]),
+          backgroundColor: labels.map((_, i) => {
+            const paletteColors = colorPalette === "demographic" ? colors.demographicSeries : colors.series;
+            return paletteColors[i % paletteColors.length];
+          }),
           borderColor: colors.surface,
           borderWidth: 2,
         },
       ],
     }),
-    [labels, data, colors],
+    [labels, data, colors, colorPalette],
   );
 
   const options = useMemo(
@@ -69,7 +74,10 @@ export default function DonutChart({
 
   return (
     <div>
-      <ChartLegend series={labels.map((name) => ({ name }))} colors={colors.series} />
+      <ChartLegend
+        series={labels.map((name) => ({ name }))}
+        colors={colorPalette === "demographic" ? colors.demographicSeries : colors.series}
+      />
       <ChartFrame title={title} height={height}>
         <Doughnut data={chartData} options={options} aria-hidden="true" />
       </ChartFrame>

@@ -16,6 +16,7 @@ export default function BarComparisonChart({
   formatValue,
   height = 280,
   horizontal = false,
+  colorPalette = "default",
 }: {
   title: string;
   labels: string[];
@@ -23,6 +24,7 @@ export default function BarComparisonChart({
   formatValue?: (n: number) => string;
   height?: number;
   horizontal?: boolean;
+  colorPalette?: "default" | "demographic";
 }) {
   const colors = useChartColors();
 
@@ -32,7 +34,7 @@ export default function BarComparisonChart({
       datasets: series.map((s, i) => ({
         label: s.name,
         data: s.data,
-        backgroundColor: getSeriesColor(colors, i, series.length),
+        backgroundColor: getSeriesColor(colors, i, series.length, colorPalette),
         borderRadius: 4,
         borderSkipped: horizontal ? ("left" as const) : ("bottom" as const),
         maxBarThickness: 24,
@@ -40,7 +42,7 @@ export default function BarComparisonChart({
         barPercentage: 0.9,
       })),
     }),
-    [labels, series, colors, horizontal],
+    [labels, series, colors, horizontal, colorPalette],
   );
 
   const options = useMemo(
@@ -57,7 +59,10 @@ export default function BarComparisonChart({
 
   return (
     <div>
-      <ChartLegend series={series} colors={series.length === 2 ? colors.twoSeries : colors.series} />
+      <ChartLegend
+        series={series}
+        colors={series.length === 2 ? (colorPalette === "demographic" ? colors.demographicSeries : colors.twoSeries) : colors.series}
+      />
       <ChartFrame title={title} height={height}>
         <Bar data={data} options={options} aria-hidden="true" />
       </ChartFrame>

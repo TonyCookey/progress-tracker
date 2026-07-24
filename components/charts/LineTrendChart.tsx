@@ -19,12 +19,14 @@ export default function LineTrendChart({
   series,
   formatValue,
   height = 280,
+  colorPalette = "default",
 }: {
   title: string;
   labels: string[];
   series: ChartSeries[];
   formatValue?: (n: number) => string;
   height?: number;
+  colorPalette?: "default" | "demographic";
 }) {
   const colors = useChartColors();
   const hasRightAxis = series.some((s) => s.axis === "right");
@@ -33,7 +35,7 @@ export default function LineTrendChart({
     () => ({
       labels,
       datasets: series.map((s, i) => {
-        const seriesColor = getSeriesColor(colors, i, series.length);
+        const seriesColor = getSeriesColor(colors, i, series.length, colorPalette);
 
         return {
           label: s.name,
@@ -53,7 +55,7 @@ export default function LineTrendChart({
         };
       }),
     }),
-    [labels, series, colors],
+    [labels, series, colors, colorPalette],
   );
 
   const options = useMemo(() => {
@@ -99,7 +101,10 @@ export default function LineTrendChart({
 
   return (
     <div>
-      <ChartLegend series={series} colors={series.length === 2 ? colors.twoSeries : colors.series} />
+      <ChartLegend
+        series={series}
+        colors={series.length === 2 ? (colorPalette === "demographic" ? colors.demographicSeries : colors.twoSeries) : colors.series}
+      />
       <ChartFrame title={title} height={height}>
         <Line data={data} options={options} aria-hidden="true" />
       </ChartFrame>

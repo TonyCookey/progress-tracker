@@ -1,6 +1,5 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -27,6 +26,7 @@ export function registerChartJs() {
 export type ChartColors = {
   series: string[];
   twoSeries: string[];
+  demographicSeries: string[];
   grid: string;
   axisText: string;
   tooltipBg: string;
@@ -38,9 +38,22 @@ export type ChartColors = {
 // Fixed-order 8-hue categorical palette from the dataviz skill's reference palette.
 // Never reassign by index dynamically - series identity must map to a known label
 // (e.g. "Cash" is always slot 1), not array position from the API response.
-const LIGHT: ChartColors = {
+//
+// The app has no dark mode (every surface is hardcoded `bg-white`, no `dark:` classes,
+// no theme toggle) - there is only one palette. Do not reintroduce OS-driven color
+// switching here without adding real dark-mode support everywhere else first; it
+// previously caused charts to silently switch to a dark palette (including a
+// near-black border) while sitting on a white card.
+const COLORS: ChartColors = {
   series: ["#4a8f43", "#1baf7a", "#eda100", "#008300", "#4a3aa7", "#e34948", "#e87ba4", "#eb6834"],
-  twoSeries: ["#2563eb", "#ef4444"],
+  // Generic two-series comparisons (cash vs transfer, new vs returning, count vs rate) -
+  // never gender. Blue + amber: distinct from the green-heavy `series` palette above,
+  // distinct from the pink/blue `demographicSeries`, and carries no red "negative" or
+  // green "positive" connotation since these pairs are neutral comparisons.
+  twoSeries: ["#2563eb", "#d97706"],
+  // Gender split specifically - blue/pink is the expected convention, not a
+  // positive/negative signal.
+  demographicSeries: ["#2563eb", "#ec4899"],
   grid: "#e1e0d9",
   axisText: "#898781",
   tooltipBg: "#fcfcfb",
@@ -49,19 +62,11 @@ const LIGHT: ChartColors = {
   surface: "#fcfcfb",
 };
 
-const DARK: ChartColors = {
-  series: ["#6fae66", "#199e70", "#c98500", "#008300", "#9085e9", "#e66767", "#d55181", "#d95926"],
-  twoSeries: ["#60a5fa", "#f87171"],
-  grid: "#2c2c2a",
-  axisText: "#898781",
-  tooltipBg: "#1a1a19",
-  tooltipText: "#ffffff",
-  tooltipBorder: "rgba(255,255,255,0.10)",
-  surface: "#1a1a19",
-};
-
-export function getSeriesColor(colors: ChartColors, index: number, totalSeries: number) {
+export function getSeriesColor(colors: ChartColors, index: number, totalSeries: number, palette: "default" | "demographic" = "default") {
   if (totalSeries === 2) {
+    if (palette === "demographic") {
+      return colors.demographicSeries[index % colors.demographicSeries.length];
+    }
     return colors.twoSeries[index % colors.twoSeries.length];
   }
 
@@ -69,17 +74,7 @@ export function getSeriesColor(colors: ChartColors, index: number, totalSeries: 
 }
 
 export function useChartColors(): ChartColors {
-  const [isDark, setIsDark] = useState(false);
-
-  useEffect(() => {
-    const mq = window.matchMedia("(prefers-color-scheme: dark)");
-    setIsDark(mq.matches);
-    const listener = (e: MediaQueryListEvent) => setIsDark(e.matches);
-    mq.addEventListener("change", listener);
-    return () => mq.removeEventListener("change", listener);
-  }, []);
-
-  return isDark ? DARK : LIGHT;
+  return COLORS;
 }
 
 // A wash - never a saturated block - for area fills under a line.
