@@ -439,6 +439,19 @@ same `lib/` functions, so there's one source of truth for each query.
   keep whatever `type` they already had. The edit form for an Offering fetches with
   `includeInactive=true` so a since-deactivated type still shows (labeled "(inactive)") rather than
   silently reassigning the record to a different type on save.
+- **Teen image upload pipeline rewritten (S13)** — `CreateLieutenantsForm`'s `uploadTeenImage` called
+  itself with no base case (infinite recursion) and uploaded the uncompressed original; `EditLieutenantsForm`
+  never compressed at all; and `CreateImageField`'s 1MB size gate ran on the *raw* file, rejecting
+  ordinary phone photos before compression ever ran. There was also no HEIC handling, so iPhone photos
+  broke on Android/desktop. Fixed: `components/input/CreateImageField.tsx` now converts HEIC/HEIF →
+  JPEG (lazy `import("heic2any")`) and compresses via `lib/compressImage.ts` itself — right when a file
+  is picked, so the preview always shows a real decoded image — and hands the forms an
+  already-final `image/jpeg` File. `lib/uploadTeenImage.ts` is the **one** shared helper both forms
+  call (`uploadTeenImage(finalFile, lieutenantId)`) to presign (`upload-url`), `PUT` to R2, and save
+  the key (`save-image`) — it assumes the file is already prepared and does not re-compress. Both
+  forms' hand-rolled duplicates were deleted. If you touch the upload path again: keep conversion/
+  compression in `CreateImageField`/`prepareTeenImage`, not in the upload helper, and never let
+  `heic2any` become a top-level import (must stay dynamically imported).
 
 ---
 

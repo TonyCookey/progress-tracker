@@ -4,6 +4,7 @@ import { useForm, Controller } from "react-hook-form";
 import { useState, useEffect } from "react";
 import Select from "react-select";
 import CreateImageField from "../input/CreateImageField";
+import { uploadTeenImage } from "@/lib/uploadTeenImage";
 import { useSyncSelectValue } from "@/lib/hooks/useSyncSelectValue";
 import Input from "@/components/ui/Input";
 import UISelect, { selectStyles } from "@/components/ui/Select";
@@ -123,51 +124,6 @@ export default function EditLieutenantForm({ lieutenant, onSuccess }: { lieutena
   useSyncSelectValue(platoons, setValue, "platoonId", lieutenant.groupId || "");
   useSyncSelectValue(households, setValue, "householdId", lieutenant.householdId || "");
 
-  const uploadLieutenantImage = async (imageFile: File, lieutenantId: string) => {
-    try {
-      // 1. get signed upload URL
-      const res = await fetch("/api/lieutenants/upload-url", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ lieutenantId, fileType: imageFile.type }),
-      });
-
-      if (!res.ok) {
-        const text = await res.text();
-        throw new Error(`Failed to get upload URL: ${res.status} ${res.statusText} - ${text}`);
-      }
-
-      const { url, key } = await res.json();
-
-      // 2. upload directly to R2
-      const uploadRes = await fetch(url, {
-        method: "PUT",
-        body: imageFile,
-        headers: { "Content-Type": imageFile.type },
-      });
-
-      if (!uploadRes.ok) {
-        const text = await uploadRes.text();
-        throw new Error(`Failed to upload image to storage: ${uploadRes.status} ${uploadRes.statusText} - ${text}`);
-      }
-
-      // 3. save key in DB
-      const saveRes = await fetch("/api/lieutenants/save-image", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ lieutenantId, key }),
-      });
-
-      if (!saveRes.ok) {
-        const text = await saveRes.text();
-        throw new Error(`Failed to save image key: ${saveRes.status} ${saveRes.statusText} - ${text}`);
-      }
-    } catch (err) {
-      console.error("uploadLieutenantImage error:", err);
-      throw err;
-    }
-  };
-
   const onSubmit = async (data: FormData) => {
     setLoading(true);
     try {
@@ -183,7 +139,7 @@ export default function EditLieutenantForm({ lieutenant, onSuccess }: { lieutena
       }
 
       if (imageFile) {
-        await uploadLieutenantImage(imageFile, lieutenant.id);
+        await uploadTeenImage(imageFile, lieutenant.id);
       }
       reset();
       toast.success("Lieutenant updated successfully");
