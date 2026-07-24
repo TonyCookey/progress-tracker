@@ -2,7 +2,7 @@
 
 import { useMemo } from "react";
 import { Doughnut } from "react-chartjs-2";
-import { registerChartJs, useChartColors, commonTooltipOptions } from "./chartTheme";
+import { registerChartJs, useChartColors } from "./chartTheme";
 import ChartLegend from "./ChartLegend";
 import ChartFrame from "./ChartFrame";
 
@@ -44,7 +44,24 @@ export default function DonutChart({
       maintainAspectRatio: false,
       plugins: {
         legend: { display: false },
-        tooltip: commonTooltipOptions(colors, formatValue),
+        tooltip: {
+          enabled: true,
+          backgroundColor: colors.tooltipBg,
+          titleColor: colors.tooltipText,
+          bodyColor: colors.tooltipText,
+          borderColor: colors.tooltipBorder,
+          borderWidth: 1,
+          padding: 10,
+          callbacks: {
+            // A pie/doughnut has one dataset and many categories, so the meaningful
+            // label per slice is `ctx.label` (the category) - `ctx.dataset.label`
+            // (what the line/bar tooltips use) is never set here and would be blank.
+            label: (ctx: { label?: string; parsed: number }) => {
+              const format = formatValue ?? ((n: number) => n.toLocaleString());
+              return `${ctx.label ?? ""}: ${format(ctx.parsed)}`;
+            },
+          },
+        },
       },
     }),
     [colors, formatValue],

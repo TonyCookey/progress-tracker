@@ -407,15 +407,19 @@ export type TeenDemographics = {
   totalActive: number;
 };
 
-const AGE_BUCKETS = ["10-12", "13-15", "16-18", "unknown"] as const;
+// "unknown" is strictly for a missing DOB - a known age outside the expected
+// 10-18 teen range gets its own bucket (under-10 / 19+) rather than being folded
+// into "unknown", which would conflate a real age with missing data.
+const AGE_BUCKETS = ["under 10", "10-12", "13-15", "16-18", "19+", "unknown"] as const;
 
 function ageBucket(dateOfBirth: Date | null): (typeof AGE_BUCKETS)[number] {
   if (!dateOfBirth) return "unknown";
   const age = calculateAge(dateOfBirth);
+  if (age < 10) return "under 10";
   if (age <= 12) return "10-12";
   if (age <= 15) return "13-15";
   if (age <= 18) return "16-18";
-  return "unknown";
+  return "19+";
 }
 
 // Over active teens for the base - counts must sum to the active roster, and

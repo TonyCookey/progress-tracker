@@ -179,18 +179,19 @@ export default function ReportsAnalyticsOverview() {
               data={groups.attendanceByPlatoon.map((g) => g.attended)}
             />
           </div>
-          {groups.teachingRates.length > 0 && (
-            <div className="mt-6">
-              <h4 className="text-xs font-semibold uppercase tracking-wide text-neutral-500 mb-3">Teaching Rate by General</h4>
-              <BarComparisonChart
-                title="Teaching attendance rate by general"
-                labels={groups.teachingRates.map((g) => g.name)}
-                series={[{ name: "Teaching rate", data: groups.teachingRates.map((g) => g.rate) }]}
-                formatValue={(n) => `${n}%`}
-                horizontal
-              />
-            </div>
-          )}
+        </Card>
+      )}
+
+      {groups && groups.teachingRates.length > 0 && (
+        <Card>
+          <h3 className="text-xs font-semibold uppercase tracking-wide text-neutral-500 mb-3">Teaching Rate by General</h3>
+          <BarComparisonChart
+            title="Teaching attendance rate by general"
+            labels={groups.teachingRates.map((g) => g.name)}
+            series={[{ name: "Teaching rate", data: groups.teachingRates.map((g) => g.rate) }]}
+            formatValue={(n) => `${n}%`}
+            horizontal
+          />
         </Card>
       )}
 
