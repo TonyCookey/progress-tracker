@@ -77,7 +77,8 @@ app/
     bulk-upload/teens/        # CSV bulk upload of teens
     dashboard/                # Dashboard aggregate counts (HAS BUGS — see §9)
     generals/                 # User CRUD: GET/PUT/PATCH (activate/deactivate)/DELETE, [id]/change-password,
-                               # [id]/send-reset (admin-triggered password reset email, S7)
+                               # [id]/send-reset (admin-triggered password reset email, S7),
+                               # upload-url/save-image (self-or-SUPERADMIN photo upload, S14)
     groups/                   # Group CRUD (GET/POST only; [id] is GET-only)
     lieutenants/              # Teen CRUD + image upload (upload-url/save-image/get-image-url)
     offerings/                # Offering list/create (no edit/delete)
@@ -117,7 +118,8 @@ See `prisma/schema.prisma` for the source of truth. Key points:
   friendly 400, not a 500 (see `app/api/bases/route.ts` / `[id]/route.ts`).
 - **User** (General): `role` ∈ {SUPERADMIN, GENERAL, COLONEL, VOLUNTEER}, belongs to one Base,
   leads Groups (`leadingGroups`), supports Groups (`GroupSupport`), teaches at Activities
-  (`TeacherParticipation`), soft-delete via `deletedAt`.
+  (`TeacherParticipation`), optional `imageKey` (R2 object key, added S14, shares the image
+  pipeline with Teen — see S14 note below), soft-delete via `deletedAt`.
 - **Teen**: `rank` ∈ {LIEUTENANT, CAPTAIN}, `gender` (string "Male"/"Female"), belongs to one Base,
   one optional Platoon (`groupId` → Group), many Squads (`GroupMember`), attendance
   (`ActivityParticipation`), optional `imageKey` (R2 object key), soft-delete via `deletedAt`.
@@ -439,19 +441,31 @@ same `lib/` functions, so there's one source of truth for each query.
   keep whatever `type` they already had. The edit form for an Offering fetches with
   `includeInactive=true` so a since-deactivated type still shows (labeled "(inactive)") rather than
   silently reassigning the record to a different type on save.
-- **Teen image upload pipeline rewritten (S13)** — `CreateLieutenantsForm`'s `uploadTeenImage` called
+- **Teen image upload pipeline rewritten (S13)** — `CreateLieutenantsForm`'s upload helper called
   itself with no base case (infinite recursion) and uploaded the uncompressed original; `EditLieutenantsForm`
   never compressed at all; and `CreateImageField`'s 1MB size gate ran on the *raw* file, rejecting
   ordinary phone photos before compression ever ran. There was also no HEIC handling, so iPhone photos
-  broke on Android/desktop. Fixed: `components/input/CreateImageField.tsx` now converts HEIC/HEIF →
+  broke on Android/desktop. Fixed: `components/input/CreateImageField.tsx` converts HEIC/HEIF →
   JPEG (lazy `import("heic2any")`) and compresses via `lib/compressImage.ts` itself — right when a file
   is picked, so the preview always shows a real decoded image — and hands the forms an
-  already-final `image/jpeg` File. `lib/uploadTeenImage.ts` is the **one** shared helper both forms
-  call (`uploadTeenImage(finalFile, lieutenantId)`) to presign (`upload-url`), `PUT` to R2, and save
-  the key (`save-image`) — it assumes the file is already prepared and does not re-compress. Both
-  forms' hand-rolled duplicates were deleted. If you touch the upload path again: keep conversion/
-  compression in `CreateImageField`/`prepareTeenImage`, not in the upload helper, and never let
-  `heic2any` become a top-level import (must stay dynamically imported).
+  already-final `image/jpeg` File. Never let `heic2any` become a top-level import (must stay
+  dynamically imported).
+- **Image pipeline generalized to Generals (S14)** — the pipeline above was teen-only; widened to a
+  second subject rather than duplicated. `lib/uploadTeenImage.ts` → **`lib/uploadImage.ts`**:
+  `prepareTeenImage` → `prepareImage(file)` (unchanged logic — HEIC convert + compress), and
+  `uploadTeenImage(finalFile, lieutenantId)` → `uploadPersonImage(finalFile, subject, id)` where
+  `subject` is `"teen" | "general"`, mapping to the right `upload-url`/`save-image` routes internally.
+  It still assumes the file is already prepared and does not re-compress. `components/lieutenants/
+  AvatarImage.tsx` (`LieutenantAvatar`) → **`components/ui/PersonAvatar.tsx`**, used by both teen and
+  general call sites; it still calls the (subject-agnostic) `lieutenants/get-image-url` route to mint
+  a signed URL from any `imageKey` — that route was **not** duplicated or renamed. The General routes
+  (`app/api/generals/upload-url`, `.../save-image`) mirror the Teen ones in shape but **not**
+  authorization: they check **self-or-SUPERADMIN** (`session.user.role === "SUPERADMIN" ||
+  session.user.id === userId`), not `assertBaseAccess` — a General's own photo isn't base-scoped data,
+  and a same-base colleague must not be able to overwrite it. Keys are namespaced
+  `general/${userId}/${nanoid()}.jpg` (vs. `lieutenant/${teenId}/...`). If you add a third subject,
+  extend the `ROUTES` map in `lib/uploadImage.ts` rather than branching on subject type inside the
+  routes themselves.
 
 ---
 

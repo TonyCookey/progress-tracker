@@ -14,6 +14,7 @@ export const safeUserSelect = {
   role: true,
   baseId: true,
   base: true,
+  imageKey: true,
   createdAt: true,
   updatedAt: true,
   deletedAt: true,

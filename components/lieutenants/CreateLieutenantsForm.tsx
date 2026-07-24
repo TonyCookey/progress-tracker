@@ -4,7 +4,7 @@ import { useForm, Controller } from "react-hook-form";
 import { useState, useEffect } from "react";
 import Select from "react-select";
 import CreateImageField from "../input/CreateImageField";
-import { uploadTeenImage } from "@/lib/uploadTeenImage";
+import { uploadPersonImage } from "@/lib/uploadImage";
 import Input from "@/components/ui/Input";
 import UISelect, { selectStyles } from "@/components/ui/Select";
 import Button from "@/components/ui/Button";
@@ -93,7 +93,7 @@ export default function CreateLieutenantForm({ onSuccess }: { onSuccess: () => v
 
       // Only attempt to upload if we have an image and a lieutenant ID
       if (imageFile && lieutenant.id) {
-        await uploadTeenImage(imageFile, lieutenant.id);
+        await uploadPersonImage(imageFile, "teen", lieutenant.id);
       }
       reset();
       toast.success("Lieutenant created successfully");

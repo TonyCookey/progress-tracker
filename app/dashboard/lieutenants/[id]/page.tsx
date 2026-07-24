@@ -6,7 +6,7 @@ import Link from "next/link";
 import LoadingSpinner from "@/components/common/LoadingSpinner";
 import { calculateAge } from "@/lib/calculateAge";
 import { formatDate } from "@/lib/formatDate";
-import LieutenantAvatar from "@/components/lieutenants/AvatarImage";
+import PersonAvatar from "@/components/ui/PersonAvatar";
 import EditLieutenantModal from "@/components/lieutenants/EditLieutenantsModal";
 import LineTrendChart from "@/components/charts/LineTrendChart";
 import StatTile from "@/components/charts/StatTile";
@@ -130,7 +130,7 @@ export default function TeenDetailsPage() {
         {/* Profile Card */}
         <Card className={`flex-1 ${color.gradient} flex items-center gap-6`}>
           {teen.imageKey ? (
-            <LieutenantAvatar imageKey={teen.imageKey} alt={`${teen.name}'s profile`} size={80} />
+            <PersonAvatar imageKey={teen.imageKey} alt={`${teen.name}'s profile`} size={80} />
           ) : (
             <div className={`w-24 h-24 rounded-full ${color.avatar} flex items-center justify-center text-3xl font-bold text-white shadow`}>
               {teen.name?.[0] ?? "?"}
