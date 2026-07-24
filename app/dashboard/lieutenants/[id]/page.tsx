@@ -259,6 +259,16 @@ export default function TeenDetailsPage() {
         <h3 className={`text-lg font-semibold mb-4 ${color.header}`}>Attendance</h3>
         {teen.attendance.length ? (
           <>
+            <div className="flex items-center gap-1 mb-4">
+              <span className="text-xs text-neutral-500 mr-2">Recent:</span>
+              {teen.attendance.slice(-12).map((a) => (
+                <span
+                  key={a.activityId}
+                  title={`${a.activityName} — ${formatDateUTC(a.date, { month: "short", day: "numeric" })} — ${a.attended ? "Attended" : "Absent"}`}
+                  className={`inline-block w-2.5 h-2.5 rounded-full ${a.attended ? "bg-success-500" : "bg-neutral-300"}`}
+                />
+              ))}
+            </div>
             <LineTrendChart
               title="Attendance Rate Over Time"
               labels={teen.attendance.map((a) => formatDateUTC(a.date, { month: "short", day: "numeric" }))}

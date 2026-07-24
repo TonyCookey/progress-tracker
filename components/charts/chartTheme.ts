@@ -8,6 +8,7 @@ import {
   PointElement,
   LineElement,
   BarElement,
+  ArcElement,
   Tooltip,
   Legend,
   Filler,
@@ -19,7 +20,7 @@ let registered = false;
 // but centralizing avoids drift between chart components on which elements they need.
 export function registerChartJs() {
   if (registered) return;
-  ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, BarElement, Tooltip, Legend, Filler);
+  ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, BarElement, ArcElement, Tooltip, Legend, Filler);
   registered = true;
 }
 

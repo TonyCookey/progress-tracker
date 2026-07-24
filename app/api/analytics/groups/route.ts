@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { requireSession, assertBaseAccess, handleApiError } from "@/lib/auth";
-import { getGroupBreakdown } from "@/lib/analytics";
+import { getGroupBreakdown, getTeachingRateComparison } from "@/lib/analytics";
 import { groupsQuerySchema } from "@/lib/validation/analytics";
 import { parseOrThrow } from "@/lib/validation/parse";
 
@@ -23,8 +23,11 @@ export async function GET(req: Request) {
     if (baseId) assertBaseAccess(session, baseId);
 
     const { from, to } = resolveGroupsRange(query);
-    const result = await getGroupBreakdown({ baseId, from, to });
-    return NextResponse.json(result);
+    const [result, teachingRates] = await Promise.all([
+      getGroupBreakdown({ baseId, from, to }),
+      getTeachingRateComparison({ baseId, from, to }),
+    ]);
+    return NextResponse.json({ ...result, teachingRates });
   } catch (error) {
     return handleApiError(error);
   }

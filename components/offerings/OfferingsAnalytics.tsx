@@ -6,6 +6,7 @@ import AnalyticsFilterBar, { AnalyticsFilterValue, BaseOption } from "@/componen
 import LineTrendChart from "@/components/charts/LineTrendChart";
 import StackedBarChart from "@/components/charts/StackedBarChart";
 import BarComparisonChart from "@/components/charts/BarComparisonChart";
+import DonutChart from "@/components/charts/DonutChart";
 import StatTile from "@/components/charts/StatTile";
 import { formatMonthLabel } from "@/lib/formatDate";
 import { formatMoney } from "@/lib/formatMoney";
@@ -14,6 +15,8 @@ import Card from "@/components/ui/Card";
 type TrendPoint = { month: string; cash: number; online: number; total: number };
 type ByBasePoint = { baseId: string; baseName: string; month: string; cash: number; online: number; total: number };
 type ByServicePoint = { service: string; cash: number; online: number; total: number };
+type ByTypePoint = { type: string; total: number };
+type PerAttendeePoint = { month: string; total: number; sundayAttendance: number; perAttendee: number | null };
 
 function defaultFilter(baseId: string): AnalyticsFilterValue {
   const now = new Date();
@@ -34,6 +37,8 @@ export default function OfferingsAnalytics() {
   const [trend, setTrend] = useState<TrendPoint[]>([]);
   const [byBase, setByBase] = useState<ByBasePoint[]>([]);
   const [byService, setByService] = useState<ByServicePoint[]>([]);
+  const [byType, setByType] = useState<ByTypePoint[]>([]);
+  const [perAttendee, setPerAttendee] = useState<PerAttendeePoint[]>([]);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
@@ -55,16 +60,24 @@ export default function OfferingsAnalytics() {
 
     const serviceParams = new URLSearchParams(params);
     serviceParams.set("by", "service");
+    const typeParams = new URLSearchParams(params);
+    typeParams.set("by", "type");
+    const perAttendeeParams = new URLSearchParams(params);
+    perAttendeeParams.set("by", "perAttendee");
 
     setLoading(true);
     Promise.all([
       fetch(`/api/analytics/offerings?${params}`).then((r) => r.json()),
       fetch(`/api/analytics/offerings?${serviceParams}`).then((r) => r.json()),
+      fetch(`/api/analytics/offerings?${typeParams}`).then((r) => r.json()),
+      fetch(`/api/analytics/offerings?${perAttendeeParams}`).then((r) => r.json()),
     ])
-      .then(([monthly, service]) => {
+      .then(([monthly, service, type, perAttendeeRes]) => {
         setTrend(monthly.trend ?? []);
         setByBase(monthly.byBase ?? []);
         setByService(service.byService ?? []);
+        setByType(type.byType ?? []);
+        setPerAttendee(perAttendeeRes.perAttendee ?? []);
       })
       .finally(() => setLoading(false));
   }, [isSuperAdmin, filter.baseId, filter.from, filter.to]);
@@ -82,6 +95,8 @@ export default function OfferingsAnalytics() {
   const baseNames = Array.from(new Set(byBase.map((p) => p.baseName))).sort();
   const baseMonths = Array.from(new Set(byBase.map((p) => p.month))).sort();
 
+  const latestPerAttendee = perAttendee.length ? perAttendee[perAttendee.length - 1] : null;
+
   return (
     <div className="space-y-6">
       <AnalyticsFilterBar bases={bases} isSuperAdmin={isSuperAdmin} value={filter} onChange={setFilter} />
@@ -97,6 +112,15 @@ export default function OfferingsAnalytics() {
           />
           <StatTile label="This month's total" value={formatMoney(trend[trend.length - 1]?.total ?? 0)} />
           <StatTile label="Last month's total" value={formatMoney(trend[trend.length - 2]?.total ?? 0)} />
+        </div>
+      )}
+
+      {latestPerAttendee && (
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <StatTile
+            label={`Offering per attendee (${formatMonthLabel(latestPerAttendee.month)})`}
+            value={latestPerAttendee.perAttendee !== null ? formatMoney(latestPerAttendee.perAttendee) : "N/A"}
+          />
         </div>
       )}
 
@@ -135,6 +159,26 @@ export default function OfferingsAnalytics() {
             series={[{ name: "Total", data: byService.map((p) => p.total) }]}
             formatValue={formatMoney}
             horizontal
+          />
+        </Card>
+
+        <Card>
+          <h3 className="text-xs font-semibold uppercase tracking-wide text-neutral-500 mb-3">By Type</h3>
+          <DonutChart
+            title="Offerings total by type"
+            labels={byType.map((p) => p.type)}
+            data={byType.map((p) => p.total)}
+            formatValue={formatMoney}
+          />
+        </Card>
+
+        <Card>
+          <h3 className="text-xs font-semibold uppercase tracking-wide text-neutral-500 mb-3">Offering per Attendee</h3>
+          <LineTrendChart
+            title="Offering per Sunday attendee, by month"
+            labels={perAttendee.map((p) => formatMonthLabel(p.month))}
+            series={[{ name: "Per attendee", data: perAttendee.map((p) => p.perAttendee) }]}
+            formatValue={formatMoney}
           />
         </Card>
 

@@ -6,6 +6,13 @@ export const markParticipationSchema = z.object({
   notes: z.string().optional().nullable(),
 });
 
+export const markTeacherParticipationSchema = z.object({
+  userId: z.string().min(1, "userId is required"),
+  attended: z.boolean(),
+  role: z.string().optional().nullable(),
+  notes: z.string().optional().nullable(),
+});
+
 export const createActivitySchema = z.object({
   name: z.string().min(1, "Name is required"),
   description: z.string().optional().nullable(),
