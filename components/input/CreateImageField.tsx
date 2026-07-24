@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { prepareTeenImage } from "@/lib/uploadTeenImage";
+import { prepareImage } from "@/lib/uploadImage";
 
 type Props = {
   onFileChange: (file: File | null) => void;
@@ -49,7 +49,7 @@ export default function CreateImageField({ onFileChange }: Props) {
     setError(null);
     setProcessing(true);
     try {
-      const finalFile = await prepareTeenImage(file);
+      const finalFile = await prepareImage(file);
       if (requestId !== requestIdRef.current) return; // a newer selection already superseded this one
 
       const objectUrl = URL.createObjectURL(finalFile);

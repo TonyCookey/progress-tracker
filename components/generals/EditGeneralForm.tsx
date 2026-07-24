@@ -3,6 +3,9 @@
 import { useForm } from "react-hook-form";
 import { useState, useEffect } from "react";
 import { useSyncSelectValue } from "@/lib/hooks/useSyncSelectValue";
+import { uploadPersonImage } from "@/lib/uploadImage";
+import CreateImageField from "@/components/input/CreateImageField";
+import PersonAvatar from "@/components/ui/PersonAvatar";
 import Input from "@/components/ui/Input";
 import Select from "@/components/ui/Select";
 import Button from "@/components/ui/Button";
@@ -21,7 +24,7 @@ type FormData = {
 
 type Base = { id: string; name: string };
 
-type General = FormData & { id: string };
+type General = FormData & { id: string; imageKey?: string | null };
 
 export default function EditGeneralForm({ general, onSuccess }: { general: General; onSuccess: () => void }) {
   const toast = useToast();
@@ -39,6 +42,8 @@ export default function EditGeneralForm({ general, onSuccess }: { general: Gener
   });
   const [loading, setLoading] = useState(false);
   const [bases, setBases] = useState<Base[]>([]);
+  const [imageKey, setImageKey] = useState<string | null>(general.imageKey ?? null);
+  const [imageFile, setImageFile] = useState<File | null>(null);
 
   useEffect(() => {
     setValue("name", general.name || "");
@@ -49,6 +54,7 @@ export default function EditGeneralForm({ general, onSuccess }: { general: Gener
     setValue("anniversaryDate", general.anniversaryDate ? new Date(general.anniversaryDate).toISOString().slice(0, 10) : "");
     setValue("baseId", general.baseId || "");
     setValue("role", general.role || "GENERAL");
+    setImageKey(general.imageKey ?? null);
   }, [general, setValue]);
 
   useEffect(() => {
@@ -75,6 +81,10 @@ export default function EditGeneralForm({ general, onSuccess }: { general: Gener
         toast.error(`Failed to update general: ${res.status} ${res.statusText} - ${text}`);
         return;
       }
+
+      if (imageFile) {
+        await uploadPersonImage(imageFile, "general", general.id);
+      }
       reset();
       toast.success("General updated successfully");
       onSuccess();
@@ -88,6 +98,11 @@ export default function EditGeneralForm({ general, onSuccess }: { general: Gener
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="mt-4">
+      <div className="flex flex-col items-center gap-2 mb-6">
+        <PersonAvatar imageKey={imageKey} alt={`${general.name}'s profile`} size={96} />
+        <CreateImageField onFileChange={setImageFile} />
+      </div>
+
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <Input label="Full Name" {...register("name", { required: true })} />
 
