@@ -417,6 +417,11 @@ export type TeenDemographics = {
 // into "unknown", which would conflate a real age with missing data.
 const AGE_BUCKETS = ["under 10", "10-12", "13-15", "16-18", "19+", "unknown"] as const;
 
+// Fixed order so the demographic donut maps gender → colour by known label, not by
+// data arrival order (chartTheme's rule): Male is always slot 0 (blue), Female slot 1
+// (pink). normalizeGender only ever yields these two values.
+const GENDER_ORDER = ["Male", "Female"] as const;
+
 function ageBucket(dateOfBirth: Date | null): (typeof AGE_BUCKETS)[number] {
   if (!dateOfBirth) return "unknown";
   const age = calculateAge(dateOfBirth);
@@ -445,7 +450,7 @@ export async function getTeenDemographics({ baseId }: { baseId?: string | null }
   }
 
   return {
-    genderBreakdown: Array.from(byGender.entries()).map(([gender, count]) => ({ gender, count })),
+    genderBreakdown: GENDER_ORDER.filter((g) => byGender.has(g)).map((gender) => ({ gender, count: byGender.get(gender) ?? 0 })),
     ageBreakdown: AGE_BUCKETS.filter((b) => byAge.has(b)).map((bucket) => ({ bucket, count: byAge.get(bucket) ?? 0 })),
     totalActive: teens.length,
   };
