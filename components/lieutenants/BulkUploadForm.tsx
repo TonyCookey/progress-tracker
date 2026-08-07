@@ -1,10 +1,14 @@
 "use client";
 
 import { useState } from "react";
+import Card from "@/components/ui/Card";
+import Input from "@/components/ui/Input";
+import Button from "@/components/ui/Button";
 
 type UploadResult = {
-  inserted: number;
-  skipped: number;
+  inserted?: number;
+  invalid?: number;
+  skipped: string[];
   message: string;
 };
 
@@ -52,41 +56,39 @@ export default function BulkTeenUploadForm() {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4 bg-white p-4 border rounded">
-      {/* Base selection (simple for now) */}
-      <div>
-        <label className="block text-sm font-medium">Base</label>
+    <Card padded>
+      <form onSubmit={handleSubmit} className="space-y-4">
+        {/* Base selection (simple for now) */}
+        <Input label="Base" type="text" placeholder="Enter baseId" value={baseId} onChange={(e) => setBaseId(e.target.value)} />
 
-        <input
-          type="text"
-          placeholder="Enter baseId"
-          value={baseId}
-          onChange={(e) => setBaseId(e.target.value)}
-          className="w-full border px-3 py-2 rounded text-sm"
-        />
-      </div>
-
-      {/* CSV file */}
-      <div>
-        <label className="block text-sm font-medium">CSV File</label>
-        <input type="file" accept=".csv" onChange={(e) => setFile(e.target.files?.[0] || null)} className="w-full text-sm" />
-      </div>
-
-      {/* Error */}
-      {error && <p className="text-sm text-red-600">{error}</p>}
-
-      {/* Success */}
-      {result && (
-        <div className="text-sm text-green-700 bg-green-50 p-3 rounded">
-          <p>{result.message}</p>
-          <p>Inserted: {result.inserted}</p>
-          <p>Skipped: {result.skipped}</p>
+        {/* CSV file */}
+        <div>
+          <label className="block text-sm font-medium text-neutral-700 mb-1">CSV File</label>
+          <input
+            type="file"
+            accept=".csv"
+            onChange={(e) => setFile(e.target.files?.[0] || null)}
+            className="w-full text-sm text-neutral-700 file:mr-3 file:py-2 file:px-4 file:rounded-pill file:border-0 file:bg-accent-50 file:text-accent-700 file:font-medium hover:file:bg-accent-100"
+          />
         </div>
-      )}
 
-      <button type="submit" disabled={loading} className="w-full bg-cyan-600 text-white py-2 rounded hover:bg-cyan-700 disabled:opacity-50">
-        {loading ? "Uploading..." : "Upload CSV"}
-      </button>
-    </form>
+        {/* Error */}
+        {error && <p className="text-sm text-danger-500">{error}</p>}
+
+        {/* Success */}
+        {result && (
+          <div className="text-sm text-success-700 bg-success-50 p-3 rounded-lg">
+            <p>{result.message}</p>
+            {typeof result.inserted === "number" && <p>Inserted: {result.inserted}</p>}
+            <p>Skipped as duplicates: {result.skipped.length}</p>
+            {result.skipped.length > 0 && <p className="text-xs text-success-600 mt-1">{result.skipped.join(", ")}</p>}
+          </div>
+        )}
+
+        <Button type="submit" disabled={loading} className="w-full">
+          {loading ? "Uploading..." : "Upload CSV"}
+        </Button>
+      </form>
+    </Card>
   );
 }

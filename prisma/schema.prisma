@@ -24,14 +24,24 @@ enum GroupType {
   SQUAD
 }
 
+enum TeenStatus {
+  ACTIVE
+  INACTIVE
+  LEFT
+}
+
 model Base {
-  id         String     @id @default(cuid())
-  name       String
-  users      User[]
-  teens      Teen[]
-  groups     Group[]
-  activities Activity[]
-  offerings  Offering[]
+  id             String          @id @default(cuid())
+  name           String          @unique
+  label          String?
+  users          User[]
+  teens          Teen[]
+  groups         Group[]
+  activities     Activity[]
+  offerings      Offering[]
+  newConverts    NewConvert[]
+  monthlyReports MonthlyReport[]
+  households     Household[]
 }
 
 model User {
@@ -41,14 +51,19 @@ model User {
   email                String                 @unique
   password             String
   dateOfBirth          DateTime?
+  anniversaryDate      DateTime?
+  gender               String?
   role                 UserRole
   baseId               String
   base                 Base                   @relation(fields: [baseId], references: [id])
   leadingGroups        Group[]                @relation("GroupLeader")
   supportingGroups     GroupSupport[]
   teacherParticipation TeacherParticipation[]
+  passwordResetTokens  PasswordResetToken[]
   createdAt            DateTime               @default(now())
   updatedAt            DateTime               @updatedAt
+  deletedAt            DateTime?
+  imageKey             String?
 }
 
 model Teen {
@@ -66,15 +81,26 @@ model Teen {
   updatedAt             DateTime                @updatedAt
   groupId               String?
   imageKey              String?
+  deletedAt             DateTime?
+  phone                 String?
+  address               String?
+  school                String?
+  guardianName          String?
+  guardianPhone         String?
+  dateJoined            DateTime?
+  status                TeenStatus              @default(ACTIVE)
+  householdId           String?
+  household             Household?              @relation(fields: [householdId], references: [id])
 
   @@index([baseId])
   @@index([groupId])
+  @@index([householdId])
 }
 
 model Group {
   id          String         @id @default(cuid())
   name        String
-  description String                  @default("")
+  description String         @default("")
   type        GroupType
   baseId      String
   base        Base           @relation(fields: [baseId], references: [id])
@@ -86,6 +112,7 @@ model Group {
   activities  Activity[]
   createdAt   DateTime       @default(now())
   updatedAt   DateTime       @updatedAt
+  deletedAt   DateTime?
 }
 
 model GroupMember {
@@ -127,6 +154,7 @@ model Activity {
   teacherParticipation TeacherParticipation[]
   createdAt            DateTime                @default(now())
   updatedAt            DateTime                @updatedAt
+  deletedAt            DateTime?
 
   @@index([baseId])
   @@index([date])
@@ -143,7 +171,7 @@ model ActivityParticipation {
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
 
-  @@unique([activityId, teenId])  // prevent duplicate attendance records
+  @@unique([activityId, teenId]) // prevent duplicate attendance records
   @@index([activityId])
   @@index([teenId])
 }
@@ -167,18 +195,131 @@ model TeacherParticipation {
 
 model Offering {
   id          String    @id @default(cuid())
-  amount      Decimal   @db.Decimal(12,2) @default("0") // use Decimal for money (or keep Int cents)
+  amount      Decimal   @default("0") @db.Decimal(12, 2) // use Decimal for money (or keep Int cents)
   isCrossBase Boolean   @default(false)
   baseId      String?
   base        Base?     @relation(fields: [baseId], references: [id])
   date        DateTime
   service     String
-  notes       String?   
+  notes       String?
   type        String?
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
+  deletedAt   DateTime?
 
   @@index([date])
   @@index([baseId])
 }
 
+model NewConvert {
+  id          String    @id @default(cuid())
+  name        String
+  gender      String?
+  phone       String?
+  dateOfBirth DateTime?
+  baseId      String?
+  base        Base?     @relation(fields: [baseId], references: [id])
+  isCrossBase Boolean   @default(false)
+  date        DateTime
+  activityId  String?
+  invitedBy   String?
+  followedUp  Boolean   @default(false)
+  becameTeen  Boolean   @default(false)
+  teenId      String?
+  notes       String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  deletedAt   DateTime?
+
+  @@index([baseId])
+  @@index([date])
+}
+
+model Household {
+  id                  String    @id @default(cuid())
+  name                String
+  address             String?
+  primaryContactName  String?
+  primaryContactPhone String?
+  baseId              String?
+  base                Base?     @relation(fields: [baseId], references: [id])
+  teens               Teen[]
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+  deletedAt           DateTime?
+
+  @@index([baseId])
+}
+
+enum ReportStatus {
+  DRAFT
+  FINAL
+}
+
+model MonthlyReport {
+  id          String       @id @default(cuid())
+  baseId      String
+  base        Base         @relation(fields: [baseId], references: [id])
+  month       Int
+  year        Int
+  generatedBy String
+  generatedAt DateTime     @default(now())
+  status      ReportStatus @default(DRAFT)
+  dataJson    Json?
+  fileKey     String?
+
+  openingBalance Decimal? @db.Decimal(12, 2)
+  income         Decimal? @db.Decimal(12, 2)
+  expenseItems   Json?
+
+  theme               String?
+  executiveSummary    String?
+  issues              String?
+  alternativeChurches String?
+  sundayTeaching      String?
+  description         String?
+  victories           Json?
+  challenges          Json?
+  plans               Json?
+  updateOnTeens       String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([baseId, month, year])
+  @@index([baseId])
+}
+
+model RefData {
+  id        String   @id @default(cuid())
+  category  String // "activity_type" | "offering_type"
+  key       String
+  label     String
+  sortOrder Int      @default(0)
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([category, key])
+  @@index([category])
+}
+
+model PasswordResetToken {
+  id        String    @id @default(cuid())
+  userId    String
+  user      User      @relation(fields: [userId], references: [id])
+  tokenHash String    @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  @@index([userId])
+}
+
+model ReportTemplateConfig {
+  id           String   @id @default(cuid())
+  key          String   @unique @default("default")
+  sectionsJson Json
+  updatedAt    DateTime @updatedAt
+  createdAt    DateTime @default(now())
+}

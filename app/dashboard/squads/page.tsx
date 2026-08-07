@@ -1,47 +1,51 @@
 import RequireAuth from "@/components/auth/RequireAuth";
 import CreateGroupModal from "@/components/groups/CreateGroupModal";
 import Link from "next/link";
+import { getGroups } from "@/lib/groups";
+import { getBases } from "@/lib/bases";
+import { getUsers } from "@/lib/users";
+import PageHeader from "@/components/ui/PageHeader";
+import Card from "@/components/ui/Card";
+import Avatar from "@/components/ui/Avatar";
+import Badge from "@/components/ui/Badge";
+import EmptyState from "@/components/ui/EmptyState";
+
+export const dynamic = "force-dynamic";
 
 export default async function SquadsPage() {
-  const [squadsRes, basesRes, leadersRes] = await Promise.all([
-    fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/api/groups?type=SQUAD`, { cache: "no-store" }),
-    fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/api/bases`, { cache: "no-store" }),
-    fetch(`${process.env.NEXT_PUBLIC_BASE_URL}/api/users`, { cache: "no-store" }),
-  ]);
-  if (!squadsRes.ok || !basesRes.ok || !leadersRes.ok) {
-    throw new Error("Failed to fetch data");
-  }
-  const squads = await squadsRes.json();
-  const bases = await basesRes.json();
-  const leaders = await leadersRes.json();
+  const [squads, bases, leaders] = await Promise.all([getGroups("SQUAD"), getBases(), getUsers()]);
 
   return (
     <RequireAuth>
-      <div className="p-6">
-        <div className="flex justify-between items-center mb-4">
-          <h1 className="text-2xl font-semibold">Squads</h1>
-          <CreateGroupModal bases={bases} leaders={leaders} type="SQUAD" />
-        </div>
+      <div className="p-4 md:p-6">
+        <PageHeader title="Squads" actions={<CreateGroupModal bases={bases} leaders={leaders} type="SQUAD" />} />
 
-        <ul className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {squads.map((squad: any) => (
-            <Link href={`/dashboard/squads/${squad.id}`} key={squad.id} className="block transition-transform hover:scale-[1.02] hover:shadow-lg">
-              <li className="border rounded-xl p-6 shadow-sm bg-white flex flex-col gap-2">
-                <div className="flex items-center gap-3 mb-2">
-                  {/* Avatar or icon */}
-                  <div className="w-10 h-10 rounded-full bg-cyan-100 flex items-center justify-center text-600 font-bold text-lg">
-                    {squad.name?.charAt(0) ?? "S"}
-                  </div>
-                  <h2 className="text-lg font-bold">{squad.name}</h2>
-                </div>
-                <div className="flex items-center gap-2">
-                  <span className="inline-block bg-green-100 text-green-800 text-xs px-2 py-1 rounded">{squad.leader?.name ?? ""}</span>
-                  <span className="inline-block bg-gray-100 text-gray-800 text-xs px-2 py-1 rounded">{squad.base?.name ?? ""} Base</span>
-                </div>
+        {squads.length ? (
+          <ul className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {squads.map((squad: any) => (
+              <li key={squad.id}>
+                <Link href={`/dashboard/squads/${squad.id}`} className="block transition-transform hover:scale-[1.02]">
+                  <Card className="flex flex-col gap-2 hover:shadow-softHover transition-shadow">
+                    <div className="flex items-center gap-3 mb-2">
+                      <Avatar name={squad.name ?? "S"} size="md" />
+                      <h2 className="text-base font-bold text-neutral-900">{squad.name}</h2>
+                    </div>
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <Badge tone="success" size="sm">
+                        {squad.leader?.name ?? ""}
+                      </Badge>
+                      <Badge tone="neutral" size="sm">
+                        {squad.base?.name ?? ""} Base
+                      </Badge>
+                    </div>
+                  </Card>
+                </Link>
               </li>
-            </Link>
-          ))}
-        </ul>
+            ))}
+          </ul>
+        ) : (
+          <EmptyState title="No squads yet" description="Create a squad to get started." />
+        )}
       </div>
     </RequireAuth>
   );

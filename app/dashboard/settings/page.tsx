@@ -1,9 +1,14 @@
+import RequireRole from "@/components/auth/RequireRole";
+import SettingsTabs from "@/components/settings/SettingsTabs";
+import PageHeader from "@/components/ui/PageHeader";
+
 export default function SettingsPage() {
-    return (
-      <div className="p-6">
-        <h1 className="text-2xl font-semibold">Settings</h1>
-        {/* Optional: Base info, preferences, roles */}
+  return (
+    <RequireRole roles={["SUPERADMIN"]}>
+      <div className="p-4 md:p-6">
+        <PageHeader title="Settings" />
+        <SettingsTabs />
       </div>
-    )
-  }
-  
+    </RequireRole>
+  );
+}

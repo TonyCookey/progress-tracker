@@ -1,26 +1,26 @@
 import { NextResponse } from "next/server";
-import { PrismaClient } from "@prisma/client";
 import bcrypt from "bcrypt";
-
-const prisma = new PrismaClient();
+import { prisma } from "@/lib/prisma";
+import { requireRole, handleApiError } from "@/lib/auth";
+import { registerSchema } from "@/lib/validation/register";
+import { parseOrThrow } from "@/lib/validation/parse";
+import { safeUserSelect } from "@/lib/users";
 
 export async function POST(req: Request) {
   try {
-    const body = await req.json();
-    const { name, username, email, password, dateOfBirth, role, baseName } = body;
+    await requireRole(["SUPERADMIN"]);
 
-    // Look up base by name
+    const body = parseOrThrow(registerSchema, await req.json());
+    const { name, username, email, password, dateOfBirth, anniversaryDate, gender, role, baseName } = body;
+
     const base = await prisma.base.findFirst({
-      where: {
-        name: baseName,
-      },
+      where: { name: baseName },
     });
 
     if (!base) {
       return NextResponse.json({ message: "Base not found" }, { status: 400 });
     }
 
-    // Check if email or username already exists
     const existingUser = await prisma.user.findFirst({
       where: {
         OR: [{ email }, { username }],
@@ -40,14 +40,16 @@ export async function POST(req: Request) {
         email,
         password: hashedPassword,
         dateOfBirth: dateOfBirth ? new Date(dateOfBirth) : undefined,
+        anniversaryDate: anniversaryDate ? new Date(anniversaryDate) : undefined,
+        gender: gender || undefined,
         role,
         baseId: base.id,
       },
+      select: safeUserSelect,
     });
 
     return NextResponse.json({ user }, { status: 201 });
   } catch (error) {
-    console.error("[REGISTER_ERROR]", error);
-    return NextResponse.json({ message: "Internal Server Error" }, { status: 500 });
+    return handleApiError(error);
   }
 }

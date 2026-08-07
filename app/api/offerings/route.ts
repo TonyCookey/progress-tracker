@@ -1,56 +1,76 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { requireSession, assertBaseAccess, handleApiError } from "@/lib/auth";
+import { createOfferingSchema } from "@/lib/validation/offering";
+import { parseOrThrow } from "@/lib/validation/parse";
+import { notDeleted } from "@/lib/softDelete";
 
 export async function GET(req: Request) {
-  const { searchParams } = new URL(req.url);
-  const page = parseInt(searchParams.get("page") ?? "1");
-  const limit = parseInt(searchParams.get("limit") ?? "10");
-  const search = searchParams.get("search")?.toLowerCase() ?? "";
-  const baseId = searchParams.get("baseId") ?? "";
+  try {
+    await requireSession();
 
-  const skip = (page - 1) * limit;
+    const { searchParams } = new URL(req.url);
+    const pageParam = parseInt(searchParams.get("page") ?? "1");
+    const limitParam = parseInt(searchParams.get("limit") ?? "10");
+    const page = Number.isFinite(pageParam) && pageParam > 0 ? pageParam : 1;
+    const limit = Number.isFinite(limitParam) ? Math.min(Math.max(limitParam, 1), 100) : 10;
+    const search = searchParams.get("search")?.toLowerCase() ?? "";
+    const baseId = searchParams.get("baseId") ?? "";
+    const includeArchived = searchParams.get("includeArchived") === "true";
 
-  const [offerings, total] = await Promise.all([
-    await prisma.offering.findMany({
-      where: {
-        service: {
-          contains: search,
-          mode: "insensitive",
-        },
-        baseId: baseId ? baseId : undefined,
+    const skip = (page - 1) * limit;
+
+    const where = {
+      service: {
+        contains: search,
+        mode: "insensitive" as const,
       },
-      include: { base: true },
-      skip,
-      take: limit,
-      orderBy: { date: "desc" },
-    }),
-    await prisma.offering.count({
-      where: {
-        service: {
-          contains: search,
-          mode: "insensitive",
-        },
-        baseId: baseId ? baseId : undefined,
-      },
-    }),
-  ]);
-  return NextResponse.json({ offerings, total });
+      baseId: baseId ? baseId : undefined,
+      ...notDeleted(includeArchived),
+    };
+
+    const [offerings, total] = await Promise.all([
+      prisma.offering.findMany({
+        where,
+        include: { base: true },
+        skip,
+        take: limit,
+        orderBy: { date: "desc" },
+      }),
+      prisma.offering.count({ where }),
+    ]);
+    return NextResponse.json({ offerings, total });
+  } catch (error) {
+    return handleApiError(error);
+  }
 }
 
 export async function POST(req: Request) {
-  const body = await req.json();
-  const { service, amount, date, notes, type, baseId } = body;
+  try {
+    const session = await requireSession();
+    const body = parseOrThrow(createOfferingSchema, await req.json());
 
-  const offering = await prisma.offering.create({
-    data: {
-      service,
-      amount: parseFloat(amount),
-      date: new Date(date),
-      notes,
-      type,
-      baseId,
-    },
-  });
+    const isCrossBase = body.baseId === "cross-base" ? true : (body.isCrossBase ?? false);
+    const baseId = isCrossBase ? null : body.baseId;
 
-  return NextResponse.json(offering);
+    assertBaseAccess(session, isCrossBase ? null : baseId);
+
+    const { service, amount, date, notes, type } = body;
+
+    const offering = await prisma.offering.create({
+      data: {
+        service,
+        amount,
+        date,
+        notes,
+        type,
+        baseId,
+        isCrossBase,
+      },
+    });
+
+    return NextResponse.json(offering);
+  } catch (error) {
+    return handleApiError(error);
+  }
 }

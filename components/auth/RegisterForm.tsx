@@ -3,6 +3,9 @@
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { useRouter } from "next/navigation";
+import Input from "@/components/ui/Input";
+import Select from "@/components/ui/Select";
+import Button from "@/components/ui/Button";
 
 type RegisterFormInputs = {
   name: string;
@@ -11,6 +14,8 @@ type RegisterFormInputs = {
   password: string;
   confirmPassword: string;
   dateOfBirth?: string;
+  anniversaryDate?: string;
+  gender?: string;
   role: string;
   baseName: string;
 };
@@ -58,79 +63,77 @@ export default function RegisterForm() {
 
   return (
     <form onSubmit={handleSubmit(onSubmit)} className="space-y-5 text-sm">
-      {successMessage && <p className="text-green-600">{successMessage}</p>}
-      {errorMessage && <p className="text-red-600">{errorMessage}</p>}
+      {successMessage && <p className="text-success-700">{successMessage}</p>}
+      {errorMessage && <p className="text-danger-500">{errorMessage}</p>}
+
+      <Input label="Name" type="text" {...register("name", { required: true })} error={errors.name && "Name is required"} />
+
+      <Input label="Username" type="text" {...register("username", { required: true })} error={errors.username && "Username is required"} />
+
+      <Input label="Email" type="email" {...register("email", { required: true })} error={errors.email && "Email is required"} />
+
+      <Input label="Date of Birth" type="date" {...register("dateOfBirth")} />
+
+      <Input label="Anniversary Date" type="date" {...register("anniversaryDate")} />
+
+      <Select label="Gender" {...register("gender")}>
+        <option value="">Select Gender</option>
+        <option value="Male">Male</option>
+        <option value="Female">Female</option>
+      </Select>
+
+      <Select label="Role" {...register("role", { required: true })} error={errors.role && "Role is required"}>
+        <option value="">Select Role</option>
+        <option value="GENERAL">General</option>
+        <option value="COLONEL">Colonel</option>
+        <option value="VOLUNTEER">Volunteer</option>
+      </Select>
+
+      <Select label="Base" {...register("baseName", { required: true })} error={errors.baseName && "Base is required"}>
+        <option value="">Select Base</option>
+        <option value="Alpha">Alpha Base</option>
+        <option value="Bravo">Bravo Base</option>
+      </Select>
 
       <div>
-        <label className="block font-medium"> Name</label>
-        <input type="text" {...register("name", { required: true })} className="w-full px-4 py-2 border rounded" />
-      </div>
-
-      <div>
-        <label className="block font-medium">Username</label>
-        <input type="text" {...register("username", { required: true })} className="w-full px-4 py-2 border rounded" />
-      </div>
-
-      <div>
-        <label className="block font-medium">Email</label>
-        <input type="email" {...register("email", { required: true })} className="w-full px-4 py-2 border rounded" />
-      </div>
-
-      <div>
-        <label className="block font-medium">Date of Birth</label>
-        <input type="date" {...register("dateOfBirth")} className="w-full px-4 py-2 border rounded" />
-      </div>
-
-      <div>
-        <label className="block font-medium">Role</label>
-        <select {...register("role", { required: true })} className="w-full px-4 py-2 border rounded">
-          <option value="">Select Role</option>
-          <option value="GENERAL">General</option>
-          <option value="COLONEL">Colonel</option>
-          <option value="VOLUNTEER">Volunteer</option>
-        </select>
-      </div>
-
-      <div>
-        <label className="block font-medium">Base</label>
-        <select {...register("baseName", { required: true })} className="w-full px-4 py-2 border rounded">
-          <option value="">Select Base</option>
-          <option value="Alpha">Alpha Base</option>
-          <option value="Bravo">Bravo Base</option>
-        </select>
-      </div>
-
-      <div>
-        <label className="block font-medium">Password</label>
+        <label className="block text-sm font-medium text-neutral-700 mb-1">Password</label>
         <div className="relative">
-          <input type={showPassword ? "text" : "password"} {...register("password", { required: true })} className="w-full px-4 py-2 border rounded" />
-          <button type="button" onClick={() => setShowPassword((prev) => !prev)} className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-gray-500">
+          <input
+            type={showPassword ? "text" : "password"}
+            {...register("password", { required: true })}
+            className="w-full border border-neutral-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-accent-400 focus:border-accent-500"
+          />
+          <button
+            type="button"
+            onClick={() => setShowPassword((prev) => !prev)}
+            className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-neutral-500"
+          >
             {showPassword ? "Hide" : "Show"}
           </button>
         </div>
       </div>
 
       <div>
-        <label className="block font-medium">Confirm Password</label>
+        <label className="block text-sm font-medium text-neutral-700 mb-1">Confirm Password</label>
         <div className="relative">
           <input
             type={showConfirmPassword ? "text" : "password"}
             {...register("confirmPassword", { required: true })}
-            className="w-full px-4 py-2 border rounded"
+            className="w-full border border-neutral-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-accent-400 focus:border-accent-500"
           />
           <button
             type="button"
             onClick={() => setShowConfirmPassword((prev) => !prev)}
-            className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-gray-500"
+            className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-neutral-500"
           >
             {showConfirmPassword ? "Hide" : "Show"}
           </button>
         </div>
       </div>
 
-      <button type="submit" className="w-full bg-blue-600 text-white py-2 px-4 rounded hover:bg-blue-700">
+      <Button type="submit" className="w-full">
         Register
-      </button>
+      </Button>
     </form>
   );
 }

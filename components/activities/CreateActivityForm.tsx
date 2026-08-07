@@ -4,25 +4,34 @@ import { useForm, Controller } from "react-hook-form";
 import Select from "react-select";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import Card from "@/components/ui/Card";
+import Input from "@/components/ui/Input";
+import Textarea from "@/components/ui/Textarea";
+import UiSelect, { selectStyles } from "@/components/ui/Select";
+import Button from "@/components/ui/Button";
+import { useToast } from "@/components/ui/Toast";
 
 type Option = { id: string; name: string };
 type SquadOption = {
   value: string;
   label: string;
 };
+type RefDataOption = { id: string; key: string; label: string };
 export default function CreateActivityForm() {
   const {
     register,
     handleSubmit,
     control,
     reset,
-    formState: { isSubmitting },
+    formState: { isSubmitting, errors },
   } = useForm();
   const router = useRouter();
+  const toast = useToast();
 
   const [bases, setBases] = useState<Option[]>([]);
   const [platoons, setPlatoons] = useState<Option[]>([]);
   const [squads, setSquads] = useState<Option[]>([]);
+  const [activityTypes, setActivityTypes] = useState<RefDataOption[]>([]);
 
   useEffect(() => {
     const fetchBases = async () => {
@@ -40,10 +49,17 @@ export default function CreateActivityForm() {
       const data = await res.json();
       setPlatoons(data);
     };
+    const fetchActivityTypes = async () => {
+      const res = await fetch("/api/refdata?category=activity_type");
+      if (!res.ok) return;
+      const data = await res.json();
+      setActivityTypes(data);
+    };
 
     fetchBases();
     fetchSquads();
     fetchPlatoons();
+    fetchActivityTypes();
   }, []);
 
   const onSubmit = async (data: any) => {
@@ -55,64 +71,45 @@ export default function CreateActivityForm() {
       const res = await fetch("/api/activities", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...data, squadIds: data.squadIds?.map((s: Option) => s.id) }),
+        body: JSON.stringify(data),
       });
       if (!res.ok) {
-        console.error("Failed to create lieutenant", res.statusText);
-        alert("Failed to create lieutenant");
+        console.error("Failed to create activity", res.statusText);
+        toast.error("Failed to create activity");
+        return;
       }
       reset();
+      toast.success("Activity created successfully");
       router.push("/dashboard/activities");
     } catch (error) {
       console.error("Failed to create activity:", error);
+      toast.error("Failed to create activity");
     }
   };
   const squadOptions: SquadOption[] = squads.map((s) => ({ value: s.id, label: s.name }));
 
   return (
-    <form onSubmit={handleSubmit(onSubmit)} className="space-y-4 p-10 bg-white rounded shadow-md">
-      <h1 className="text-xl font-semibold">Create Activity</h1>
-      <div>
-        <label htmlFor="title" className="block text-sm font-medium">
-          Title
-        </label>
-        <input id="title" {...register("name", { required: true })} className="w-full border rounded px-3 py-2 mt-1" />
-      </div>
+    <Card>
+      <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+        <h1 className="text-lg font-semibold">Create Activity</h1>
+        <Input id="title" label="Title" {...register("name", { required: true })} error={errors.name && "Title is required."} />
 
-      <div>
-        <label htmlFor="description" className="block text-sm font-medium">
-          Description
-        </label>
-        <textarea id="description" {...register("description")} className="w-full border rounded px-3 py-2 mt-1" rows={3} />
-      </div>
+        <Textarea id="description" label="Description" {...register("description")} rows={3} />
 
-      <div>
-        <label htmlFor="date" className="block text-sm font-medium">
-          Date
-        </label>
-        <input type="date" id="date" {...register("date", { required: true })} className="w-full border rounded px-3 py-2 mt-1" />
-      </div>
+        <Input id="date" type="date" label="Date" {...register("date", { required: true })} error={errors.date && "Date is required."} />
 
-      <div>
-        <label htmlFor="type" className="block text-sm font-medium">
-          Type
-        </label>
-        <select id="type" {...register("type")} className="w-full border rounded px-3 py-2 mt-1">
-          <option value="Outreach">Outreach</option>
-          <option value="Worship">Worship</option>
-          <option value="Sunday Service">Sunday Service</option>
-          <option value="Bible Study">Bible Study</option>
-          <option value="Hangouts">Hangouts</option>
-          <option value="Rehearsals">Rehearsals</option>
-          <option value="Other">Other</option>
-        </select>
-      </div>
+        <UiSelect id="type" label="Type" {...register("type", { required: true })} defaultValue="" error={errors.type && "Please select a type."}>
+          <option value="" disabled>
+            Select a type
+          </option>
+          {activityTypes.map((t) => (
+            <option key={t.id} value={t.key}>
+              {t.label}
+            </option>
+          ))}
+        </UiSelect>
 
-      <div>
-        <label htmlFor="baseId" className="block text-sm font-medium">
-          Base
-        </label>
-        <select id="baseId" {...register("baseId")} className="w-full border rounded px-3 py-2 mt-1">
+        <UiSelect id="baseId" label="Base" {...register("baseId")}>
           <option value="">Select a Base</option>
           <option value="cross-base">Cross Base</option>
           {bases.map((b) => (
@@ -120,50 +117,46 @@ export default function CreateActivityForm() {
               {b.name}
             </option>
           ))}
-        </select>
-      </div>
+        </UiSelect>
 
-      <div>
-        <label htmlFor="platoonId" className="block text-sm font-medium">
-          Platoon (optional)
-        </label>
-        <select id="platoonId" {...register("platoonId")} className="w-full border rounded px-3 py-2 mt-1">
+        <UiSelect id="platoonId" label="Platoon (optional)" {...register("platoonId")}>
           <option value="">None</option>
           {platoons.map((p) => (
             <option key={p.id} value={p.id}>
               {p.name}
             </option>
           ))}
-        </select>
-      </div>
+        </UiSelect>
 
-      <div>
-        <label htmlFor="squadIds" className="block text-sm font-medium mb-1">
-          Squads
-        </label>
-        <Controller
-          name="squadIds"
-          control={control}
-          render={({ field }) => (
-            <Select<SquadOption, true>
-              {...field}
-              isMulti
-              options={squadOptions}
-              className="react-select-container"
-              classNamePrefix="react-select"
-              value={squadOptions.filter((opt) => field.value?.includes(opt.value))}
-              onChange={(selected) => field.onChange(selected.map((opt) => opt.value))}
-              onBlur={field.onBlur}
-            />
-          )}
-        />
-      </div>
+        <div>
+          <label htmlFor="squadIds" className="block text-sm font-medium mb-1">
+            Squads
+          </label>
+          <Controller
+            name="squadIds"
+            control={control}
+            render={({ field }) => (
+              <Select<SquadOption, true>
+                {...field}
+                isMulti
+                options={squadOptions}
+                className="react-select-container"
+                classNamePrefix="react-select"
+                styles={selectStyles}
+                value={squadOptions.filter((opt) => field.value?.includes(opt.value))}
+                onChange={(selected) => field.onChange(selected.map((opt) => opt.value))}
+                onBlur={field.onBlur}
+              />
+            )}
+          />
+        </div>
 
-      <div className="flex justify-end pt-2">
-        <button type="submit" disabled={isSubmitting} className="bg-cyan-600 text-white px-4 py-2 rounded hover:bg-cyan-700">
-          {isSubmitting ? "Creating..." : "Create Activity"}
-        </button>
-      </div>
-    </form>
+        <div className="flex justify-end pt-2">
+          <Button type="submit" disabled={isSubmitting} isLoading={isSubmitting}>
+            {isSubmitting ? "Creating..." : "Create Activity"}
+          </Button>
+        </div>
+      </form>
+    </Card>
   );
 }

@@ -1,24 +1,36 @@
 // app/api/generals/route.ts
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { requireSession, handleApiError } from "@/lib/auth";
+import { notDeleted } from "@/lib/softDelete";
+import { safeUserSelect } from "@/lib/users";
 
 export async function GET(req: Request) {
-  const { searchParams } = new URL(req.url);
-  const page = parseInt(searchParams.get("page") ?? "1");
-  const limit = 10;
-  const skip = (page - 1) * limit;
+  try {
+    await requireSession();
 
-  const [generals, count] = await Promise.all([
-    prisma.user.findMany({
-      skip,
-      take: limit,
-      include: { base: true },
-    }),
-    prisma.user.count({}),
-  ]);
+    const { searchParams } = new URL(req.url);
+    const page = Math.max(1, parseInt(searchParams.get("page") ?? "1") || 1);
+    const limit = Math.min(1000, Math.max(1, parseInt(searchParams.get("limit") ?? "10") || 10));
+    const skip = (page - 1) * limit;
+    const includeArchived = searchParams.get("includeArchived") === "true";
+    const where = notDeleted(includeArchived);
 
-  return NextResponse.json({
-    generals,
-    totalPages: Math.ceil(count / limit),
-  });
+    const [generals, count] = await Promise.all([
+      prisma.user.findMany({
+        where,
+        skip,
+        take: limit,
+        select: safeUserSelect,
+      }),
+      prisma.user.count({ where }),
+    ]);
+
+    return NextResponse.json({
+      generals,
+      totalPages: Math.ceil(count / limit),
+    });
+  } catch (error) {
+    return handleApiError(error);
+  }
 }

@@ -1,10 +1,25 @@
 import { NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { requireSession, assertBaseAccess, handleApiError } from "@/lib/auth";
+import { createActivitySchema } from "@/lib/validation/activity";
+import { parseOrThrow } from "@/lib/validation/parse";
+import { notDeleted } from "@/lib/softDelete";
+import { assertGroupsInBase, assertGroupsExist } from "@/lib/validateBaseRefs";
 
 export async function POST(req: NextRequest) {
   try {
-    const body = await req.json();
-    const { name, description, type, date, baseId, platoonId, squadIds = [], isCrossBase = false } = body;
+    const session = await requireSession();
+    const body = parseOrThrow(createActivitySchema, await req.json());
+    const { name, description, type, date, platoonId, squadIds } = body;
+
+    const isCrossBase = body.baseId === "cross-base" ? true : body.isCrossBase;
+    const baseId = isCrossBase ? null : body.baseId;
+
+    if (!isCrossBase) {
+      assertBaseAccess(session, baseId);
+    } else if (session.user.role !== "SUPERADMIN") {
+      assertBaseAccess(session, null);
+    }
 
     // Collect all group IDs
     const groupIds: string[] = [];
@@ -12,12 +27,17 @@ export async function POST(req: NextRequest) {
     if (platoonId) groupIds.push(platoonId);
     if (Array.isArray(squadIds)) groupIds.push(...squadIds);
 
+    // A base-scoped activity may only attach its own base's groups; a cross-base
+    // activity may span groups from any base, so just check they exist.
+    if (baseId) await assertGroupsInBase(groupIds, baseId, "groupIds");
+    else await assertGroupsExist(groupIds, "groupIds");
+
     const activity = await prisma.activity.create({
       data: {
         name,
-        description,
+        description: description ?? undefined,
         type,
-        date: new Date(date),
+        date,
         baseId,
         isCrossBase,
         groups: {
@@ -31,18 +51,20 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json(activity, { status: 201 });
   } catch (error) {
-    console.error("Error creating activity:", error);
-    return NextResponse.json({ message: "Failed to create activity" }, { status: 500 });
+    return handleApiError(error);
   }
 }
 
 export async function GET(req: NextRequest) {
   try {
+    await requireSession();
+
     const { searchParams } = new URL(req.url);
     const baseId = searchParams.get("baseId");
+    const includeArchived = searchParams.get("includeArchived") === "true";
 
     const activities = await prisma.activity.findMany({
-      where: baseId ? { baseId } : {},
+      where: { ...(baseId ? { baseId } : {}), ...notDeleted(includeArchived) },
       include: {
         base: true,
       },
@@ -53,7 +75,6 @@ export async function GET(req: NextRequest) {
 
     return NextResponse.json(activities);
   } catch (error) {
-    console.error("Error fetching activities:", error);
-    return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
+    return handleApiError(error);
   }
 }

@@ -3,25 +3,29 @@
 import { useState } from "react";
 import GeneralBirthdaysTable from "./GeneralBirthdaysTable";
 import TeenBirthdaysTable from "./TeenBirthdaysTable";
+import GeneralAnniversariesTable from "./GeneralAnniversariesTable";
+import SegmentedToggle from "@/components/ui/SegmentedToggle";
 
-type Tab = "generals" | "teens";
+type Tab = "generals" | "teens" | "anniversaries";
 
-export default function BirthdayTabs({ generals, teens }: { generals: any[]; teens: any[] }) {
+export default function BirthdayTabs({ generals, teens, anniversaries }: { generals: any[]; teens: any[]; anniversaries: any[] }) {
   const [activeTab, setActiveTab] = useState<Tab>("generals");
 
   return (
     <div className="space-y-6">
-      <div className="flex space-x-4">
-        <button className={`px-4 py-2 rounded ${activeTab === "generals" ? "bg-cyan-600 text-white" : "bg-gray-200"}`} onClick={() => setActiveTab("generals")}>
-          Generals
-        </button>
-        <button className={`px-4 py-2 rounded ${activeTab === "teens" ? "bg-cyan-600 text-white" : "bg-gray-200"}`} onClick={() => setActiveTab("teens")}>
-          Teens
-        </button>
-      </div>
+      <SegmentedToggle
+        options={[
+          { label: "Generals", value: "generals" },
+          { label: "Teens", value: "teens" },
+          { label: "Anniversaries", value: "anniversaries" },
+        ]}
+        value={activeTab}
+        onChange={setActiveTab}
+      />
 
       {activeTab === "generals" && <GeneralBirthdaysTable data={generals} />}
       {activeTab === "teens" && <TeenBirthdaysTable data={teens} />}
+      {activeTab === "anniversaries" && <GeneralAnniversariesTable data={anniversaries} />}
     </div>
   );
 }

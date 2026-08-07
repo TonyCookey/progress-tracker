@@ -3,7 +3,8 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import clsx from "clsx";
-import { useState } from "react";
+import { useState, Fragment } from "react";
+import { Dialog, DialogPanel, Transition, TransitionChild } from "@headlessui/react";
 import {
   HomeIcon,
   UserGroupIcon,
@@ -15,6 +16,8 @@ import {
   CakeIcon,
   CalendarDaysIcon,
   CurrencyDollarIcon,
+  UserPlusIcon,
+  HomeModernIcon,
 } from "@heroicons/react/24/outline";
 import { useSession } from "next-auth/react";
 import { UploadCloud } from "lucide-react";
@@ -25,12 +28,14 @@ const links = [
   { href: "/dashboard/generals", label: "Generals", icon: <UserCircleIcon className="h-6 w-6" />, role: "SUPERADMIN" },
   { href: "/dashboard/squads", label: "Squads", icon: <UserGroupIcon className="h-6 w-6" /> },
   { href: "/dashboard/platoons", label: "Platoons", icon: <ShieldCheckIcon className="h-6 w-6" /> },
+  { href: "/dashboard/households", label: "Households", icon: <HomeModernIcon className="h-6 w-6" /> },
   { href: "/dashboard/activities", label: "Activities", icon: <CalendarDaysIcon className="h-6 w-6" /> },
   { href: "/dashboard/offerings", label: "Offerings", icon: <CurrencyDollarIcon className="h-6 w-6" /> },
   { href: "/dashboard/birthdays", label: "Birthdays", icon: <CakeIcon className="h-6 w-6" /> },
-  { href: "/dashboard/lieutenants/bulk-upload", label: "Bulk Upload", icon: <UploadCloud className="h-6 w-6" />, role: "SUPERADMIN" },
-  // { href: "/dashboard/reports", label: "Reports", icon: <ChartPieIcon className="h-6 w-6" />, role: "SUPERADMIN" },
-  // { href: "/dashboard/settings", label: "Settings", icon: <Cog6ToothIcon className="h-6 w-6" />, role: "SUPERADMIN" },
+  { href: "/dashboard/new-converts", label: "New Converts", icon: <UserPlusIcon className="h-6 w-6" />, role: ["SUPERADMIN", "GENERAL"] },
+  { href: "/dashboard/reports", label: "Monthly Report", icon: <ChartPieIcon className="h-6 w-6" />, role: ["SUPERADMIN", "GENERAL"] },
+  // { href: "/dashboard/lieutenants/bulk-upload", label: "Bulk Upload", icon: <UploadCloud className="h-6 w-6" />, role: "SUPERADMIN" },
+  { href: "/dashboard/settings", label: "Settings", icon: <Cog6ToothIcon className="h-6 w-6" />, role: "SUPERADMIN" },
 ];
 
 export default function Sidebar() {
@@ -43,14 +48,14 @@ export default function Sidebar() {
   // Filter links based on role
   const visibleLinks = links.filter((link) => {
     if (!link.role) return true;
-    return link.role === userRole;
+    return Array.isArray(link.role) ? link.role.includes(userRole as string) : link.role === userRole;
   });
 
   // Sidebar content
   const sidebarContent = (
     <div className="flex flex-col h-full">
-      <div className="px-6 py-6 text-xl font-extrabold text-400">DA Church Tracker</div>
-      <div className="border-t border-cyan-700 mx-6 mb-2" />
+      <div className="px-6 py-6 text-lg font-extrabold text-neutral-900">DA Church Tracker</div>
+      <div className="border-t border-neutral-200 mx-6 mb-2" />
       <nav className="mt-2 flex-1">
         {visibleLinks.map(({ href, label, icon }) => (
           <Link
@@ -58,13 +63,14 @@ export default function Sidebar() {
             href={href}
             onClick={() => setOpen(false)}
             className={clsx(
-              "flex items-center space-x-4 px-6 py-3 rounded-lg transition-all duration-150 cursor-pointer ",
-              "hover:bg-cyan-600 hover:text-white",
-              pathname === href ? "bg-cyan-700 text-white border-l-4 border-cyan-400 font-semibold shadow" : "text-cyan-200",
+              "flex items-center space-x-4 px-6 py-3 mx-3 rounded-lg transition-all duration-150 cursor-pointer",
+              pathname === href
+                ? "bg-accent-50 text-accent-700 border-l-4 border-accent-500 font-semibold"
+                : "text-neutral-600 border-l-4 border-transparent hover:bg-neutral-50 hover:text-neutral-900",
             )}
           >
             {icon}
-            <span className="text-base">{label}</span>
+            <span className="text-sm">{label}</span>
           </Link>
         ))}
       </nav>
@@ -75,7 +81,7 @@ export default function Sidebar() {
     <>
       {/* Hamburger button for mobile */}
       <button
-        className="md:hidden fixed top-4 left-4 z-40 bg-cyan-800 p-2 rounded text-white focus:outline-none shadow-lg"
+        className="md:hidden fixed top-4 left-4 z-40 bg-white border border-neutral-200 p-2 rounded-lg text-neutral-700 focus:outline-none shadow-soft"
         onClick={() => setOpen(true)}
         aria-label="Open sidebar"
       >
@@ -85,25 +91,51 @@ export default function Sidebar() {
       </button>
 
       {/* Sidebar for desktop */}
-      <aside className="hidden md:flex w-64 h-screen bg-gradient-to-b from-cyan-900 via-cyan-800 to-cyan-700 text-white fixed top-0 left-0 shadow-lg z-30">
+      <aside className="hidden md:flex w-64 h-screen bg-white border-r border-neutral-200 fixed top-0 left-0 z-30">
         {sidebarContent}
       </aside>
 
       {/* Sidebar drawer for mobile */}
-      {open && (
-        <>
-          {/* Overlay */}
-          <div className="fixed inset-0 bg-black bg-opacity-40 z-40 transition-opacity duration-200" onClick={() => setOpen(false)} />
-          <aside className="fixed top-0 left-0 w-64 h-full bg-gradient-to-b from-cyan-900 via-cyan-800 to-cyan-700 text-white shadow-lg z-50 animate-slide-in">
-            <button className="absolute top-4 right-3 text-white focus:outline-none" onClick={() => setOpen(false)} aria-label="Close sidebar">
-              <svg className="h-6 w-6" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            </button>
-            {sidebarContent}
-          </aside>
-        </>
-      )}
+      <Transition show={open} as={Fragment}>
+        <Dialog as="div" className="relative z-50 md:hidden" onClose={() => setOpen(false)}>
+          <TransitionChild
+            as={Fragment}
+            enter="ease-out duration-200"
+            leave="ease-in duration-150"
+            enterFrom="opacity-0"
+            enterTo="opacity-100"
+            leaveFrom="opacity-100"
+            leaveTo="opacity-0"
+          >
+            <div className="fixed inset-0 bg-neutral-900/40" />
+          </TransitionChild>
+
+          <div className="fixed inset-0 flex">
+            <TransitionChild
+              as={Fragment}
+              enter="ease-out duration-200"
+              leave="ease-in duration-150"
+              enterFrom="-translate-x-full"
+              enterTo="translate-x-0"
+              leaveFrom="translate-x-0"
+              leaveTo="-translate-x-full"
+            >
+              <DialogPanel className="relative w-64 max-w-[85vw] h-full bg-white border-r border-neutral-200 shadow-softHover">
+                <button
+                  className="absolute top-4 right-3 text-neutral-500 hover:text-neutral-900 focus:outline-none min-h-11 min-w-11 flex items-center justify-center"
+                  onClick={() => setOpen(false)}
+                  aria-label="Close sidebar"
+                >
+                  <svg className="h-6 w-6" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+                {sidebarContent}
+              </DialogPanel>
+            </TransitionChild>
+          </div>
+        </Dialog>
+      </Transition>
     </>
   );
 }

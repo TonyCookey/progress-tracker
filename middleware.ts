@@ -16,10 +16,7 @@ export async function middleware(request: NextRequest) {
 
 export const config = {
   matcher: [
-    "/dashboard/:path*", // main dashboard
-    "/platoons/:path*", // platoon management
-    "/squads/:path*", // squad management
-    "/events/:path*", // tracking events
-    "/reports/:path*", // analytics
+    "/dashboard/:path*", // main dashboard (all app pages live under here)
+    "/auth/register", // leader registration (SUPERADMIN-only, enforced client + server side)
   ],
 };
