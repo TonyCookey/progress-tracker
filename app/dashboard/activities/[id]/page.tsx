@@ -170,7 +170,13 @@ export default function ActivityDetailsPage({ params }: { params: { id: string }
           </div>
           <p>{activity?.description}</p>
           <p>Date: {formatDate(activity?.date)}</p>
-          <p>Base: {activity?.base?.name || "N/A"}</p>
+          <p>Base: {activity?.isCrossBase ? "Cross base" : activity?.base?.name || "N/A"}</p>
+          <p>
+            For:{" "}
+            {activity?.groups?.length
+              ? activity.groups.map((g: { name: string; type: string }) => `${g.name} (${g.type === "PLATOON" ? "platoon" : "squad"})`).join(", ")
+              : "Everyone in the base"}
+          </p>
         </Card>
         {/* Stats Card */}
         <Card className="flex-1 h-fit">

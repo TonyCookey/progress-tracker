@@ -7,7 +7,7 @@ import { notDeleted } from "@/lib/softDelete";
 
 export async function GET(req: Request) {
   try {
-    await requireSession();
+    const session = await requireSession();
 
     const { searchParams } = new URL(req.url);
     const pageParam = parseInt(searchParams.get("page") ?? "1");
@@ -15,7 +15,17 @@ export async function GET(req: Request) {
     const page = Number.isFinite(pageParam) && pageParam > 0 ? pageParam : 1;
     const limit = Number.isFinite(limitParam) ? Math.min(Math.max(limitParam, 1), 100) : 10;
     const search = searchParams.get("search")?.toLowerCase() ?? "";
-    const baseId = searchParams.get("baseId") ?? "";
+    // "" = all bases, "cross-base" = offerings not tied to a base. Non-superadmins are
+    // always pinned to their own base.
+    const requestedBaseId = (searchParams.get("baseId") ?? "").trim();
+    const baseId = session.user.role === "SUPERADMIN" ? requestedBaseId : session.user.baseId;
+    const type = searchParams.get("type") || undefined;
+    const from = searchParams.get("from");
+    const to = searchParams.get("to");
+    const dateFilter =
+      from || to
+        ? { date: { ...(from ? { gte: new Date(from) } : {}), ...(to ? { lt: new Date(new Date(to).getTime() + 24 * 60 * 60 * 1000) } : {}) } }
+        : {};
     const includeArchived = searchParams.get("includeArchived") === "true";
 
     const skip = (page - 1) * limit;
@@ -25,11 +35,13 @@ export async function GET(req: Request) {
         contains: search,
         mode: "insensitive" as const,
       },
-      baseId: baseId ? baseId : undefined,
+      baseId: baseId === "cross-base" ? null : baseId ? baseId : undefined,
+      type,
+      ...dateFilter,
       ...notDeleted(includeArchived),
     };
 
-    const [offerings, total] = await Promise.all([
+    const [offerings, total, sum] = await Promise.all([
       prisma.offering.findMany({
         where,
         include: { base: true },
@@ -38,8 +50,9 @@ export async function GET(req: Request) {
         orderBy: { date: "desc" },
       }),
       prisma.offering.count({ where }),
+      prisma.offering.aggregate({ where, _sum: { amount: true } }),
     ]);
-    return NextResponse.json({ offerings, total });
+    return NextResponse.json({ offerings, total, totalAmount: Number(sum._sum.amount ?? 0) });
   } catch (error) {
     return handleApiError(error);
   }

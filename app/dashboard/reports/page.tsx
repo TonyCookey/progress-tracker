@@ -1,18 +1,18 @@
 import RequireAuth from "@/components/auth/RequireAuth";
-import MonthlyReportBuilder from "@/components/reports/MonthlyReportBuilder";
-import ReportsAnalyticsOverview from "@/components/reports/ReportsAnalyticsOverview";
+import ReportsWorkspace from "@/components/reports/ReportsWorkspace";
 import PageHeader from "@/components/ui/PageHeader";
+import { getSession } from "@/lib/auth";
 
-export default function MonthlyReportPage() {
+export default async function MonthlyReportPage() {
+  const session = await getSession();
+  // The report builder/history APIs are SUPERADMIN + GENERAL only; other roles get analytics.
+  const canBuild = session?.user?.role === "SUPERADMIN" || session?.user?.role === "GENERAL";
+
   return (
     <RequireAuth>
       <div className="p-4 md:p-6">
-        <PageHeader title="Reports" />
-        <ReportsAnalyticsOverview />
-        <div className="mt-10 pt-10 border-t border-neutral-200">
-          <h2 className="text-lg font-semibold text-neutral-900 mb-6">Monthly Report Builder</h2>
-          <MonthlyReportBuilder />
-        </div>
+        <PageHeader title="Reports" description="Build the monthly base report, download past reports, and dig into attendance." />
+        <ReportsWorkspace canBuild={canBuild} />
       </div>
     </RequireAuth>
   );

@@ -1,3 +1,4 @@
+import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { notDeleted } from "@/lib/softDelete";
 import { normalizeGender } from "@/lib/normalizeGender";
@@ -13,7 +14,10 @@ function monthKey(date: Date) {
 function enumerateMonths(from: Date, to: Date) {
   const months: string[] = [];
   const cursor = new Date(Date.UTC(from.getUTCFullYear(), from.getUTCMonth(), 1));
-  const end = new Date(Date.UTC(to.getUTCFullYear(), to.getUTCMonth(), 1));
+  // `to` is exclusive - step back 1ms so a range ending exactly at a month boundary
+  // (e.g. "This Year" -> Jan 1 next year) doesn't grow an extra empty month.
+  const last = new Date(to.getTime() - 1);
+  const end = new Date(Date.UTC(last.getUTCFullYear(), last.getUTCMonth(), 1));
   while (cursor <= end) {
     months.push(monthKey(cursor));
     cursor.setUTCMonth(cursor.getUTCMonth() + 1);
@@ -171,116 +175,240 @@ export async function getOfferingPerAttendee({ baseId, from, to }: DateRange): P
   });
 }
 
-export type AttendanceTrendPoint = {
-  activityId: string;
-  date: string;
-  type: string;
-  attended: number;
-  newCount: number;
-  returningCount: number;
-  rosterSize: number;
-  rate: number | null;
-};
+// ---------------------------------------------------------------------------
+// Attendance analytics
+//
+// Every attendance metric below is built on one shared "attendance context": the
+// activities in scope (with which teens attended) plus the active roster (with which
+// platoon/squads each teen is in). That lets us answer "who was *expected* at this
+// activity" accurately:
+//   - a base activity expects that base's active teens; a cross-base one expects everyone
+//   - an activity tied to platoons/squads expects only members of those groups
+// Previously the denominator was always the whole base roster, so a single-platoon
+// activity showed a misleadingly low rate.
+//
+// Activities where nobody has been marked yet (no participation rows at all) are
+// treated as "not recorded" - they are excluded from rates and drop-off rather than
+// counted as 0% turnout.
+// ---------------------------------------------------------------------------
 
-// "Active roster" for analytics denominators (attendance rate, demographics) is
-// strictly status ACTIVE — the same definition the monthly report uses for
-// membership (lib/reports/monthly.ts) and drop-off below, so the headline numbers
-// reconcile. This is deliberately narrower than the participation route's live
-// "who can be marked" list, which admits non-LEFT teens.
+export type GroupFilter = { platoonIds?: string[]; squadIds?: string[] };
+export type AnalyticsScope = DateRange & GroupFilter;
+
+// "Active roster" for analytics denominators is strictly status ACTIVE - the same
+// definition the monthly report uses for membership (lib/reports/monthly.ts).
 const activeTeenFilter = { deletedAt: null, status: "ACTIVE" as const };
 
-export async function getAttendanceTrend({
+function hasGroupFilter(f: GroupFilter) {
+  return !!(f.platoonIds?.length || f.squadIds?.length);
+}
+
+// Platoons OR'd together, squads OR'd together, and the two dimensions AND'd - so
+// "Platoon A + Choir squad" means choir members who are in platoon A.
+export function teenGroupWhere(f: GroupFilter): Prisma.TeenWhereInput {
+  const and: Prisma.TeenWhereInput[] = [];
+  if (f.platoonIds?.length) and.push({ groupId: { in: f.platoonIds } });
+  if (f.squadIds?.length) and.push({ squadMemberships: { some: { groupId: { in: f.squadIds } } } });
+  return and.length ? { AND: and } : {};
+}
+
+// With a group filter, only activities the filtered teens could have attended: open
+// activities (no groups attached) or ones attached to a selected group.
+function activityGroupWhere(f: GroupFilter): Prisma.ActivityWhereInput {
+  const ids = [...(f.platoonIds ?? []), ...(f.squadIds ?? [])];
+  if (!ids.length) return {};
+  return { OR: [{ groups: { none: {} } }, { groups: { some: { id: { in: ids } } } }] };
+}
+
+type RosterTeen = { id: string; name: string; baseId: string; groupId: string | null; squadIds: string[] };
+
+type ContextActivity = {
+  id: string;
+  name: string;
+  type: string;
+  date: Date;
+  baseId: string | null;
+  groupIds: string[];
+  attendees: Set<string>;
+  recorded: boolean;
+};
+
+async function loadRoster(baseId: string | null | undefined, f: GroupFilter): Promise<RosterTeen[]> {
+  const teens = await prisma.teen.findMany({
+    where: { baseId: baseId ?? undefined, ...activeTeenFilter, ...teenGroupWhere(f) },
+    select: { id: true, name: true, baseId: true, groupId: true, squadMemberships: { select: { groupId: true } } },
+  });
+  return teens.map((t) => ({ id: t.id, name: t.name, baseId: t.baseId, groupId: t.groupId, squadIds: t.squadMemberships.map((m) => m.groupId) }));
+}
+
+async function loadActivities({
   baseId,
-  activityType,
   from,
   to,
-}: DateRange & { activityType?: string }): Promise<{
-  points: AttendanceTrendPoint[];
-  summary: { average: number; total: number; averageRate: number | null };
-}> {
+  activityType,
+  ...f
+}: AnalyticsScope & { activityType?: string }): Promise<ContextActivity[]> {
   const activities = await prisma.activity.findMany({
-    where: { baseId: baseId ?? undefined, type: activityType ?? undefined, date: { gte: from, lt: to }, ...notDeleted(false) },
-    include: { teenParticipation: { where: { attended: true }, select: { teenId: true } } },
+    where: {
+      baseId: baseId ?? undefined,
+      type: activityType || undefined,
+      date: { gte: from, lt: to },
+      ...notDeleted(false),
+      ...activityGroupWhere(f),
+    },
+    select: {
+      id: true,
+      name: true,
+      type: true,
+      date: true,
+      baseId: true,
+      groups: { select: { id: true } },
+      teenParticipation: {
+        where: { attended: true, ...(hasGroupFilter(f) ? { teen: teenGroupWhere(f) } : {}) },
+        select: { teenId: true },
+      },
+      _count: { select: { teenParticipation: true } },
+    },
     orderBy: { date: "asc" },
   });
 
-  if (!activities.length) return { points: [], summary: { average: 0, total: 0, averageRate: null } };
+  return activities.map((a) => ({
+    id: a.id,
+    name: a.name,
+    type: a.type,
+    date: a.date,
+    baseId: a.baseId,
+    groupIds: a.groups.map((g) => g.id),
+    attendees: new Set(a.teenParticipation.map((p) => p.teenId)),
+    recorded: a._count.teenParticipation > 0,
+  }));
+}
 
-  // Base-level roster denominator (v1) - active teen count per base, plus a global
-  // count for cross-base activities (baseId null), computed once for the whole range.
-  const baseIdsInScope = Array.from(new Set(activities.map((a) => a.baseId).filter((id): id is string => !!id)));
-  const hasCrossBase = activities.some((a) => !a.baseId);
-  const [rosterByBase, globalRoster] = await Promise.all([
-    baseIdsInScope.length
-      ? prisma.teen.groupBy({ by: ["baseId"], where: { baseId: { in: baseIdsInScope }, ...activeTeenFilter }, _count: { _all: true } })
-      : [],
-    hasCrossBase ? prisma.teen.count({ where: activeTeenFilter }) : 0,
-  ]);
-  const rosterSizeByBase = new Map(rosterByBase.map((r) => [r.baseId, r._count._all]));
+function isExpected(activity: ContextActivity, teen: RosterTeen) {
+  if (activity.baseId && activity.baseId !== teen.baseId) return false;
+  if (!activity.groupIds.length) return true;
+  if (teen.groupId && activity.groupIds.includes(teen.groupId)) return true;
+  return teen.squadIds.some((id) => activity.groupIds.includes(id));
+}
 
-  // Every teen who had an attended participation before this range, so "new" can be
-  // told apart from "returning" without an N+1 query per activity.
+function pct(numerator: number, denominator: number) {
+  return denominator > 0 ? Math.round((numerator / denominator) * 1000) / 10 : null;
+}
+
+export type AttendanceTrendPoint = {
+  activityId: string;
+  name: string;
+  date: string;
+  type: string;
+  attended: number;
+  expected: number;
+  newCount: number;
+  returningCount: number;
+  rosterSize: number;
+  recorded: boolean;
+  rate: number | null;
+};
+
+export async function getAttendanceTrend(
+  scope: AnalyticsScope & { activityType?: string },
+): Promise<{
+  points: AttendanceTrendPoint[];
+  summary: { average: number; total: number; averageRate: number | null; recordedActivities: number; uniqueAttendees: number };
+}> {
+  const { baseId, activityType, from, ...f } = scope;
+  const [activities, roster] = await Promise.all([loadActivities(scope), loadRoster(baseId, f)]);
+
+  const empty = { average: 0, total: 0, averageRate: null, recordedActivities: 0, uniqueAttendees: 0 };
+  if (!activities.length) return { points: [], summary: empty };
+
+  // Every teen who attended before this range, so "first time" can be told apart from
+  // "returning" without an N+1 query per activity.
   const priorAttended = await prisma.activityParticipation.findMany({
     where: {
       attended: true,
-      activity: { baseId: baseId ?? undefined, type: activityType ?? undefined, date: { lt: from }, ...notDeleted(false) },
+      activity: { baseId: baseId ?? undefined, type: activityType || undefined, date: { lt: from }, ...notDeleted(false) },
+      ...(hasGroupFilter(f) ? { teen: teenGroupWhere(f) } : {}),
     },
     select: { teenId: true },
+    distinct: ["teenId"],
   });
-  const everAttendedBefore = new Set(priorAttended.map((p) => p.teenId));
+  const seen = new Set(priorAttended.map((p) => p.teenId));
 
-  const points: AttendanceTrendPoint[] = [];
-  const seenInRange = new Set(everAttendedBefore);
-  for (const activity of activities) {
+  const unique = new Set<string>();
+  const points: AttendanceTrendPoint[] = activities.map((activity) => {
     let newCount = 0;
     let returningCount = 0;
-    for (const p of activity.teenParticipation) {
-      if (seenInRange.has(p.teenId)) returningCount++;
+    for (const teenId of Array.from(activity.attendees)) {
+      if (seen.has(teenId)) returningCount++;
       else newCount++;
-      seenInRange.add(p.teenId);
+      seen.add(teenId);
+      unique.add(teenId);
     }
-    const rosterSize = activity.baseId ? (rosterSizeByBase.get(activity.baseId) ?? 0) : globalRoster;
-    const attended = activity.teenParticipation.length;
-    points.push({
+    const expectedTeens = roster.filter((t) => isExpected(activity, t));
+    const attendedExpected = expectedTeens.filter((t) => activity.attendees.has(t.id)).length;
+    return {
       activityId: activity.id,
+      name: activity.name,
       date: activity.date.toISOString(),
       type: activity.type,
-      attended,
+      attended: activity.attendees.size,
+      expected: expectedTeens.length,
       newCount,
       returningCount,
-      rosterSize,
-      rate: rosterSize > 0 ? Math.round((attended / rosterSize) * 1000) / 10 : null,
-    });
+      rosterSize: expectedTeens.length,
+      recorded: activity.recorded,
+      rate: activity.recorded ? pct(attendedExpected, expectedTeens.length) : null,
+    };
+  });
+
+  // With a platoon/squad filter, activities in other bases have nobody expected and
+  // nobody attending - drop them rather than plotting empty points.
+  if (hasGroupFilter(f)) {
+    for (let i = points.length - 1; i >= 0; i--) if (points[i].expected === 0 && points[i].attended === 0) points.splice(i, 1);
   }
 
-  const total = points.reduce((sum, p) => sum + p.attended, 0);
-  const ratedPoints = points.filter((p) => p.rate !== null);
+  const recordedPoints = points.filter((p) => p.recorded);
+  const total = recordedPoints.reduce((sum, p) => sum + p.attended, 0);
+  const ratedPoints = recordedPoints.filter((p) => p.rate !== null);
   const averageRate = ratedPoints.length
     ? Math.round((ratedPoints.reduce((sum, p) => sum + (p.rate as number), 0) / ratedPoints.length) * 10) / 10
     : null;
-  return { points, summary: { average: Math.round((total / points.length) * 10) / 10, total, averageRate } };
+  return {
+    points,
+    summary: {
+      average: recordedPoints.length ? Math.round((total / recordedPoints.length) * 10) / 10 : 0,
+      total,
+      averageRate,
+      recordedActivities: recordedPoints.length,
+      uniqueAttendees: unique.size,
+    },
+  };
 }
 
-export type AttendanceByTypePoint = { type: string; average: number; activityCount: number };
+export type AttendanceByTypePoint = { type: string; average: number; activityCount: number; averageRate: number | null };
 
 // Average attendance per Activity.type for the period - types come from the data
 // itself (RefData keys are admin-editable, never hardcode a type list).
-export async function getAttendanceByType({ baseId, from, to }: DateRange): Promise<AttendanceByTypePoint[]> {
-  const activities = await prisma.activity.findMany({
-    where: { baseId: baseId ?? undefined, date: { gte: from, lt: to }, ...notDeleted(false) },
-    include: { teenParticipation: { where: { attended: true }, select: { id: true } } },
-  });
+export async function getAttendanceByType(scope: AnalyticsScope): Promise<AttendanceByTypePoint[]> {
+  const { points } = await getAttendanceTrend(scope);
 
-  const byType = new Map<string, { total: number; count: number }>();
-  for (const activity of activities) {
-    const entry = byType.get(activity.type) ?? { total: 0, count: 0 };
-    entry.total += activity.teenParticipation.length;
+  const byType = new Map<string, { total: number; count: number; rates: number[] }>();
+  for (const p of points) {
+    if (!p.recorded) continue;
+    const entry = byType.get(p.type) ?? { total: 0, count: 0, rates: [] };
+    entry.total += p.attended;
     entry.count += 1;
-    byType.set(activity.type, entry);
+    if (p.rate !== null) entry.rates.push(p.rate);
+    byType.set(p.type, entry);
   }
 
   return Array.from(byType.entries())
-    .map(([type, { total, count }]) => ({ type, average: Math.round((total / count) * 10) / 10, activityCount: count }))
+    .map(([type, { total, count, rates }]) => ({
+      type,
+      average: Math.round((total / count) * 10) / 10,
+      activityCount: count,
+      averageRate: rates.length ? Math.round((rates.reduce((s, r) => s + r, 0) / rates.length) * 10) / 10 : null,
+    }))
     .sort((a, b) => b.average - a.average);
 }
 
@@ -288,84 +416,158 @@ export type AttendanceDropoff = {
   priorCount: number;
   currentCount: number;
   droppedOffCount: number;
-  droppedOffTeens: { id: string; name: string }[];
+  droppedOffTeens: { id: string; name: string; lastAttended: string | null; missed: number }[];
+  minMissed: number;
+  currentRecordedActivities: number;
 };
+
+// "Needs follow-up" / dropped off. A teen is flagged when ALL of these hold:
+//   1. they're on the active roster (and match any platoon/squad filter)
+//   2. they have attended before (we look back up to LOOKBACK_DAYS before the period)
+//   3. they missed their most recent MIN_MISSED+ *recorded* activities in a row that
+//      they were expected at, up to the end of the selected period
+//   4. at least one of those misses falls inside the selected period
+// Activities with no attendance marked at all are ignored, so an unmarked Sunday
+// doesn't make everyone look dropped off. The earlier "attended last period but not
+// this one" rule missed teens who stopped coming more than one period ago and flagged
+// everyone at the start of a month.
+const MIN_MISSED = 3;
+const LOOKBACK_DAYS = 180;
 
 export async function getAttendanceDropoff({
   baseId,
   activityType,
   periodStart,
   periodEnd,
-}: {
+  ...f
+}: GroupFilter & {
   baseId?: string | null;
   activityType?: string;
   periodStart: Date;
   periodEnd: Date;
 }): Promise<AttendanceDropoff> {
-  const periodLengthMs = periodEnd.getTime() - periodStart.getTime();
-  const priorStart = new Date(periodStart.getTime() - periodLengthMs);
+  const lookbackStart = new Date(periodStart.getTime() - LOOKBACK_DAYS * 24 * 60 * 60 * 1000);
 
-  const [currentParticipation, priorParticipation] = await Promise.all([
-    prisma.activityParticipation.findMany({
-      where: {
-        attended: true,
-        activity: { baseId: baseId ?? undefined, type: activityType ?? undefined, date: { gte: periodStart, lt: periodEnd }, ...notDeleted(false) },
-        teen: { status: "ACTIVE", ...notDeleted(false) },
-      },
-      select: { teenId: true },
-    }),
-    prisma.activityParticipation.findMany({
-      where: {
-        attended: true,
-        activity: { baseId: baseId ?? undefined, type: activityType ?? undefined, date: { gte: priorStart, lt: periodStart }, ...notDeleted(false) },
-        teen: { status: "ACTIVE", ...notDeleted(false) },
-      },
-      select: { teenId: true },
-    }),
+  // The platoon/squad filter narrows *who* we look at, not which activities count: a
+  // Lions teen who skipped Sundays but came to a squad rehearsal hasn't dropped off.
+  const [activities, roster] = await Promise.all([
+    loadActivities({ baseId, activityType, from: lookbackStart, to: periodEnd }),
+    loadRoster(baseId, f),
   ]);
 
-  const currentSet = new Set(currentParticipation.map((p) => p.teenId));
-  const priorSet = new Set(priorParticipation.map((p) => p.teenId));
-  const droppedOffIds = [...priorSet].filter((id) => !currentSet.has(id));
+  const recorded = activities.filter((a) => a.recorded); // ascending by date
+  const inPeriod = recorded.filter((a) => a.date >= periodStart);
 
-  const droppedOffTeens = droppedOffIds.length
-    ? await prisma.teen.findMany({ where: { id: { in: droppedOffIds.slice(0, 20) } }, select: { id: true, name: true } })
-    : [];
+  const dropped: AttendanceDropoff["droppedOffTeens"] = [];
+  const attendedBefore = new Set<string>();
+  const attendedInPeriod = new Set<string>();
+
+  for (const teen of roster) {
+    const expected = recorded.filter((a) => isExpected(a, teen));
+    let streak = 0;
+    let lastAttended: Date | null = null;
+    for (let i = expected.length - 1; i >= 0; i--) {
+      if (expected[i].attendees.has(teen.id)) {
+        lastAttended = expected[i].date;
+        break;
+      }
+      streak++;
+    }
+    if (lastAttended && lastAttended < periodStart) attendedBefore.add(teen.id);
+    if (expected.some((a) => a.date >= periodStart && a.attendees.has(teen.id))) attendedInPeriod.add(teen.id);
+
+    const latestMiss = streak > 0 ? expected[expected.length - 1].date : null;
+    if (lastAttended && streak >= MIN_MISSED && latestMiss && latestMiss >= periodStart) {
+      dropped.push({ id: teen.id, name: teen.name, lastAttended: lastAttended.toISOString(), missed: streak });
+    }
+  }
+  dropped.sort((a, b) => b.missed - a.missed || a.name.localeCompare(b.name));
 
   return {
-    priorCount: priorSet.size,
-    currentCount: currentSet.size,
-    droppedOffCount: droppedOffIds.length,
-    droppedOffTeens,
+    priorCount: attendedBefore.size,
+    currentCount: attendedInPeriod.size,
+    droppedOffCount: dropped.length,
+    droppedOffTeens: dropped.slice(0, 50),
+    minMissed: MIN_MISSED,
+    currentRecordedActivities: inPeriod.length,
+  };
+}
+
+export type EngagementBucket = "Regular" | "Occasional" | "Rarely" | "Not seen" | "No activities yet";
+export type Engagement = {
+  buckets: { bucket: EngagementBucket; count: number }[];
+  totalActive: number;
+  notSeen: { id: string; name: string }[];
+};
+
+// Fixed order so the donut always maps bucket -> colour the same way.
+const ENGAGEMENT_ORDER: EngagementBucket[] = ["Regular", "Occasional", "Rarely", "Not seen", "No activities yet"];
+
+// How engaged the active roster has been in the period: each teen's share of the
+// recorded activities they were expected at. Replaces the old "status breakdown"
+// donut, which only reflected a rarely-edited status field (almost always ACTIVE).
+export async function getEngagement(scope: AnalyticsScope & { activityType?: string }): Promise<Engagement> {
+  // Group filter narrows the roster; every activity a teen was expected at still counts.
+  const { platoonIds, squadIds, ...activityScope } = scope;
+  const [activities, roster] = await Promise.all([loadActivities(activityScope), loadRoster(scope.baseId, { platoonIds, squadIds })]);
+  const recorded = activities.filter((a) => a.recorded);
+
+  const counts = new Map<EngagementBucket, number>();
+  const notSeen: { id: string; name: string }[] = [];
+  for (const teen of roster) {
+    const expected = recorded.filter((a) => isExpected(a, teen));
+    let bucket: EngagementBucket;
+    if (!expected.length) bucket = "No activities yet";
+    else {
+      const share = expected.filter((a) => a.attendees.has(teen.id)).length / expected.length;
+      if (share >= 0.75) bucket = "Regular";
+      else if (share >= 0.25) bucket = "Occasional";
+      else if (share > 0) bucket = "Rarely";
+      else bucket = "Not seen";
+    }
+    if (bucket === "Not seen") notSeen.push({ id: teen.id, name: teen.name });
+    counts.set(bucket, (counts.get(bucket) ?? 0) + 1);
+  }
+
+  return {
+    buckets: ENGAGEMENT_ORDER.filter((b) => counts.has(b)).map((bucket) => ({ bucket, count: counts.get(bucket) ?? 0 })),
+    totalActive: roster.length,
+    notSeen: notSeen.sort((a, b) => a.name.localeCompare(b.name)).slice(0, 50),
   };
 }
 
 export type MembershipGrowth = {
-  trend: { month: string; added: number }[];
+  trend: { month: string; added: number; total: number }[];
   statusSnapshot: { status: string; count: number }[];
 };
 
-export async function getMembershipGrowth({ baseId, from, to }: DateRange): Promise<MembershipGrowth> {
-  const [joined, statusGroups] = await Promise.all([
+// `added` = teens who joined in the month; `total` = members on the books at the end
+// of that month (joined by then, not deleted, not LEFT). Join date falls back to the
+// record's creation date for teens imported without a dateJoined.
+export async function getMembershipGrowth({ baseId, from, to, ...f }: AnalyticsScope): Promise<MembershipGrowth> {
+  const [teens, statusGroups] = await Promise.all([
     prisma.teen.findMany({
-      where: { baseId: baseId ?? undefined, dateJoined: { gte: from, lt: to }, ...notDeleted(false) },
-      select: { dateJoined: true },
+      where: { baseId: baseId ?? undefined, status: { not: "LEFT" }, ...notDeleted(false), ...teenGroupWhere(f) },
+      select: { dateJoined: true, createdAt: true },
     }),
     prisma.teen.groupBy({
       by: ["status"],
-      where: { baseId: baseId ?? undefined, ...notDeleted(false) },
+      where: { baseId: baseId ?? undefined, ...notDeleted(false), ...teenGroupWhere(f) },
       _count: { _all: true },
     }),
   ]);
 
-  const byMonth = new Map<string, number>();
-  for (const t of joined) {
-    if (!t.dateJoined) continue;
-    const key = monthKey(t.dateJoined);
-    byMonth.set(key, (byMonth.get(key) ?? 0) + 1);
-  }
-
-  const trend = enumerateMonths(from, to).map((month) => ({ month, added: byMonth.get(month) ?? 0 }));
+  const joinDates = teens.map((t) => t.dateJoined ?? t.createdAt);
+  const trend = enumerateMonths(from, to).map((month) => {
+    const [y, m] = month.split("-").map(Number);
+    const monthStart = new Date(Date.UTC(y, m - 1, 1));
+    const monthEnd = new Date(Date.UTC(y, m, 1));
+    return {
+      month,
+      added: joinDates.filter((d) => d >= monthStart && d < monthEnd && d >= from && d < to).length,
+      total: joinDates.filter((d) => d < monthEnd).length,
+    };
+  });
   const statusSnapshot = statusGroups.map((g) => ({ status: g.status, count: g._count._all }));
 
   return { trend, statusSnapshot };
@@ -374,37 +576,50 @@ export async function getMembershipGrowth({ baseId, from, to }: DateRange): Prom
 export type GroupBreakdown = {
   platoons: { groupId: string; name: string; teenCount: number }[];
   squads: { groupId: string; name: string; teenCount: number }[];
-  attendanceByPlatoon: { groupId: string; name: string; attended: number }[];
+  attendanceByPlatoon: { groupId: string; name: string; attended: number; rate: number | null }[];
 };
 
+// Platoon comparison uses turnout % (attended / expected across recorded activities),
+// not raw attendance totals - a raw sum just ranks platoons by size.
 export async function getGroupBreakdown({ baseId, from, to }: DateRange): Promise<GroupBreakdown> {
-  const [platoons, squads, participation] = await Promise.all([
+  const [platoons, squads, activities, roster] = await Promise.all([
     prisma.group.findMany({
       where: { type: "PLATOON", baseId: baseId ?? undefined, ...notDeleted(false) },
-      select: { id: true, name: true, _count: { select: { teens: true } } },
+      select: { id: true, name: true, teens: { where: activeTeenFilter, select: { id: true } } },
+      orderBy: { name: "asc" },
     }),
     prisma.group.findMany({
       where: { type: "SQUAD", baseId: baseId ?? undefined, ...notDeleted(false) },
-      select: { id: true, name: true, _count: { select: { members: true } } },
+      select: { id: true, name: true, members: { where: { teen: activeTeenFilter }, select: { id: true } } },
+      orderBy: { name: "asc" },
     }),
-    prisma.activityParticipation.findMany({
-      where: { attended: true, activity: { baseId: baseId ?? undefined, date: { gte: from, lt: to }, ...notDeleted(false) } },
-      select: { teen: { select: { groupId: true } } },
-    }),
+    loadActivities({ baseId, from, to }),
+    loadRoster(baseId, {}),
   ]);
 
-  const attendedByPlatoonId = new Map<string, number>();
-  for (const p of participation) {
-    if (!p.teen.groupId) continue;
-    attendedByPlatoonId.set(p.teen.groupId, (attendedByPlatoonId.get(p.teen.groupId) ?? 0) + 1);
+  const recorded = activities.filter((a) => a.recorded);
+  const byPlatoon = new Map<string, { attended: number; expected: number }>();
+  for (const teen of roster) {
+    if (!teen.groupId) continue;
+    const entry = byPlatoon.get(teen.groupId) ?? { attended: 0, expected: 0 };
+    for (const a of recorded) {
+      if (!isExpected(a, teen)) continue;
+      entry.expected += 1;
+      if (a.attendees.has(teen.id)) entry.attended += 1;
+    }
+    byPlatoon.set(teen.groupId, entry);
   }
 
   return {
-    platoons: platoons.map((g) => ({ groupId: g.id, name: g.name, teenCount: g._count.teens })),
-    squads: squads.map((g) => ({ groupId: g.id, name: g.name, teenCount: g._count.members })),
-    attendanceByPlatoon: platoons.map((g) => ({ groupId: g.id, name: g.name, attended: attendedByPlatoonId.get(g.id) ?? 0 })),
+    platoons: platoons.map((g) => ({ groupId: g.id, name: g.name, teenCount: g.teens.length })),
+    squads: squads.map((g) => ({ groupId: g.id, name: g.name, teenCount: g.members.length })),
+    attendanceByPlatoon: platoons.map((g) => {
+      const entry = byPlatoon.get(g.id) ?? { attended: 0, expected: 0 };
+      return { groupId: g.id, name: g.name, attended: entry.attended, rate: pct(entry.attended, entry.expected) };
+    }),
   };
 }
+
 
 export type TeenDemographics = {
   genderBreakdown: { gender: string; count: number }[];
@@ -434,9 +649,9 @@ function ageBucket(dateOfBirth: Date | null): (typeof AGE_BUCKETS)[number] {
 
 // Over active teens for the base - counts must sum to the active roster, and
 // unknown-DOB teens get their own bucket rather than being silently dropped.
-export async function getTeenDemographics({ baseId }: { baseId?: string | null }): Promise<TeenDemographics> {
+export async function getTeenDemographics({ baseId, ...f }: { baseId?: string | null } & GroupFilter): Promise<TeenDemographics> {
   const teens = await prisma.teen.findMany({
-    where: { baseId: baseId ?? undefined, ...activeTeenFilter, ...notDeleted(false) },
+    where: { baseId: baseId ?? undefined, ...activeTeenFilter, ...teenGroupWhere(f) },
     select: { gender: true, dateOfBirth: true },
   });
 

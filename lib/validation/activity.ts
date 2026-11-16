@@ -20,7 +20,9 @@ export const createActivitySchema = z.object({
   type: z.string().min(1, "Type is required"),
   date: z.coerce.date(),
   baseId: z.string().min(1).optional().nullable(),
+  // Legacy single-platoon field, still accepted; new clients send platoonIds.
   platoonId: optionalId(),
+  platoonIds: z.array(z.string()).optional().default([]),
   squadIds: z.array(z.string()).optional().default([]),
   isCrossBase: z.boolean().optional().default(false),
 });

@@ -10,7 +10,7 @@ export async function POST(req: NextRequest) {
   try {
     const session = await requireSession();
     const body = parseOrThrow(createActivitySchema, await req.json());
-    const { name, description, type, date, platoonId, squadIds } = body;
+    const { name, description, type, date, platoonId, platoonIds, squadIds } = body;
 
     const isCrossBase = body.baseId === "cross-base" ? true : body.isCrossBase;
     const baseId = isCrossBase ? null : body.baseId;
@@ -21,11 +21,8 @@ export async function POST(req: NextRequest) {
       assertBaseAccess(session, null);
     }
 
-    // Collect all group IDs
-    const groupIds: string[] = [];
-
-    if (platoonId) groupIds.push(platoonId);
-    if (Array.isArray(squadIds)) groupIds.push(...squadIds);
+    // An activity can be for several platoons and several squads at once.
+    const groupIds = Array.from(new Set([...(platoonId ? [platoonId] : []), ...platoonIds, ...squadIds]));
 
     // A base-scoped activity may only attach its own base's groups; a cross-base
     // activity may span groups from any base, so just check they exist.
@@ -67,6 +64,8 @@ export async function GET(req: NextRequest) {
       where: { ...(baseId ? { baseId } : {}), ...notDeleted(includeArchived) },
       include: {
         base: true,
+        groups: { select: { id: true, name: true, type: true } },
+        _count: { select: { teenParticipation: { where: { attended: true } } } },
       },
       orderBy: {
         date: "desc",

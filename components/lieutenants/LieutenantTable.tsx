@@ -10,7 +10,12 @@ import Pagination from "@/components/ui/Pagination";
 import Avatar from "@/components/ui/Avatar";
 import Card from "@/components/ui/Card";
 
-export default function LieutenantTable() {
+const STATUS_LABEL: Record<string, string> = { ACTIVE: "Active", INACTIVE: "Inactive", LEFT: "Left" };
+
+const filterClass =
+  "border border-neutral-300 rounded-lg px-3 py-2 w-full sm:w-auto text-sm text-neutral-900 focus:outline-none focus:ring-2 focus:ring-accent-400 focus:border-accent-500 transition-colors bg-white";
+
+export default function LieutenantTable({ initialBaseId = "", initialStatus = "" }: { initialBaseId?: string; initialStatus?: string }) {
   const router = useRouter();
   const { data: session } = useSession();
   const user = session?.user;
@@ -19,38 +24,41 @@ export default function LieutenantTable() {
   const [page, setPage] = useState(1);
   const [total, setTotal] = useState(0);
   const [search, setSearch] = useState("");
-  const [baseId, setBaseId] = useState(user?.baseId);
+  // "" = all bases (superadmin only; everyone else is scoped to their base server-side).
+  const [baseId, setBaseId] = useState(initialBaseId);
   const [rank, setRank] = useState("");
+  const [status, setStatus] = useState(initialStatus);
   const [bases, setBases] = useState([]);
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     if (isSuperAdmin) {
       fetch("/api/bases")
         .then((res) => res.json())
         .then(setBases);
-
-      setBaseId(user?.baseId);
     }
-  }, [isSuperAdmin, user?.baseId]);
+  }, [isSuperAdmin]);
 
   const limit = 10;
-  const fetchData = async (page: number, search: string, baseId: any, rank: string) => {
-    const res = await fetch(
-      `/api/lieutenants?page=${page}&limit=${limit}&search=${search}&baseId=${baseId}&rank=${rank}`,
-      { cache: "no-store" },
-    );
-    const { data, total } = await res.json();
-    setLieutenants(data);
-    setTotal(total);
+  const fetchData = async () => {
+    const params = new URLSearchParams({ page: String(page), limit: String(limit), search, baseId, rank, status });
+    setLoading(true);
+    try {
+      const res = await fetch(`/api/lieutenants?${params}`, { cache: "no-store" });
+      const { data, total } = await res.json();
+      setLieutenants(data ?? []);
+      setTotal(total ?? 0);
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => {
-    if (baseId) {
-      fetchData(page, search, baseId, rank);
-    }
-  }, [page, search, baseId, rank]);
+    if (user) fetchData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.id, page, search, baseId, rank, status]);
+
   const handleView = (id: string) => {
-    // Redirect to the lieutenant detail page
     router.push(`/dashboard/lieutenants/${id}`);
   };
 
@@ -59,21 +67,54 @@ export default function LieutenantTable() {
   return (
     <div>
       <div className="flex flex-col gap-3 sm:flex-row sm:justify-between sm:items-center mb-4">
-        {isSuperAdmin && (
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+          {isSuperAdmin && (
+            <select
+              id="baseId"
+              aria-label="Base"
+              className={filterClass}
+              onChange={(e) => {
+                setBaseId(e.target.value);
+                setPage(1);
+              }}
+              value={baseId}
+            >
+              <option value="">All bases</option>
+              {bases.map((b: any) => (
+                <option key={b.id} value={b.id}>
+                  {b.name}
+                </option>
+              ))}
+            </select>
+          )}
           <select
-            id="baseId"
-            className="border border-neutral-300 rounded-lg px-3 py-2 mt-1 w-full sm:w-auto text-sm text-neutral-900 focus:outline-none focus:ring-2 focus:ring-accent-400 focus:border-accent-500 transition-colors bg-white"
-            onChange={(e) => setBaseId(e.target.value)}
-            value={baseId}
+            aria-label="Rank"
+            className={filterClass}
+            value={rank}
+            onChange={(e) => {
+              setRank(e.target.value);
+              setPage(1);
+            }}
           >
-            <option value=" ">Cross Base</option>
-            {bases.map((b: any) => (
-              <option key={b.id} value={b.id}>
-                {b.name}
-              </option>
-            ))}
+            <option value="">All ranks</option>
+            <option value="LIEUTENANT">Lieutenant</option>
+            <option value="CAPTAIN">Captain</option>
           </select>
-        )}
+          <select
+            aria-label="Status"
+            className={filterClass}
+            value={status}
+            onChange={(e) => {
+              setStatus(e.target.value);
+              setPage(1);
+            }}
+          >
+            <option value="">Any status</option>
+            <option value="ACTIVE">Active</option>
+            <option value="INACTIVE">Inactive</option>
+            <option value="LEFT">Left</option>
+          </select>
+        </div>
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center w-full sm:w-auto">
           <input
             type="text"
@@ -85,31 +126,18 @@ export default function LieutenantTable() {
             }}
             className="border border-neutral-300 px-3 py-2 rounded-lg w-full sm:w-64 text-sm text-neutral-900 placeholder:text-neutral-400 focus:outline-none focus:ring-2 focus:ring-accent-400 focus:border-accent-500 transition-colors"
           />
-          <select
-            className="border border-neutral-300 rounded-lg px-3 py-2 text-sm text-neutral-900 focus:outline-none focus:ring-2 focus:ring-accent-400 focus:border-accent-500 transition-colors bg-white"
-            value={rank}
-            onChange={(e) => {
-              setRank(e.target.value);
-              setPage(1);
-            }}
-          >
-            <option value="">All ranks</option>
-            <option value="LIEUTENANT">Lieutenant</option>
-            <option value="CAPTAIN">Captain</option>
-          </select>
           <button
-            onClick={() => {
-              setPage(1);
-              setSearch("");
-              fetchData(1, search, baseId, rank);
-            }}
-            className="flex items-center px-4 py-2 bg-accent-50 text-accent-700 rounded-pill sm:mx-2 hover:bg-accent-100 w-full sm:w-auto justify-center transition-colors"
+            onClick={() => fetchData()}
+            className="flex items-center px-4 py-2 bg-accent-50 text-accent-700 rounded-pill hover:bg-accent-100 w-full sm:w-auto justify-center transition-colors"
           >
-            <ArrowPathIcon className="w-5 h-5 mr-2" />
+            <ArrowPathIcon className={`w-5 h-5 mr-2 ${loading ? "animate-spin" : ""}`} />
             Refresh
           </button>
         </div>
       </div>
+      <p className="text-sm text-neutral-500 mb-3">
+        {loading ? "Loading…" : `${total} ${total === 1 ? "teen" : "teens"}`}
+      </p>
 
       {/* Table for desktop, cards for mobile */}
       <div>
@@ -123,6 +151,7 @@ export default function LieutenantTable() {
                 <TableHeaderCell>Gender</TableHeaderCell>
                 <TableHeaderCell>Age</TableHeaderCell>
                 <TableHeaderCell>Base</TableHeaderCell>
+                <TableHeaderCell>Status</TableHeaderCell>
                 <TableHeaderCell>Actions</TableHeaderCell>
               </tr>
             </TableHead>
@@ -149,6 +178,11 @@ export default function LieutenantTable() {
                   <TableCell>{lt.gender}</TableCell>
                   <TableCell>{calculateAge(lt.dateOfBirth)} yrs</TableCell>
                   <TableCell>{lt.base?.name ?? "-"}</TableCell>
+                  <TableCell>
+                    <span className={`text-xs font-medium ${lt.status === "ACTIVE" ? "text-success-700" : "text-neutral-500"}`}>
+                      {STATUS_LABEL[lt.status] ?? lt.status}
+                    </span>
+                  </TableCell>
                   <TableCell>
                     <button onClick={() => handleView(lt.id)} title="View" className="p-2 rounded-pill hover:bg-accent-50 transition">
                       <EyeIcon className="w-5 h-5 text-accent-600" />
@@ -198,6 +232,10 @@ export default function LieutenantTable() {
           ))}
         </div>
       </div>
+
+      {!loading && lieutenants.length === 0 && (
+        <p className="text-sm text-neutral-500 text-center py-10">No teens match these filters.</p>
+      )}
 
       <Pagination page={page} totalPages={totalPages} onChange={setPage} />
     </div>

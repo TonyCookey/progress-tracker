@@ -9,6 +9,7 @@ declare module "next-auth" {
       email: string;
       role: string;
       baseId: string;
+      mustChangePassword?: boolean;
     };
   }
 }

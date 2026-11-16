@@ -64,6 +64,7 @@ model User {
   updatedAt            DateTime               @updatedAt
   deletedAt            DateTime?
   imageKey             String?
+  mustChangePassword   Boolean                @default(false)
 }
 
 model Teen {

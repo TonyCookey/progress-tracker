@@ -47,6 +47,7 @@ export const authOptions: NextAuthOptions = {
           session.user.username = user.username;
           session.user.role = user.role;
           session.user.baseId = user.baseId;
+          session.user.mustChangePassword = user.mustChangePassword;
         }
       }
       return session;

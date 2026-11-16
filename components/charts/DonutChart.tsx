@@ -79,7 +79,11 @@ export default function DonutChart({
         colors={colorPalette === "demographic" ? colors.demographicSeries : colors.series}
       />
       <ChartFrame title={title} height={height}>
-        <Doughnut data={chartData} options={options} aria-hidden="true" />
+        {data.every((v) => !v) ? (
+          <div className="absolute inset-0 flex items-center justify-center rounded-lg bg-neutral-50 text-sm text-neutral-500">No data for this period yet.</div>
+        ) : (
+          <Doughnut data={chartData} options={options} aria-hidden="true" />
+        )}
       </ChartFrame>
     </div>
   );

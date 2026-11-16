@@ -11,7 +11,7 @@ export default async function BirthdaysPage() {
   return (
     <RequireAuth>
       <div className="p-4 md:p-6">
-        <PageHeader title="Upcoming Birthdays 🎉" />
+        <PageHeader title="Upcoming Celebrations 🎉" />
         <BirthdayTabs generals={generals as any[]} teens={teens as any[]} anniversaries={anniversaries as any[]} />
       </div>
     </RequireAuth>

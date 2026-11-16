@@ -10,7 +10,7 @@ import DonutChart from "@/components/charts/DonutChart";
 import StatTile from "@/components/charts/StatTile";
 import { formatMonthLabel } from "@/lib/formatDate";
 import { formatMoney } from "@/lib/formatMoney";
-import Card from "@/components/ui/Card";
+import ChartCard from "@/components/charts/ChartCard";
 
 type TrendPoint = { month: string; cash: number; online: number; total: number };
 type ByBasePoint = { baseId: string; baseName: string; month: string; cash: number; online: number; total: number };
@@ -93,66 +93,55 @@ export default function OfferingsAnalytics() {
 
   const showBaseComparison = isSuperAdmin && !filter.baseId && byBase.length > 0;
   const baseNames = Array.from(new Set(byBase.map((p) => p.baseName))).sort();
-  const baseMonths = Array.from(new Set(byBase.map((p) => p.month))).sort();
 
   const latestPerAttendee = perAttendee.length ? perAttendee[perAttendee.length - 1] : null;
+
+  const periodTotal = trend.reduce((sum, p) => sum + p.total, 0);
+  const last = trend[trend.length - 1];
+  const prev = trend[trend.length - 2];
+  const otherByMonth = trend.map((p) => Math.max(0, p.total - p.cash - p.online));
+  const hasOther = otherByMonth.some((v) => v > 0);
+  const baseTotals = baseNames.map((name) => byBase.filter((p) => p.baseName === name).reduce((sum, p) => sum + p.total, 0));
 
   return (
     <div className="space-y-6">
       <AnalyticsFilterBar bases={bases} isSuperAdmin={isSuperAdmin} value={filter} onChange={setFilter} />
 
-      {loading && <p className="text-sm text-neutral-500">Loading charts...</p>}
-
-      {monthOverMonth && (
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+      <div className={`grid grid-cols-2 lg:grid-cols-4 gap-4 transition-opacity ${loading ? "opacity-60" : ""}`}>
+        <StatTile label="Total for period" value={formatMoney(periodTotal)} hint={`${trend.length} month${trend.length === 1 ? "" : "s"}`} />
+        {last && <StatTile label={formatMonthLabel(last.month)} value={formatMoney(last.total)} hint="Latest month in range" />}
+        {monthOverMonth && prev ? (
           <StatTile
-            label="Month-over-month change"
+            label="Change vs previous month"
             value={`${monthOverMonth.value >= 0 ? "+" : ""}${monthOverMonth.value.toFixed(1)}%`}
             delta={{ value: monthOverMonth.value, direction: monthOverMonth.direction }}
+            hint={`Compared with ${formatMonthLabel(prev.month)} (${formatMoney(prev.total)})`}
           />
-          <StatTile label="This month's total" value={formatMoney(trend[trend.length - 1]?.total ?? 0)} />
-          <StatTile label="Last month's total" value={formatMoney(trend[trend.length - 2]?.total ?? 0)} />
-        </div>
-      )}
+        ) : (
+          <StatTile label="Change vs previous month" value="—" hint="Needs two months with offerings" />
+        )}
+        <StatTile
+          label="Per Sunday attendee"
+          value={latestPerAttendee?.perAttendee != null ? formatMoney(latestPerAttendee.perAttendee) : "—"}
+          hint={latestPerAttendee ? `${formatMonthLabel(latestPerAttendee.month)}: offerings ÷ teens present at Sunday Services` : undefined}
+        />
+      </div>
 
-      {latestPerAttendee && (
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          <StatTile
-            label={`Offering per attendee (${formatMonthLabel(latestPerAttendee.month)})`}
-            value={latestPerAttendee.perAttendee !== null ? formatMoney(latestPerAttendee.perAttendee) : "N/A"}
-          />
-        </div>
-      )}
-
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <Card>
-          <h3 className="text-xs font-semibold uppercase tracking-wide text-neutral-500 mb-3">Monthly Totals</h3>
-          <LineTrendChart
-            title="Offerings monthly totals, cash vs transfer"
-            labels={trend.map((p) => formatMonthLabel(p.month))}
-            series={[
-              { name: "Cash", data: trend.map((p) => p.cash) },
-              { name: "Transfer", data: trend.map((p) => p.online) },
-            ]}
-            formatValue={formatMoney}
-          />
-        </Card>
-
-        <Card>
-          <h3 className="text-xs font-semibold uppercase tracking-wide text-neutral-500 mb-3">Cash vs Transfer Split</h3>
+      <div className={`grid grid-cols-1 lg:grid-cols-2 gap-6 transition-opacity ${loading ? "opacity-60" : ""}`}>
+        <ChartCard className="lg:col-span-2" title="Offerings by month" description="Each bar is one month's offerings, split by how they were given.">
           <StackedBarChart
-            title="Offerings split, cash vs transfer, by month"
+            title="Offerings by month, cash vs transfer"
             labels={trend.map((p) => formatMonthLabel(p.month))}
             series={[
               { name: "Cash", data: trend.map((p) => p.cash) },
               { name: "Transfer", data: trend.map((p) => p.online) },
+              ...(hasOther ? [{ name: "Other", data: otherByMonth }] : []),
             ]}
             formatValue={formatMoney}
           />
-        </Card>
+        </ChartCard>
 
-        <Card>
-          <h3 className="text-xs font-semibold uppercase tracking-wide text-neutral-500 mb-3">By Service</h3>
+        <ChartCard title="By service" description="Which services bring in the most. Top 8 shown; the rest are grouped as Other.">
           <BarComparisonChart
             title="Offerings total by service"
             labels={byService.map((p) => p.service)}
@@ -160,41 +149,39 @@ export default function OfferingsAnalytics() {
             formatValue={formatMoney}
             horizontal
           />
-        </Card>
+        </ChartCard>
 
-        <Card>
-          <h3 className="text-xs font-semibold uppercase tracking-wide text-neutral-500 mb-3">By Type</h3>
+        <ChartCard title="By type" description="Share of the period's total by payment type.">
           <DonutChart
             title="Offerings total by type"
-            labels={byType.map((p) => p.type)}
+            labels={byType.map((p) => (p.type === "Online" ? "Transfer" : p.type))}
             data={byType.map((p) => p.total)}
             formatValue={formatMoney}
           />
-        </Card>
+        </ChartCard>
 
-        <Card>
-          <h3 className="text-xs font-semibold uppercase tracking-wide text-neutral-500 mb-3">Offering per Attendee</h3>
+        <ChartCard
+          title="Offering per Sunday attendee"
+          description="Each month's total offerings divided by the number of teens present at that month's Sunday Services. Gaps mean no Sunday attendance was recorded."
+        >
           <LineTrendChart
             title="Offering per Sunday attendee, by month"
             labels={perAttendee.map((p) => formatMonthLabel(p.month))}
             series={[{ name: "Per attendee", data: perAttendee.map((p) => p.perAttendee) }]}
             formatValue={formatMoney}
           />
-        </Card>
+        </ChartCard>
 
         {showBaseComparison && (
-          <Card>
-            <h3 className="text-xs font-semibold uppercase tracking-wide text-neutral-500 mb-3">Base Comparison</h3>
+          <ChartCard title="By base" description="Total offerings per base for the selected period.">
             <BarComparisonChart
-              title="Total offerings by base, by month"
-              labels={baseMonths.map(formatMonthLabel)}
-              series={baseNames.map((baseName) => ({
-                name: baseName,
-                data: baseMonths.map((month) => byBase.find((p) => p.baseName === baseName && p.month === month)?.total ?? 0),
-              }))}
+              title="Total offerings by base"
+              labels={baseNames}
+              series={[{ name: "Total", data: baseTotals }]}
               formatValue={formatMoney}
+              horizontal
             />
-          </Card>
+          </ChartCard>
         )}
       </div>
     </div>

@@ -50,7 +50,7 @@ export async function POST(req: Request) {
 
 export async function GET(req: Request) {
   try {
-    await requireSession();
+    const session = await requireSession();
 
     const { searchParams } = new URL(req.url);
     const pageParam = parseInt(searchParams.get("page") ?? "1");
@@ -58,8 +58,12 @@ export async function GET(req: Request) {
     const page = Number.isFinite(pageParam) && pageParam > 0 ? pageParam : 1;
     const limit = Number.isFinite(limitParam) ? Math.min(Math.max(limitParam, 1), 100) : 10;
     const search = searchParams.get("search")?.toLowerCase() ?? "";
-    const baseId = searchParams.get("baseId") ?? "";
+    // Only superadmins may look across bases; everyone else is pinned to their own.
+    const requestedBaseId = (searchParams.get("baseId") ?? "").trim();
+    const baseId = session.user.role === "SUPERADMIN" ? requestedBaseId : session.user.baseId;
     const rank = searchParams.get("rank");
+    const statusParam = searchParams.get("status");
+    const status = statusParam === "ACTIVE" || statusParam === "INACTIVE" || statusParam === "LEFT" ? (statusParam as "ACTIVE" | "INACTIVE" | "LEFT") : undefined;
     const includeArchived = searchParams.get("includeArchived") === "true";
 
     const skip = (page - 1) * limit;
@@ -67,6 +71,7 @@ export async function GET(req: Request) {
     const where = {
       rank: (rank === "LIEUTENANT" || rank === "CAPTAIN" ? rank : undefined) as "LIEUTENANT" | "CAPTAIN" | undefined,
       baseId: baseId ? baseId : undefined,
+      status,
       name: {
         contains: search,
         mode: "insensitive" as const,
@@ -80,7 +85,7 @@ export async function GET(req: Request) {
         include: { base: true },
         skip,
         take: limit,
-        orderBy: { createdAt: "desc" },
+        orderBy: { name: "asc" },
       }),
       prisma.teen.count({ where }),
     ]);

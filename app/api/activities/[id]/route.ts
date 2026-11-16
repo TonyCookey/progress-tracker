@@ -31,7 +31,7 @@ export async function PUT(req: Request, { params }: { params: { id: string } }) 
   try {
     const session = await requireRole(["SUPERADMIN", "GENERAL"]);
     const body = parseOrThrow(createActivitySchema, await req.json());
-    const { name, description, type, date, platoonId, squadIds } = body;
+    const { name, description, type, date, platoonId, platoonIds, squadIds } = body;
 
     const existingActivity = await prisma.activity.findUnique({ where: { id: params.id } });
     if (!existingActivity) return NextResponse.json({ error: "Activity not found" }, { status: 404 });
@@ -46,9 +46,8 @@ export async function PUT(req: Request, { params }: { params: { id: string } }) 
       assertBaseAccess(session, null);
     }
 
-    const groupIds: string[] = [];
-    if (platoonId) groupIds.push(platoonId);
-    if (Array.isArray(squadIds)) groupIds.push(...squadIds);
+    // An activity can be for several platoons and several squads at once.
+    const groupIds = Array.from(new Set([...(platoonId ? [platoonId] : []), ...platoonIds, ...squadIds]));
 
     // A base-scoped activity may only attach its own base's groups; a cross-base
     // activity may span groups from any base, so just check they exist.

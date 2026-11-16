@@ -8,7 +8,11 @@ function hashToken(rawToken: string) {
   return createHash("sha256").update(rawToken).digest("hex");
 }
 
-export async function issuePasswordResetToken(userId: string) {
+// Admin-generated links are shared by hand (WhatsApp/SMS), so they live longer than
+// the 1-hour emailed ones.
+export const SHARED_LINK_TTL_MS = 72 * 60 * 60 * 1000;
+
+export async function issuePasswordResetToken(userId: string, ttlMs = RESET_TOKEN_TTL_MS) {
   const rawToken = nanoid(32);
   await prisma.$transaction([
     // Invalidate any outstanding tokens for this user so only the newest one is usable.
@@ -20,7 +24,7 @@ export async function issuePasswordResetToken(userId: string) {
       data: {
         userId,
         tokenHash: hashToken(rawToken),
-        expiresAt: new Date(Date.now() + RESET_TOKEN_TTL_MS),
+        expiresAt: new Date(Date.now() + ttlMs),
       },
     }),
   ]);

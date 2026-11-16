@@ -1,6 +1,7 @@
 import { ReactNode } from "react";
 import Sidebar from "@/components/navigation/Sidebar";
 import Topbar from "@/components/navigation/Topbar";
+import PasswordChangeGate from "@/components/auth/PasswordChangeGate";
 
 export default function DashboardLayout({ children }: { children: ReactNode }) {
   return (
@@ -8,7 +9,9 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
       <Sidebar />
       <main className="w-full min-h-screen bg-neutral-50 pt-16 md:ml-64 transition-all">
         <Topbar />
-        <div className="px-4 md:px-6 mt-6">{children}</div>
+        <div className="px-4 md:px-6 mt-6">
+          <PasswordChangeGate>{children}</PasswordChangeGate>
+        </div>
       </main>
     </div>
   );

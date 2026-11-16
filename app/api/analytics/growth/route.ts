@@ -15,7 +15,7 @@ export async function GET(req: Request) {
     if (baseId) assertBaseAccess(session, baseId);
 
     const { from, to } = resolveDateRange(query);
-    const result = await getMembershipGrowth({ baseId, from, to });
+    const result = await getMembershipGrowth({ baseId, from, to, platoonIds: query.platoonIds, squadIds: query.squadIds });
     return NextResponse.json(result);
   } catch (error) {
     return handleApiError(error);

@@ -2,6 +2,18 @@ import { Resend } from "resend";
 
 const FROM_ADDRESS = process.env.EMAIL_FROM || "DA Progress Tracker <no-reply@yourdomain.com>";
 
+export function isEmailConfigured() {
+  return !!process.env.RESEND_API_KEY;
+}
+
+// Base URL for links in emails / shared links. NEXT_PUBLIC_BASE_URL wins; otherwise
+// fall back to the incoming request's origin so links still work on Vercel previews.
+export function appBaseUrl(req?: Request) {
+  if (process.env.NEXT_PUBLIC_BASE_URL) return process.env.NEXT_PUBLIC_BASE_URL.replace(/\/$/, "");
+  if (process.env.VERCEL_PROJECT_PRODUCTION_URL) return `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`;
+  return req ? new URL(req.url).origin : "";
+}
+
 export async function sendEmail({ to, subject, html }: { to: string; subject: string; html: string }) {
   if (!process.env.RESEND_API_KEY) {
     console.error("[email] RESEND_API_KEY not set — email not sent:", { to, subject });

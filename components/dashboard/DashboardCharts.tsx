@@ -1,30 +1,42 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { useSession } from "next-auth/react";
-import AnalyticsFilterBar, { AnalyticsFilterValue, BaseOption } from "@/components/analytics/AnalyticsFilterBar";
+import AnalyticsFilterBar, { AnalyticsFilterValue, BaseOption, filterToParams, hasGroupFilter } from "@/components/analytics/AnalyticsFilterBar";
 import LineTrendChart from "@/components/charts/LineTrendChart";
 import BarComparisonChart from "@/components/charts/BarComparisonChart";
+import StackedBarChart from "@/components/charts/StackedBarChart";
 import DonutChart from "@/components/charts/DonutChart";
 import StatTile from "@/components/charts/StatTile";
-import { formatMonthLabel } from "@/lib/formatDate";
+import ChartCard from "@/components/charts/ChartCard";
+import Badge from "@/components/ui/Badge";
+import { formatMonthLabel, formatDateUTC } from "@/lib/formatDate";
 import { formatMoney } from "@/lib/formatMoney";
-import Card from "@/components/ui/Card";
 
 type OfferingsTrendPoint = { month: string; cash: number; online: number; total: number };
 type OfferingsByBasePoint = { baseId: string; baseName: string; month: string; cash: number; online: number; total: number };
-type AttendancePoint = { date: string; attended: number; rate: number | null };
-type GrowthPoint = { month: string; added: number };
-type StatusSnapshotPoint = { status: string; count: number };
+type AttendancePoint = { activityId: string; name: string; type: string; date: string; attended: number; expected: number; recorded: boolean; rate: number | null };
+type AttendanceSummary = { average: number; total: number; averageRate: number | null; recordedActivities: number; uniqueAttendees: number };
+type GrowthPoint = { month: string; added: number; total: number };
+type Engagement = { buckets: { bucket: string; count: number }[]; totalActive: number; notSeen: { id: string; name: string }[] };
+type Dropoff = { droppedOffCount: number; droppedOffTeens: { id: string; name: string; lastAttended: string | null; missed: number }[]; minMissed: number };
+
+const EMPTY_SUMMARY: AttendanceSummary = { average: 0, total: 0, averageRate: null, recordedActivities: 0, uniqueAttendees: 0 };
 
 function defaultFilter(baseId: string): AnalyticsFilterValue {
   const now = new Date();
   return {
     baseId,
-    from: new Date(Date.UTC(now.getUTCFullYear(), 0, 1)).toISOString().slice(0, 10),
+    from: new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - 3, 1)).toISOString().slice(0, 10),
     to: now.toISOString().slice(0, 10),
+    platoonIds: [],
+    squadIds: [],
+    activityType: "",
   };
 }
+
+const shortDate = (iso: string) => formatDateUTC(iso, { month: "short", day: "numeric" });
 
 export default function DashboardCharts() {
   const { data: session } = useSession();
@@ -37,9 +49,10 @@ export default function DashboardCharts() {
   const [offeringsTrend, setOfferingsTrend] = useState<OfferingsTrendPoint[]>([]);
   const [offeringsByBase, setOfferingsByBase] = useState<OfferingsByBasePoint[]>([]);
   const [attendance, setAttendance] = useState<AttendancePoint[]>([]);
+  const [summary, setSummary] = useState<AttendanceSummary>(EMPTY_SUMMARY);
   const [growth, setGrowth] = useState<GrowthPoint[]>([]);
-  const [statusSnapshot, setStatusSnapshot] = useState<StatusSnapshotPoint[]>([]);
-  const [averageRate, setAverageRate] = useState<number | null>(null);
+  const [engagement, setEngagement] = useState<Engagement | null>(null);
+  const [dropoff, setDropoff] = useState<Dropoff | null>(null);
 
   useEffect(() => {
     if (isSuperAdmin) {
@@ -51,112 +64,199 @@ export default function DashboardCharts() {
     }
   }, [isSuperAdmin, user?.baseId]);
 
+  const filterKey = JSON.stringify(filter);
   useEffect(() => {
-    if (!isSuperAdmin && !filter.baseId) return;
-    const params = new URLSearchParams({ from: filter.from, to: filter.to });
-    if (filter.baseId) params.set("baseId", filter.baseId);
-    const groupByBase = isSuperAdmin && !filter.baseId;
-    if (groupByBase) params.set("groupByBase", "true");
+    if (!user || (!isSuperAdmin && !filter.baseId)) return;
+    const attendanceParams = filterToParams(filter);
+    const growthParams = filterToParams(filter, { activityType: false });
+    const offeringParams = filterToParams(filter, { groups: false, activityType: false });
+    if (isSuperAdmin && !filter.baseId) offeringParams.set("groupByBase", "true");
+    const dropoffParams = filterToParams(filter);
+    dropoffParams.delete("from");
+    dropoffParams.delete("to");
+    dropoffParams.set("periodStart", filter.from);
+    dropoffParams.set("periodEnd", filter.to);
 
+    const json = (r: Response): Promise<any> => (r.ok ? r.json() : Promise.resolve({}));
     setLoading(true);
     Promise.all([
-      fetch(`/api/analytics/offerings?${params}`).then((r) => r.json()),
-      fetch(`/api/analytics/attendance?${params}`).then((r) => r.json()),
-      fetch(`/api/analytics/growth?${params}`).then((r) => r.json()),
+      fetch(`/api/analytics/offerings?${offeringParams}`).then(json),
+      fetch(`/api/analytics/attendance?${attendanceParams}`).then(json),
+      fetch(`/api/analytics/growth?${growthParams}`).then(json),
+      fetch(`/api/analytics/engagement?${attendanceParams}`).then(json),
+      fetch(`/api/analytics/attendance/dropoff?${dropoffParams}`).then(json),
     ])
-      .then(([offerings, attendanceRes, growthRes]) => {
+      .then(([offerings, attendanceRes, growthRes, engagementRes, dropoffRes]) => {
         setOfferingsTrend(offerings.trend ?? []);
         setOfferingsByBase(offerings.byBase ?? []);
-        setAttendance(
-          (attendanceRes.points ?? []).map((p: { date: string; attended: number; rate: number | null }) => ({
-            date: p.date,
-            attended: p.attended,
-            rate: p.rate,
-          })),
-        );
-        setAverageRate(attendanceRes.summary?.averageRate ?? null);
+        setAttendance(attendanceRes.points ?? []);
+        setSummary(attendanceRes.summary ?? EMPTY_SUMMARY);
         setGrowth(growthRes.trend ?? []);
-        setStatusSnapshot(growthRes.statusSnapshot ?? []);
+        setEngagement(engagementRes.buckets ? engagementRes : null);
+        setDropoff(dropoffRes.droppedOffTeens ? dropoffRes : null);
       })
       .finally(() => setLoading(false));
-  }, [isSuperAdmin, filter.baseId, filter.from, filter.to]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.id, isSuperAdmin, filterKey]);
 
+  const groupFiltered = hasGroupFilter(filter);
   const showBaseComparison = isSuperAdmin && !filter.baseId && offeringsByBase.length > 0;
-  const baseNames = Array.from(new Set(offeringsByBase.map((p) => p.baseName))).sort();
-  const baseComparisonMonths = Array.from(new Set(offeringsByBase.map((p) => p.month))).sort();
+  const baseTotals = Array.from(
+    offeringsByBase.reduce((acc, p) => acc.set(p.baseName, (acc.get(p.baseName) ?? 0) + p.total), new Map<string, number>()),
+  ).sort((a, b) => a[0].localeCompare(b[0]));
+
+  const recorded = attendance.filter((p) => p.recorded);
+  const unrecorded = attendance.length - recorded.length;
+  const currentMembers = growth.length ? growth[growth.length - 1].total : null;
+  const joinedInPeriod = growth.reduce((s, p) => s + p.added, 0);
+  const offeringsTotal = offeringsTrend.reduce((s, p) => s + p.total, 0);
+  const otherOfferings = offeringsTrend.map((p) => Math.max(0, p.total - p.cash - p.online));
+  const hasOtherOfferings = otherOfferings.some((v) => v > 0);
+
+  const notMarkedTitle = unrecorded > 0 ? `${unrecorded} activit${unrecorded === 1 ? "y has" : "ies have"} no attendance marked yet and ${unrecorded === 1 ? "is" : "are"} left out.` : null;
 
   return (
-    <div className="space-y-6 mt-6">
-      <AnalyticsFilterBar bases={bases} isSuperAdmin={isSuperAdmin} value={filter} onChange={setFilter} />
+    <section className="space-y-6 mt-10" aria-labelledby="dashboard-insights">
+      <div className="flex items-end justify-between gap-4">
+        <div>
+          <h2 id="dashboard-insights" className="text-lg font-semibold text-neutral-900">
+            Insights
+          </h2>
+          <p className="text-sm text-neutral-500">Attendance, engagement, growth and giving for the selected period.</p>
+        </div>
+        {loading && <span className="text-xs text-neutral-400 animate-pulse">Updating…</span>}
+      </div>
 
-      {loading && <p className="text-sm text-neutral-500">Loading charts...</p>}
+      <div className="lg:sticky lg:top-16 z-10">
+        <AnalyticsFilterBar
+          bases={bases}
+          isSuperAdmin={isSuperAdmin}
+          value={filter}
+          onChange={setFilter}
+          showGroups
+          showActivityType
+          userBaseId={user?.baseId}
+        />
+      </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <Card>
-          <h3 className="text-xs font-semibold uppercase tracking-wide text-neutral-500 mb-3">Offerings Trend</h3>
+      <div className={`grid grid-cols-2 lg:grid-cols-4 gap-4 transition-opacity ${loading ? "opacity-60" : ""}`}>
+        <StatTile
+          label="Average turnout"
+          value={summary.averageRate !== null ? `${summary.averageRate}%` : "—"}
+          hint="Share of expected teens who were present, averaged per activity"
+        />
+        <StatTile label="Avg present" value={summary.average} hint="Teens present per activity" />
+        <StatTile label="Teens reached" value={summary.uniqueAttendees} hint={`Different teens who attended at least once (${summary.recordedActivities} activities)`} />
+        <StatTile
+          label="Active members"
+          value={currentMembers ?? "—"}
+          hint={joinedInPeriod ? `+${joinedInPeriod} joined in this period` : "No new members in this period"}
+        />
+      </div>
+
+      <div className={`grid grid-cols-1 lg:grid-cols-3 gap-6 transition-opacity ${loading ? "opacity-60" : ""}`}>
+        <ChartCard
+          className="lg:col-span-2"
+          title="Attendance per activity"
+          description="Bars show how many teens were present. The line shows turnout: present ÷ expected, where expected = active teens of that base (or only the platoons/squads the activity is for)."
+          footnote={notMarkedTitle}
+        >
           <LineTrendChart
-            title="Offerings trend, cash vs transfer, by month"
+            title="Teens present and turnout per activity"
+            labels={recorded.map((p) => shortDate(p.date))}
+            tooltipTitles={recorded.map((p) => `${p.name} · ${p.type} · ${shortDate(p.date)}`)}
+            series={[
+              { name: "Teens present", kind: "bar", data: recorded.map((p) => p.attended) },
+              { name: "Turnout %", axis: "right", data: recorded.map((p) => p.rate), formatValue: (n) => `${n}%` },
+            ]}
+            yTitle="Teens present"
+            y1Title="Turnout %"
+            height={300}
+            emptyMessage="No attendance has been marked for this period yet."
+          />
+        </ChartCard>
+
+        <ChartCard
+          title="Engagement"
+          description="Active teens grouped by how often they came to activities they were expected at. Regular ≥ 75%, Occasional 25–74%, Rarely under 25%."
+        >
+          {engagement && engagement.totalActive > 0 ? (
+            <DonutChart title="Teens by engagement level" labels={engagement.buckets.map((b) => b.bucket)} data={engagement.buckets.map((b) => b.count)} height={240} />
+          ) : (
+            <p className="text-sm text-neutral-500">No active teens match these filters.</p>
+          )}
+        </ChartCard>
+
+        <ChartCard
+          className="lg:col-span-2"
+          title="Membership growth"
+          description="Line: members on the books at the end of each month (teens marked Left aren't counted). Bars: how many joined that month. Both use the same scale."
+        >
+          <LineTrendChart
+            title="Total members and new joiners by month"
+            labels={growth.map((p) => formatMonthLabel(p.month))}
+            series={[
+              { name: "Total members", data: growth.map((p) => p.total) },
+              { name: "Joined that month", kind: "bar", data: growth.map((p) => p.added) },
+            ]}
+            yTitle="Teens"
+          />
+        </ChartCard>
+
+        <ChartCard
+          title="Needs follow-up"
+          description={`Teens who have come before but missed their last ${dropoff?.minMissed ?? 3}+ activities in a row (up to the end of the period). Unmarked activities are ignored.`}
+          actions={dropoff && dropoff.droppedOffCount > 0 ? <Badge tone="warning">{dropoff.droppedOffCount}</Badge> : undefined}
+        >
+          {dropoff && dropoff.droppedOffTeens.length ? (
+            <ul className="divide-y divide-neutral-100 max-h-64 overflow-y-auto -mx-2">
+              {dropoff.droppedOffTeens.map((teen) => (
+                <li key={teen.id}>
+                  <Link href={`/dashboard/lieutenants/${teen.id}`} className="flex items-center justify-between gap-3 px-2 py-2 rounded-lg hover:bg-neutral-50">
+                    <span className="text-sm font-medium text-neutral-900">{teen.name}</span>
+                    <span className="text-xs text-neutral-500 whitespace-nowrap">
+                      {teen.lastAttended ? `last seen ${shortDate(teen.lastAttended)}` : ""} · missed {teen.missed}
+                    </span>
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="text-sm text-neutral-500">Nobody has dropped off in this period. 🎉</p>
+          )}
+        </ChartCard>
+
+        <ChartCard
+          className={showBaseComparison ? "lg:col-span-2" : "lg:col-span-3"}
+          title="Offerings by month"
+          description={`Cash and transfer offerings recorded in the app. Total for the period: ${formatMoney(offeringsTotal)}.`}
+          actions={groupFiltered ? <Badge tone="neutral">Base-level only</Badge> : undefined}
+          footnote={groupFiltered ? "Offerings are recorded per base, not per platoon or squad, so the platoon/squad filters don't apply here." : undefined}
+        >
+          <StackedBarChart
+            title="Offerings by month, cash vs transfer"
             labels={offeringsTrend.map((p) => formatMonthLabel(p.month))}
             series={[
               { name: "Cash", data: offeringsTrend.map((p) => p.cash) },
               { name: "Transfer", data: offeringsTrend.map((p) => p.online) },
+              ...(hasOtherOfferings ? [{ name: "Other", data: otherOfferings }] : []),
             ]}
             formatValue={formatMoney}
           />
-        </Card>
-
-        <Card>
-          <h3 className="text-xs font-semibold uppercase tracking-wide text-neutral-500 mb-3">Attendance Trend</h3>
-          <StatTile label="Avg attendance rate" value={averageRate !== null ? `${averageRate}%` : "N/A"} />
-          <div className="mt-3">
-            <LineTrendChart
-              title="Attendance per activity, count and rate"
-              labels={attendance.map((p) => new Date(p.date).toLocaleDateString(undefined, { month: "short", day: "numeric" }))}
-              series={[
-                { name: "Attended", data: attendance.map((p) => p.attended) },
-                { name: "Rate", data: attendance.map((p) => p.rate), axis: "right", formatValue: (n) => `${n}%` },
-              ]}
-            />
-          </div>
-        </Card>
-
-        <Card>
-          <h3 className="text-xs font-semibold uppercase tracking-wide text-neutral-500 mb-3">Membership Growth</h3>
-          <LineTrendChart
-            title="Teens added per month"
-            labels={growth.map((p) => formatMonthLabel(p.month))}
-            series={[{ name: "Added", data: growth.map((p) => p.added) }]}
-          />
-        </Card>
-
-        {statusSnapshot.length > 0 && (
-          <Card>
-            <h3 className="text-xs font-semibold uppercase tracking-wide text-neutral-500 mb-3">Teen Status Breakdown</h3>
-            <DonutChart
-              title="Teens by status"
-              labels={statusSnapshot.map((s) => s.status)}
-              data={statusSnapshot.map((s) => s.count)}
-            />
-          </Card>
-        )}
+        </ChartCard>
 
         {showBaseComparison && (
-          <Card>
-            <h3 className="text-xs font-semibold uppercase tracking-wide text-neutral-500 mb-3">Base Comparison (Offerings)</h3>
+          <ChartCard title="Offerings by base" description="Total offerings per base for the selected period.">
             <BarComparisonChart
-              title="Total offerings by base, by month"
-              labels={baseComparisonMonths.map(formatMonthLabel)}
-              series={baseNames.map((baseName) => ({
-                name: baseName,
-                data: baseComparisonMonths.map(
-                  (month) => offeringsByBase.find((p) => p.baseName === baseName && p.month === month)?.total ?? 0,
-                ),
-              }))}
+              title="Total offerings by base"
+              labels={baseTotals.map(([name]) => name)}
+              series={[{ name: "Total", data: baseTotals.map(([, total]) => total) }]}
               formatValue={formatMoney}
+              horizontal
             />
-          </Card>
+          </ChartCard>
         )}
       </div>
-    </div>
+    </section>
   );
 }
