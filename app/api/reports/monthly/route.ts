@@ -13,6 +13,23 @@ export async function GET(req: Request) {
     const month = searchParams.get("month");
     const year = searchParams.get("year");
 
+    // History listing: superadmins may omit baseId to see every base's reports.
+    if (!month && !year) {
+      if (!baseId && session.user.role !== "SUPERADMIN") throw new ApiError(400, "baseId is required");
+      if (baseId) assertBaseAccess(session, baseId);
+      const reports = await prisma.monthlyReport.findMany({
+        where: baseId ? { baseId } : {},
+        select: { id: true, baseId: true, month: true, year: true, status: true, generatedAt: true, generatedBy: true, updatedAt: true, fileKey: true, base: { select: { name: true, label: true } } },
+        orderBy: [{ year: "desc" }, { month: "desc" }],
+      });
+      const userIds = Array.from(new Set(reports.map((r) => r.generatedBy)));
+      const users = await prisma.user.findMany({ where: { id: { in: userIds } }, select: { id: true, name: true } });
+      const nameById = new Map(users.map((u) => [u.id, u.name]));
+      return NextResponse.json({
+        reports: reports.map(({ fileKey, ...r }) => ({ ...r, archived: !!fileKey, generatedByName: nameById.get(r.generatedBy) ?? null })),
+      });
+    }
+
     if (!baseId) {
       throw new ApiError(400, "baseId is required");
     }
@@ -27,12 +44,7 @@ export async function GET(req: Request) {
       ]);
       return NextResponse.json({ auto, draft });
     }
-
-    const reports = await prisma.monthlyReport.findMany({
-      where: { baseId },
-      orderBy: [{ year: "desc" }, { month: "desc" }],
-    });
-    return NextResponse.json({ reports });
+    throw new ApiError(400, "month and year must be provided together");
   } catch (error) {
     return handleApiError(error);
   }

@@ -15,24 +15,43 @@ interface General {
   name: string;
   email: string;
   imageKey?: string | null;
+  role?: string;
   base: {
     name: string;
   };
 }
 
-export default function GeneralsTable() {
+const ROLE_LABEL: Record<string, string> = { SUPERADMIN: "Superadmin", GENERAL: "General", COLONEL: "Colonel", VOLUNTEER: "Volunteer" };
+
+const filterClass =
+  "border border-neutral-300 rounded-lg px-3 py-2 w-full sm:w-auto text-sm text-neutral-900 focus:outline-none focus:ring-2 focus:ring-accent-400 focus:border-accent-500 transition-colors bg-white";
+
+export default function GeneralsTable({ initialRole = "", initialBaseId = "" }: { initialRole?: string; initialBaseId?: string }) {
   const [generals, setGenerals] = useState<General[]>([]);
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
+  const [total, setTotal] = useState(0);
   const [loading, setLoading] = useState(false);
+  const [role, setRole] = useState(initialRole);
+  const [baseId, setBaseId] = useState(initialBaseId);
+  const [search, setSearch] = useState("");
+  const [bases, setBases] = useState<{ id: string; name: string }[]>([]);
+
+  useEffect(() => {
+    fetch("/api/bases")
+      .then((res) => (res.ok ? res.json() : []))
+      .then(setBases);
+  }, []);
 
   const fetchGenerals = async (currentPage = 1) => {
     setLoading(true);
     try {
-      const res = await fetch(`/api/generals?page=${currentPage}`);
+      const params = new URLSearchParams({ page: String(currentPage), role, baseId, search });
+      const res = await fetch(`/api/generals?${params}`);
       const data = await res.json();
-      setGenerals(data.generals);
-      setTotalPages(data.totalPages);
+      setGenerals(data.generals ?? []);
+      setTotalPages(data.totalPages ?? 1);
+      setTotal(data.total ?? 0);
     } catch (error) {
       console.error("Failed to fetch generals:", error);
     } finally {
@@ -42,9 +61,42 @@ export default function GeneralsTable() {
 
   useEffect(() => {
     fetchGenerals(page);
-  }, [page]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [page, role, baseId, search]);
+
+  const resetPage = <T,>(setter: (v: T) => void) => (v: T) => {
+    setter(v);
+    setPage(1);
+  };
+
   return (
     <div>
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-center mb-4">
+        <select aria-label="Base" className={filterClass} value={baseId} onChange={(e) => resetPage(setBaseId)(e.target.value)}>
+          <option value="">All bases</option>
+          {bases.map((b) => (
+            <option key={b.id} value={b.id}>
+              {b.name}
+            </option>
+          ))}
+        </select>
+        <select aria-label="Role" className={filterClass} value={role} onChange={(e) => resetPage(setRole)(e.target.value)}>
+          <option value="">All roles</option>
+          {Object.entries(ROLE_LABEL).map(([value, label]) => (
+            <option key={value} value={value}>
+              {label}
+            </option>
+          ))}
+        </select>
+        <input
+          type="text"
+          placeholder="Search by name or email..."
+          value={search}
+          onChange={(e) => resetPage(setSearch)(e.target.value)}
+          className="border border-neutral-300 px-3 py-2 rounded-lg w-full sm:w-64 text-sm text-neutral-900 placeholder:text-neutral-400 focus:outline-none focus:ring-2 focus:ring-accent-400 focus:border-accent-500"
+        />
+        <span className="text-sm text-neutral-500 sm:ml-auto">{total} {total === 1 ? "person" : "people"}</span>
+      </div>
       {loading ? (
         <LoadingSpinner />
       ) : (
@@ -56,6 +108,7 @@ export default function GeneralsTable() {
                 <tr>
                   <TableHeaderCell>Name</TableHeaderCell>
                   <TableHeaderCell>Email</TableHeaderCell>
+                  <TableHeaderCell>Role</TableHeaderCell>
                   <TableHeaderCell>Base</TableHeaderCell>
                   <TableHeaderCell className="text-right">Actions</TableHeaderCell>
                 </tr>
@@ -72,6 +125,7 @@ export default function GeneralsTable() {
                       <span className="font-medium text-neutral-900">{general.name}</span>
                     </TableCell>
                     <TableCell>{general.email}</TableCell>
+                    <TableCell>{ROLE_LABEL[general.role ?? ""] ?? general.role ?? "-"}</TableCell>
                     <TableCell>{general.base?.name ?? "-"}</TableCell>
                     <TableCell className="text-right">
                       <Link href={`/dashboard/generals/${general.id}`} className="inline-flex">

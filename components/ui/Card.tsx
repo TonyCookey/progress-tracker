@@ -12,7 +12,7 @@ export default function Card({ children, padded = true, className, ...props }: C
     <div
       className={clsx(
         "bg-white border border-neutral-200 rounded-card shadow-soft",
-        padded && !hasPaddingOverride && "p-6",
+        padded && !hasPaddingOverride && "p-4 md:p-6",
         className,
       )}
       {...props}

@@ -54,7 +54,9 @@ function fromLines(value: unknown) {
   return Array.isArray(value) ? value.join("\n") : "";
 }
 
-export default function MonthlyReportBuilder() {
+export type ReportSelection = { baseId: string; month: number; year: number };
+
+export default function MonthlyReportBuilder({ initial, onSaved }: { initial?: ReportSelection; onSaved?: () => void } = {}) {
   const { data: session } = useSession();
   const toast = useToast();
   const user = session?.user;
@@ -62,9 +64,9 @@ export default function MonthlyReportBuilder() {
 
   const now = new Date();
   const [bases, setBases] = useState<Option[]>([]);
-  const [baseId, setBaseId] = useState<string>("");
-  const [month, setMonth] = useState(now.getMonth() + 1);
-  const [year, setYear] = useState(now.getFullYear());
+  const [baseId, setBaseId] = useState<string>(initial?.baseId ?? "");
+  const [month, setMonth] = useState(initial?.month ?? now.getMonth() + 1);
+  const [year, setYear] = useState(initial?.year ?? now.getFullYear());
   const [auto, setAuto] = useState<AutoData | null>(null);
   const [status, setStatus] = useState<"DRAFT" | "FINAL" | null>(null);
   const [loading, setLoading] = useState(false);
@@ -81,7 +83,7 @@ export default function MonthlyReportBuilder() {
       fetch("/api/bases")
         .then((res) => res.json())
         .then(setBases);
-    } else if (user?.baseId) {
+    } else if (user?.baseId && !initial?.baseId) {
       setBaseId(user.baseId);
     }
   }, [isSuperAdmin, user?.baseId]);
@@ -189,6 +191,7 @@ export default function MonthlyReportBuilder() {
       if (!report) return;
       setStatus(report.status);
       toast.success("Draft saved");
+      onSaved?.();
     } finally {
       setSaving(false);
     }
@@ -222,6 +225,7 @@ export default function MonthlyReportBuilder() {
       toast.success("Report generated successfully");
       window.URL.revokeObjectURL(url);
       setStatus("FINAL");
+      onSaved?.();
     } finally {
       setGenerating(false);
     }

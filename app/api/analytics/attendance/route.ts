@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { requireSession, assertBaseAccess, handleApiError } from "@/lib/auth";
-import { getAttendanceTrend, getAttendanceByType } from "@/lib/analytics";
+import { getAttendanceTrend, attendanceByTypeFromPoints } from "@/lib/analytics";
 import { attendanceQuerySchema, resolveDateRange } from "@/lib/validation/analytics";
 import { parseOrThrow } from "@/lib/validation/parse";
 
@@ -15,12 +15,13 @@ export async function GET(req: Request) {
     if (baseId) assertBaseAccess(session, baseId);
 
     const { from, to } = resolveDateRange(query);
-    const result = await getAttendanceTrend({ baseId, activityType: query.activityType, from, to });
+    const groups = { platoonIds: query.platoonIds, squadIds: query.squadIds };
+    const result = await getAttendanceTrend({ baseId, activityType: query.activityType, from, to, ...groups });
 
     // byType is a full breakdown across all activity types for the period, so it's
     // only meaningful (and only computed) when the caller isn't already filtered to one.
     if (!query.activityType) {
-      const byType = await getAttendanceByType({ baseId, from, to });
+      const byType = attendanceByTypeFromPoints(result.points);
       return NextResponse.json({ ...result, byType });
     }
     return NextResponse.json(result);

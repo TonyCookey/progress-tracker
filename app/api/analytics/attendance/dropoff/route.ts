@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { requireSession, assertBaseAccess, handleApiError } from "@/lib/auth";
 import { getAttendanceDropoff } from "@/lib/analytics";
-import { dropoffQuerySchema } from "@/lib/validation/analytics";
+import { dropoffQuerySchema, inclusiveEnd } from "@/lib/validation/analytics";
 import { parseOrThrow } from "@/lib/validation/parse";
 
 export async function GET(req: Request) {
@@ -18,7 +18,9 @@ export async function GET(req: Request) {
       baseId,
       activityType: query.activityType,
       periodStart: query.periodStart,
-      periodEnd: query.periodEnd,
+      periodEnd: inclusiveEnd(query.periodEnd),
+      platoonIds: query.platoonIds,
+      squadIds: query.squadIds,
     });
     return NextResponse.json(result);
   } catch (error) {

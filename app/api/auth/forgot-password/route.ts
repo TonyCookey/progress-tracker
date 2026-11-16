@@ -4,7 +4,7 @@ import { handleApiError } from "@/lib/auth";
 import { parseOrThrow } from "@/lib/validation/parse";
 import { forgotPasswordSchema } from "@/lib/validation/passwordReset";
 import { issuePasswordResetToken, invalidatePasswordResetToken } from "@/lib/passwordReset";
-import { sendPasswordResetEmail } from "@/lib/email";
+import { sendPasswordResetEmail, appBaseUrl } from "@/lib/email";
 
 const GENERIC_MESSAGE = "If that email exists, a reset link has been sent.";
 
@@ -15,7 +15,7 @@ export async function POST(req: Request) {
     const user = await prisma.user.findUnique({ where: { email } });
     if (user && !user.deletedAt) {
       const rawToken = await issuePasswordResetToken(user.id);
-      const resetUrl = `${process.env.NEXT_PUBLIC_BASE_URL}/auth/reset-password/${rawToken}`;
+      const resetUrl = `${appBaseUrl(req)}/auth/reset-password/${rawToken}`;
       // Swallow email failures — never leak whether the account exists via the response —
       // but don't strand a live, unusable token if the send didn't go through.
       await sendPasswordResetEmail(user.email, resetUrl).catch(async (e) => {

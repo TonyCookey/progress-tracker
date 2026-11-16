@@ -7,7 +7,7 @@ import { parseOrThrow } from "@/lib/validation/parse";
 
 export async function POST(req: NextRequest, { params }: { params: { id: string } }) {
   try {
-    const session = await requireSession();
+    const session = await requireSession({ allowPendingPasswordChange: true });
     if (session.user.id !== params.id) {
       throw new ApiError(403, "Forbidden");
     }
@@ -23,7 +23,7 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
       return NextResponse.json({ message: "Current password is incorrect" }, { status: 400 });
     }
     const hashed = await bcrypt.hash(newPassword, 10);
-    await prisma.user.update({ where: { id: params.id }, data: { password: hashed } });
+    await prisma.user.update({ where: { id: params.id }, data: { password: hashed, mustChangePassword: false } });
     return NextResponse.json({ success: true });
   } catch (error) {
     return handleApiError(error);

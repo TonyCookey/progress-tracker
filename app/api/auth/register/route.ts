@@ -44,6 +44,8 @@ export async function POST(req: Request) {
         gender: gender || undefined,
         role,
         baseId: base.id,
+        // The admin chose this password, so the person sets their own at first sign-in.
+        mustChangePassword: true,
       },
       select: safeUserSelect,
     });

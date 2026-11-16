@@ -467,6 +467,37 @@ same `lib/` functions, so there's one source of truth for each query.
   extend the `ROUTES` map in `lib/uploadImage.ts` rather than branching on subject type inside the
   routes themselves.
 
+### Nov 2026 analytics/accounts update (read before touching analytics)
+
+- **Date ranges are inclusive of the `to` day.** The filter bar sends calendar dates; `resolveDateRange`
+  / `inclusiveEnd` (`lib/validation/analytics.ts`) push `to` to the next midnight because every query
+  uses `lt: to`. Before this, anything on the end date (e.g. today) was silently excluded.
+- **Attendance "expected" denominator** (`lib/analytics.ts`, `isExpected`): a base activity expects
+  that base's ACTIVE teens; an activity tied to platoons/squads expects only their members; a
+  cross-base one expects everyone. Activities with **no participation rows at all** are "not
+  recorded" and excluded from turnout, engagement and drop-off (not counted as 0%).
+- **Platoon/squad filters** (`platoonIds`, `squadIds`, comma-separated): platoons OR'd, squads OR'd,
+  the two dimensions AND'd (`teenGroupWhere`). On the attendance trend they also restrict activities
+  to open ones + ones for a selected group. For engagement and drop-off they narrow only the
+  *roster* — every activity a teen was expected at still counts. Offerings have no group relation,
+  so group filters never apply to them.
+- **Drop-off / "Needs follow-up"**: active teen who has attended before (180-day lookback) and missed
+  their last 3+ recorded, expected activities in a row, with the latest miss inside the period.
+- **Engagement** (`GET /api/analytics/engagement`) replaced the dashboard's status donut.
+- **Activities can target several platoons and squads** (`platoonIds[]` + `squadIds[]`; legacy
+  `platoonId` still accepted). No schema change — `Activity.groups` was already many-to-many.
+- **Report history**: `GET /api/reports/monthly` with no month/year lists reports (superadmin may omit
+  `baseId`). `GET /api/reports/monthly/[id]/download` redirects to R2 when archived, otherwise
+  rebuilds the .pptx from the saved inputs + `dataJson` snapshot. Generation no longer fails when
+  R2 is unconfigured/unreachable — archiving is best-effort.
+- **Passwords without email**: `User.mustChangePassword` (additive migration) gates the dashboard
+  (`components/auth/PasswordChangeGate.tsx`) until the user picks a password. Set by admin account
+  creation, `POST /api/generals/[id]/temp-password`, and `POST /api/generals/require-password-change`
+  (bulk). `POST /api/generals/[id]/send-reset?mode=link` returns a 72h reset link for sharing by
+  hand. Enforced server-side: `requireSession` returns 403 for flagged accounts (except the
+  change-password route) and the dashboard layout withholds page content until they change it.
+- List APIs `GET /api/lieutenants` and `GET /api/offerings` now pin non-superadmins to their own base.
+
 ---
 
 ## 10. Conventions & style

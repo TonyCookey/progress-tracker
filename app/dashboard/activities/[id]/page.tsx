@@ -29,7 +29,7 @@ export default function ActivityDetailsPage({ params }: { params: { id: string }
   const [attendance, setAttendance] = useState<{ [teenId: string]: boolean }>({});
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(1);
-  const pageSize = 10;
+  const pageSize = 25;
 
   const [generals, setGenerals] = useState<GeneralAttendee[]>([]);
   const [generalAttendance, setGeneralAttendance] = useState<{ [userId: string]: boolean }>({});
@@ -152,13 +152,13 @@ export default function ActivityDetailsPage({ params }: { params: { id: string }
   };
 
   return (
-    <div className="max-w-5xl mx-auto py-10 px-4">
+    <div className="max-w-5xl mx-auto py-4 md:py-10 px-4">
       {/* Top Section: Activity Details & Stats Side by Side */}
-      <div className="flex flex-col md:flex-row gap-8 mb-8">
+      <div className="flex flex-col md:flex-row gap-4 md:gap-8 mb-6 md:mb-8">
         {/* Activity Details Card */}
         <Card className="space-y-4 flex-1">
           <div className="flex items-start justify-between gap-4">
-            <h2 className="text-2xl font-bold mb-2 text-accent-700">{activity?.name}</h2>
+            <h2 className="text-xl md:text-2xl font-bold mb-2 text-accent-700 break-words min-w-0">{activity?.name}</h2>
             <div className="flex gap-2 shrink-0">
               <Button size="sm" variant="secondary" onClick={() => router.push(`/dashboard/activities/${params.id}/edit`)}>
                 Edit
@@ -170,7 +170,13 @@ export default function ActivityDetailsPage({ params }: { params: { id: string }
           </div>
           <p>{activity?.description}</p>
           <p>Date: {formatDate(activity?.date)}</p>
-          <p>Base: {activity?.base?.name || "N/A"}</p>
+          <p>Base: {activity?.isCrossBase ? "Cross base" : activity?.base?.name || "N/A"}</p>
+          <p>
+            For:{" "}
+            {activity?.groups?.length
+              ? activity.groups.map((g: { name: string; type: string }) => `${g.name} (${g.type === "PLATOON" ? "platoon" : "squad"})`).join(", ")
+              : "Everyone in the base"}
+          </p>
         </Card>
         {/* Stats Card */}
         <Card className="flex-1 h-fit">
@@ -241,31 +247,33 @@ export default function ActivityDetailsPage({ params }: { params: { id: string }
             </Table>
           </TableContainer>
         </div>
-        {/* Mobile Cards */}
-        <div className="md:hidden space-y-4">
-          {paginatedTeens.map((teen) => (
-            <Card key={teen.id} padded className="flex flex-col gap-2">
-              <div className="flex items-center gap-3 mb-2">
-                <Avatar name={teen.name} size="sm" />
-                <span className="font-medium text-sm break-words leading-snug">{teen.name}</span>
-              </div>
-              <div className="flex flex-wrap gap-4 text-sm mb-2">
-                <div>
-                  <span className="font-semibold">Gender:</span> {teen.gender}
-                </div>
-              </div>
-              <div className="flex mt-2">
-                <Button
-                  className="w-full"
-                  variant={attendance[teen.id] ? "primary" : "secondary"}
-                  onClick={() => handleMarkAttendance(teen.id)}
+        {/* Mobile: compact tap-to-toggle rows - quick to mark a whole room on a phone */}
+        <ul className="md:hidden divide-y divide-neutral-100 -mx-1">
+          {paginatedTeens.map((person) => {
+            const present = !!attendance[person.id];
+            return (
+              <li key={person.id}>
+                <button
+                  type="button"
+                  onClick={() => handleMarkAttendance(person.id)}
+                  aria-pressed={present}
+                  className="w-full flex items-center gap-3 px-1 py-3 min-h-14 text-left active:bg-neutral-50"
                 >
-                  {attendance[teen.id] ? "Present" : "Mark Present"}
-                </Button>
-              </div>
-            </Card>
-          ))}
-        </div>
+                  <Avatar name={person.name} size="sm" />
+                  <span className="flex-1 min-w-0">
+                    <span className="block text-sm font-medium text-neutral-900 truncate">{person.name}</span>
+                    <span className="block text-xs text-neutral-500">{person.gender}</span>
+                  </span>
+                  <span
+                    className={`shrink-0 rounded-pill px-3 py-1.5 text-xs font-semibold ${present ? "bg-accent-600 text-white" : "bg-neutral-100 text-neutral-600"}`}
+                  >
+                    {present ? "Present ✓" : "Tap if present"}
+                  </span>
+                </button>
+              </li>
+            );
+          })}
+        </ul>
         {/* Pagination */}
         <Pagination page={page} totalPages={totalPages} onChange={setPage} />
       </Card>
@@ -321,31 +329,33 @@ export default function ActivityDetailsPage({ params }: { params: { id: string }
             </Table>
           </TableContainer>
         </div>
-        {/* Mobile Cards */}
-        <div className="md:hidden space-y-4">
-          {paginatedGenerals.map((general) => (
-            <Card key={general.id} padded className="flex flex-col gap-2">
-              <div className="flex items-center gap-3 mb-2">
-                <Avatar name={general.name} size="sm" />
-                <span className="font-medium text-sm break-words leading-snug">{general.name}</span>
-              </div>
-              <div className="flex flex-wrap gap-4 text-sm mb-2">
-                <div>
-                  <span className="font-semibold">Role:</span> {general.role}
-                </div>
-              </div>
-              <div className="flex mt-2">
-                <Button
-                  className="w-full"
-                  variant={generalAttendance[general.id] ? "primary" : "secondary"}
-                  onClick={() => handleMarkGeneralAttendance(general.id)}
+        {/* Mobile: compact tap-to-toggle rows - quick to mark a whole room on a phone */}
+        <ul className="md:hidden divide-y divide-neutral-100 -mx-1">
+          {paginatedGenerals.map((person) => {
+            const present = !!generalAttendance[person.id];
+            return (
+              <li key={person.id}>
+                <button
+                  type="button"
+                  onClick={() => handleMarkGeneralAttendance(person.id)}
+                  aria-pressed={present}
+                  className="w-full flex items-center gap-3 px-1 py-3 min-h-14 text-left active:bg-neutral-50"
                 >
-                  {generalAttendance[general.id] ? "Present" : "Mark Present"}
-                </Button>
-              </div>
-            </Card>
-          ))}
-        </div>
+                  <Avatar name={person.name} size="sm" />
+                  <span className="flex-1 min-w-0">
+                    <span className="block text-sm font-medium text-neutral-900 truncate">{person.name}</span>
+                    <span className="block text-xs text-neutral-500">{person.role}</span>
+                  </span>
+                  <span
+                    className={`shrink-0 rounded-pill px-3 py-1.5 text-xs font-semibold ${present ? "bg-accent-600 text-white" : "bg-neutral-100 text-neutral-600"}`}
+                  >
+                    {present ? "Present ✓" : "Tap if present"}
+                  </span>
+                </button>
+              </li>
+            );
+          })}
+        </ul>
         {/* Pagination */}
         <Pagination page={generalPage} totalPages={totalGeneralPages} onChange={setGeneralPage} />
       </Card>

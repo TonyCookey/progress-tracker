@@ -11,6 +11,8 @@ import {
   Tooltip,
   Legend,
   Filler,
+  LineController,
+  BarController,
 } from "chart.js";
 
 let registered = false;
@@ -19,7 +21,7 @@ let registered = false;
 // but centralizing avoids drift between chart components on which elements they need.
 export function registerChartJs() {
   if (registered) return;
-  ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, BarElement, ArcElement, Tooltip, Legend, Filler);
+  ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, BarElement, ArcElement, Tooltip, Legend, Filler, LineController, BarController);
   registered = true;
 }
 
@@ -103,6 +105,13 @@ export function commonTooltipOptions(colors: ChartColors, formatValue: (n: numbe
   };
 }
 
+// Value-axis ticks: 150000 -> "150K" so money axes don't collide on narrow charts.
+const compact = new Intl.NumberFormat("en", { notation: "compact", maximumFractionDigits: 1 });
+export function compactTick(value: number | string) {
+  const n = typeof value === "number" ? value : Number(value);
+  return Number.isFinite(n) && Math.abs(n) >= 1000 ? compact.format(n) : value;
+}
+
 export function baseChartOptions(colors: ChartColors) {
   return {
     responsive: true,
@@ -116,7 +125,7 @@ export function baseChartOptions(colors: ChartColors) {
       y: {
         beginAtZero: true,
         grid: { color: colors.grid, drawTicks: false },
-        ticks: { color: colors.axisText },
+        ticks: { color: colors.axisText, callback: compactTick },
       },
     },
     plugins: {

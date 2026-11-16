@@ -2,7 +2,7 @@
 
 import { useMemo } from "react";
 import { Bar } from "react-chartjs-2";
-import { registerChartJs, useChartColors, commonTooltipOptions, baseChartOptions, getSeriesColor } from "./chartTheme";
+import { registerChartJs, useChartColors, commonTooltipOptions, baseChartOptions, getSeriesColor, compactTick } from "./chartTheme";
 import ChartLegend from "./ChartLegend";
 import ChartFrame from "./ChartFrame";
 import type { ChartSeries } from "./LineTrendChart";
@@ -48,6 +48,15 @@ export default function BarComparisonChart({
   const options = useMemo(
     () => ({
       ...baseChartOptions(colors),
+      ...(horizontal
+        ? {
+            // Horizontal: the value axis is x, the category axis is y - swap tick handling.
+            scales: {
+              x: { beginAtZero: true, grid: { color: colors.grid, drawTicks: false }, ticks: { color: colors.axisText, callback: compactTick, maxTicksLimit: 5 } },
+              y: { grid: { display: false }, ticks: { color: colors.axisText } },
+            },
+          }
+        : {}),
       indexAxis: horizontal ? ("y" as const) : ("x" as const),
       plugins: {
         legend: { display: false },
@@ -64,7 +73,11 @@ export default function BarComparisonChart({
         colors={series.length === 2 ? (colorPalette === "demographic" ? colors.demographicSeries : colors.twoSeries) : colors.series}
       />
       <ChartFrame title={title} height={height}>
-        <Bar data={data} options={options} aria-hidden="true" />
+        {!labels.length || series.every((s) => s.data.every((v) => v === null || v === 0)) ? (
+          <div className="absolute inset-0 flex items-center justify-center rounded-lg bg-neutral-50 text-sm text-neutral-500">No data for this period yet.</div>
+        ) : (
+          <Bar data={data} options={options} aria-hidden="true" />
+        )}
       </ChartFrame>
     </div>
   );

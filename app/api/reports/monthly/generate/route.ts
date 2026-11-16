@@ -6,7 +6,7 @@ import { requireRole, assertBaseAccess, handleApiError, ApiError } from "@/lib/a
 import { generateMonthlyReportSchema } from "@/lib/validation/monthlyReport";
 import { parseOrThrow } from "@/lib/validation/parse";
 import { getMonthlyReport } from "@/lib/reports/monthly";
-import { buildMonthlyReportPptx } from "@/lib/reports/generatePptx";
+import { buildReportBuffer, isR2Configured, PPTX_CONTENT_TYPE, reportFileKey, reportFileName } from "@/lib/reports/buildReportFile";
 
 export async function POST(req: Request) {
   try {
@@ -24,41 +24,23 @@ export async function POST(req: Request) {
       throw new ApiError(404, "Base not found");
     }
 
-    const expenseItems = (draft?.expenseItems as { description: string; amount: number }[] | null) ?? [];
+    const buffer = await buildReportBuffer({ base, month, year, auto, draft });
 
-    const pptx = buildMonthlyReportPptx({
-      baseLabel: base.label ?? base.name,
-      baseName: base.name,
-      month,
-      year,
-      auto,
-      openingBalance: Number(draft?.openingBalance ?? 0),
-      income: Number(draft?.income ?? auto.offeringsTotal.total),
-      expenseItems,
-      theme: draft?.theme ?? "",
-      executiveSummary: draft?.executiveSummary ?? "",
-      issues: draft?.issues ?? "",
-      alternativeChurches: draft?.alternativeChurches ?? "",
-      sundayTeaching: draft?.sundayTeaching ?? "",
-      description: draft?.description ?? "",
-      victories: (draft?.victories as string[] | null) ?? [],
-      challenges: (draft?.challenges as string[] | null) ?? [],
-      plans: (draft?.plans as string[] | null) ?? [],
-      updateOnTeens: draft?.updateOnTeens ?? "",
-    });
+    // Archiving to R2 is best-effort: if storage isn't configured or the upload fails,
+    // the user still gets their file, and the report can be rebuilt later from the
+    // saved inputs + the auto-figure snapshot (dataJson) stored below.
+    let fileKey: string | null = draft?.fileKey ?? null;
+    if (isR2Configured()) {
+      const key = reportFileKey(baseId, month, year);
+      try {
+        await r2.send(new PutObjectCommand({ Bucket: process.env.R2_BUCKET!, Key: key, Body: buffer, ContentType: PPTX_CONTENT_TYPE }));
+        fileKey = key;
+      } catch (uploadError) {
+        console.error("[reports/generate] R2 upload failed - returning file without archiving", uploadError);
+      }
+    }
 
-    const buffer = (await pptx.write({ outputType: "nodebuffer" })) as Buffer;
-
-    const fileKey = `reports/monthly/${baseId}/${year}-${String(month).padStart(2, "0")}.pptx`;
-    await r2.send(
-      new PutObjectCommand({
-        Bucket: process.env.R2_BUCKET!,
-        Key: fileKey,
-        Body: buffer,
-        ContentType: "application/vnd.openxmlformats-officedocument.presentationml.presentation",
-      }),
-    );
-
+    const snapshot = JSON.parse(JSON.stringify(auto));
     await prisma.monthlyReport.upsert({
       where: { baseId_month_year: { baseId, month, year } },
       create: {
@@ -67,26 +49,14 @@ export async function POST(req: Request) {
         year,
         generatedBy: session.user.id,
         status: "FINAL",
-        dataJson: JSON.parse(JSON.stringify(auto)),
+        dataJson: snapshot,
         fileKey,
-        openingBalance: draft?.openingBalance,
-        income: draft?.income,
-        expenseItems: draft?.expenseItems ?? undefined,
-        theme: draft?.theme,
-        executiveSummary: draft?.executiveSummary,
-        issues: draft?.issues,
-        alternativeChurches: draft?.alternativeChurches,
-        sundayTeaching: draft?.sundayTeaching,
-        description: draft?.description,
-        victories: draft?.victories ?? undefined,
-        challenges: draft?.challenges ?? undefined,
-        plans: draft?.plans ?? undefined,
-        updateOnTeens: draft?.updateOnTeens,
       },
       update: {
         status: "FINAL",
-        dataJson: JSON.parse(JSON.stringify(auto)),
+        dataJson: snapshot,
         fileKey,
+        generatedBy: session.user.id,
         generatedAt: new Date(),
       },
     });
@@ -94,8 +64,8 @@ export async function POST(req: Request) {
     return new NextResponse(buffer, {
       status: 200,
       headers: {
-        "Content-Type": "application/vnd.openxmlformats-officedocument.presentationml.presentation",
-        "Content-Disposition": `attachment; filename="${(base.label ?? base.name).replace(/\s+/g, "-")}-${year}-${String(month).padStart(2, "0")}.pptx"`,
+        "Content-Type": PPTX_CONTENT_TYPE,
+        "Content-Disposition": `attachment; filename="${reportFileName(base, month, year)}"`,
       },
     });
   } catch (error) {

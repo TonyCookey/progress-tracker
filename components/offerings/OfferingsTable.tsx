@@ -1,8 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
-import { EyeIcon, ArrowPathIcon } from "@heroicons/react/24/outline";
+import { ArrowPathIcon } from "@heroicons/react/24/outline";
 import { useSession } from "next-auth/react";
-import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { formatDate } from "@/lib/formatDate";
 import { formatMoney } from "@/lib/formatMoney";
@@ -15,7 +14,6 @@ import Pagination from "@/components/ui/Pagination";
 import { useToast } from "@/components/ui/Toast";
 
 export default function OfferingsTable() {
-  const router = useRouter();
   const toast = useToast();
   const { data: session } = useSession();
   const user = session?.user;
@@ -24,36 +22,45 @@ export default function OfferingsTable() {
   const [offerings, setOfferings] = useState([]);
   const [page, setPage] = useState(1);
   const [total, setTotal] = useState(0);
+  const [totalAmount, setTotalAmount] = useState(0);
   const [search, setSearch] = useState("");
-  const [baseId, setBaseId] = useState(user?.baseId);
+  // "" = all bases, "cross-base" = offerings with no base; non-superadmins are scoped server-side.
+  const [baseId, setBaseId] = useState("");
+  const [type, setType] = useState("");
+  const [from, setFrom] = useState("");
+  const [to, setTo] = useState("");
   const [bases, setBases] = useState([]);
+  const [offeringTypes, setOfferingTypes] = useState<{ key: string; label: string }[]>([]);
 
   useEffect(() => {
     if (isSuperAdmin) {
       fetch("/api/bases")
         .then((res) => res.json())
         .then(setBases);
-
-      setBaseId(user?.baseId);
     }
-  }, [isSuperAdmin, user?.baseId]);
+    fetch("/api/refdata?category=offering_type")
+      .then((res) => (res.ok ? res.json() : []))
+      .then(setOfferingTypes);
+  }, [isSuperAdmin]);
 
   const limit = 10;
-  const fetchData = async (page: number, search: string, baseId: any) => {
-    const res = await fetch(`/api/offerings?page=${page}&limit=${limit}&search=${search}&baseId=${baseId}`, { cache: "no-store" });
-    const { offerings, total } = await res.json();
-    setOfferings(offerings);
-    setTotal(total);
+  const fetchData = async () => {
+    const params = new URLSearchParams({ page: String(page), limit: String(limit), search, baseId, type, from, to });
+    const res = await fetch(`/api/offerings?${params}`, { cache: "no-store" });
+    const { offerings, total, totalAmount } = await res.json();
+    setOfferings(offerings ?? []);
+    setTotal(total ?? 0);
+    setTotalAmount(totalAmount ?? 0);
   };
 
   useEffect(() => {
-    if (baseId) {
-      fetchData(page, search, baseId);
-    }
-  }, [page, search, baseId]);
+    if (user) fetchData();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.id, page, search, baseId, type, from, to]);
 
-  const handleView = (id: string) => {
-    router.push(`/dashboard/offerings/${id}`);
+  const withReset = (setter: (v: string) => void) => (v: string) => {
+    setter(v);
+    setPage(1);
   };
 
   const handleDelete = async (id: string) => {
@@ -65,53 +72,55 @@ export default function OfferingsTable() {
       return;
     }
     toast.success("Offering deleted successfully");
-    fetchData(page, search, baseId);
+    fetchData();
   };
 
   const totalPages = Math.ceil(total / limit);
 
   return (
     <div>
-      <div className="flex flex-col gap-3 sm:flex-row sm:justify-between sm:items-center mb-4">
+      <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:flex-wrap mb-4">
         {isSuperAdmin && (
-          <UiSelect
-            id="baseId"
-            className="sm:w-auto"
-            onChange={(e) => setBaseId(e.target.value)}
-            value={baseId}
-          >
-            <option value=" ">Cross Base</option>
+          <UiSelect id="baseId" label="Base" className="lg:w-44" onChange={(e) => withReset(setBaseId)(e.target.value)} value={baseId}>
+            <option value="">All bases</option>
             {bases.map((b: any) => (
               <option key={b.id} value={b.id}>
                 {b.name}
               </option>
             ))}
+            <option value="cross-base">Cross-base only</option>
           </UiSelect>
         )}
-        <div className="flex flex-col gap-2 sm:flex-row sm:items-center w-full sm:w-auto">
-          <Input
-            type="text"
-            placeholder="Search by service..."
-            value={search}
-            onChange={(e) => {
-              setSearch(e.target.value);
-              setPage(1);
-            }}
-            className="sm:w-64"
-          />
-          <Button
-            variant="secondary"
-            className="w-full sm:w-auto"
-            onClick={() => {
-              setPage(1);
-              setSearch("");
-              fetchData(1, search, baseId);
-            }}
-          >
-            <ArrowPathIcon className="w-5 h-5 mr-2" />
-            Refresh
-          </Button>
-        </div>
+        <UiSelect id="type" label="Type" className="lg:w-40" onChange={(e) => withReset(setType)(e.target.value)} value={type}>
+          <option value="">All types</option>
+          {offeringTypes.map((t) => (
+            <option key={t.key} value={t.key}>
+              {t.label}
+            </option>
+          ))}
+        </UiSelect>
+        <Input type="date" label="From" value={from} onChange={(e) => withReset(setFrom)(e.target.value)} className="lg:w-40" />
+        <Input type="date" label="To" value={to} onChange={(e) => withReset(setTo)(e.target.value)} className="lg:w-40" />
+        <Input
+          type="text"
+          label="Search"
+          placeholder="Service name..."
+          value={search}
+          onChange={(e) => withReset(setSearch)(e.target.value)}
+          className="lg:w-56"
+        />
+        <Button variant="secondary" className="w-full lg:w-auto" onClick={() => fetchData()}>
+          <ArrowPathIcon className="w-5 h-5 mr-2" />
+          Refresh
+        </Button>
+      </div>
+      <div className="flex items-center justify-between mb-3 text-sm">
+        <span className="text-neutral-500">
+          {total} {total === 1 ? "offering" : "offerings"}
+        </span>
+        <span className="text-neutral-700">
+          Total: <span className="font-bold text-success-700">{formatMoney(totalAmount)}</span>
+        </span>
       </div>
 
       {/* Table for desktop, cards for mobile */}

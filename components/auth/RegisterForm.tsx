@@ -96,7 +96,8 @@ export default function RegisterForm() {
       </Select>
 
       <div>
-        <label className="block text-sm font-medium text-neutral-700 mb-1">Password</label>
+        <label className="block text-sm font-medium text-neutral-700 mb-1">Temporary password</label>
+        <p className="text-xs text-neutral-400 mb-1">Share it with them; they&apos;ll be asked to choose their own the first time they sign in.</p>
         <div className="relative">
           <input
             type={showPassword ? "text" : "password"}

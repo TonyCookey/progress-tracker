@@ -125,7 +125,7 @@ export default function TeenDetailsPage() {
   const statusTone: BadgeTone = teen.status === "LEFT" ? "neutral" : teen.status === "INACTIVE" ? "warning" : "success";
 
   return (
-    <div className="max-w-5xl mx-auto p-6">
+    <div className="max-w-5xl mx-auto p-4 md:p-6">
       <div className="flex flex-col md:flex-row gap-6 mb-8">
         {/* Profile Card */}
         <Card className={`flex-1 ${color.gradient} flex items-center gap-6`}>

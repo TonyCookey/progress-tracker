@@ -26,7 +26,7 @@ export default function EditOfferingPage() {
 
   if (error) {
     return (
-      <div className="px-5 space-y-4">
+      <div className="px-4 md:px-5 py-4 md:py-0 space-y-4">
         <p className="text-danger-500">{error}</p>
         <Button variant="secondary" onClick={() => router.push("/dashboard/offerings")}>
           Back to Offerings
@@ -38,7 +38,7 @@ export default function EditOfferingPage() {
   if (!offering) return <LoadingSpinner />;
 
   return (
-    <div className="px-5 space-y-5">
+    <div className="px-4 md:px-5 py-4 md:py-0 space-y-5">
       <RecordOfferingForm offering={offering} />
     </div>
   );

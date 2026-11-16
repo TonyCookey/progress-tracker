@@ -1,19 +1,18 @@
 "use client";
 
-import { useForm, Controller } from "react-hook-form";
-import Select from "react-select";
+import { useForm } from "react-hook-form";
+import GroupMultiSelect, { GroupLite } from "@/components/activities/GroupMultiSelect";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useSyncSelectValue } from "@/lib/hooks/useSyncSelectValue";
 import Card from "@/components/ui/Card";
 import Input from "@/components/ui/Input";
 import Textarea from "@/components/ui/Textarea";
-import UiSelect, { selectStyles } from "@/components/ui/Select";
+import UiSelect from "@/components/ui/Select";
 import Button from "@/components/ui/Button";
 import { useToast } from "@/components/ui/Toast";
 
 type Option = { id: string; name: string };
-type SquadOption = { value: string; label: string };
 type RefDataOption = { id: string; key: string; label: string };
 type Group = { id: string; type: "PLATOON" | "SQUAD" };
 type Activity = {
@@ -28,13 +27,13 @@ type Activity = {
 };
 
 export default function EditActivityForm({ activity }: { activity: Activity }) {
-  const platoonId = activity.groups?.find((g) => g.type === "PLATOON")?.id ?? "";
+  const platoonIds = activity.groups?.filter((g) => g.type === "PLATOON").map((g) => g.id) ?? [];
   const squadIds = activity.groups?.filter((g) => g.type === "SQUAD").map((g) => g.id) ?? [];
 
   const {
     register,
     handleSubmit,
-    control,
+    watch,
     setValue,
     formState: { isSubmitting, errors },
   } = useForm({
@@ -44,16 +43,17 @@ export default function EditActivityForm({ activity }: { activity: Activity }) {
       date: activity.date ? new Date(activity.date).toISOString().slice(0, 10) : "",
       type: activity.type,
       baseId: activity.isCrossBase ? "cross-base" : (activity.baseId ?? ""),
-      platoonId,
+      platoonIds,
       squadIds,
     },
   });
+  const selectedBaseId = watch("baseId");
   const router = useRouter();
   const toast = useToast();
 
   const [bases, setBases] = useState<Option[]>([]);
-  const [platoons, setPlatoons] = useState<Option[]>([]);
-  const [squads, setSquads] = useState<Option[]>([]);
+  const [platoons, setPlatoons] = useState<GroupLite[]>([]);
+  const [squads, setSquads] = useState<GroupLite[]>([]);
   const [activityTypes, setActivityTypes] = useState<RefDataOption[]>([]);
 
   useEffect(() => {
@@ -82,7 +82,6 @@ export default function EditActivityForm({ activity }: { activity: Activity }) {
   }, []);
 
   useSyncSelectValue(bases, setValue, "baseId", activity.isCrossBase ? "cross-base" : (activity.baseId ?? ""));
-  useSyncSelectValue(platoons, setValue, "platoonId", platoonId);
   useSyncSelectValue(activityTypes, setValue, "type", activity.type);
 
   const onSubmit = async (data: any) => {
@@ -94,7 +93,7 @@ export default function EditActivityForm({ activity }: { activity: Activity }) {
       const res = await fetch(`/api/activities/${activity.id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...data, squadIds: data.squadIds?.map((s: string | Option) => (typeof s === "string" ? s : s.id)) }),
+        body: JSON.stringify(data),
       });
       if (!res.ok) {
         console.error("Failed to update activity", res.statusText);
@@ -108,7 +107,6 @@ export default function EditActivityForm({ activity }: { activity: Activity }) {
       toast.error("Failed to update activity");
     }
   };
-  const squadOptions: SquadOption[] = squads.map((s) => ({ value: s.id, label: s.name }));
 
   return (
     <Card>
@@ -141,37 +139,24 @@ export default function EditActivityForm({ activity }: { activity: Activity }) {
           ))}
         </UiSelect>
 
-        <UiSelect id="platoonId" label="Platoon (optional)" {...register("platoonId")}>
-          <option value="">None</option>
-          {platoons.map((p) => (
-            <option key={p.id} value={p.id}>
-              {p.name}
-            </option>
-          ))}
-        </UiSelect>
+        <GroupMultiSelect
+          id="platoonIds"
+          label="Platoons (optional)"
+          groups={platoons}
+          baseId={selectedBaseId ?? ""}
+          value={watch("platoonIds")}
+          onChange={(ids) => setValue("platoonIds", ids)}
+        />
 
-        <div>
-          <label htmlFor="squadIds" className="block text-sm font-medium mb-1">
-            Squads
-          </label>
-          <Controller
-            name="squadIds"
-            control={control}
-            render={({ field }) => (
-              <Select<SquadOption, true>
-                {...field}
-                isMulti
-                options={squadOptions}
-                className="react-select-container"
-                classNamePrefix="react-select"
-                styles={selectStyles}
-                value={squadOptions.filter((opt) => (field.value as string[])?.includes(opt.value))}
-                onChange={(selected) => field.onChange(selected.map((opt) => opt.value))}
-                onBlur={field.onBlur}
-              />
-            )}
-          />
-        </div>
+        <GroupMultiSelect
+          id="squadIds"
+          label="Squads (optional)"
+          hint="Leave both empty if the activity is open to every teen in the base. Attendance and turnout only expect members of the selected groups."
+          groups={squads}
+          baseId={selectedBaseId ?? ""}
+          value={watch("squadIds")}
+          onChange={(ids) => setValue("squadIds", ids)}
+        />
 
         <div className="flex justify-end pt-2">
           <Button type="submit" disabled={isSubmitting} isLoading={isSubmitting}>

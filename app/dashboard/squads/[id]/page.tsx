@@ -76,7 +76,7 @@ export default function SquadDetailsPage() {
   if (!squad) return <LoadingSpinner />;
 
   return (
-    <div className="max-w-5xl mx-auto p-8">
+    <div className="max-w-5xl mx-auto p-4 md:p-8">
       {/* Squad Info Card */}
       <Card className="mb-8">
         <h1 className="text-2xl font-extrabold mb-2 text-neutral-900">{squad.name}</h1>
