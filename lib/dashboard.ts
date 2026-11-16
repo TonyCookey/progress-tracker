@@ -76,8 +76,8 @@ export async function getDashboardSummary(scopeBaseId?: string): Promise<Dashboa
 }
 
 // Flat card list kept for the existing GET /api/dashboard consumers.
-export async function getDashboardCards() {
-  const summary = await getDashboardSummary();
+export async function getDashboardCards(scopeBaseId?: string) {
+  const summary = await getDashboardSummary(scopeBaseId);
   return [
     ...summary.headline.map(({ label, value, href }) => ({ label: `Total ${label}`, value, href })),
     ...summary.roles.map(({ label, value, href }) => ({ label: `Role: ${label}`, value, href })),

@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { requireSession, assertBaseAccess, handleApiError } from "@/lib/auth";
+import { requireSession, assertBaseAccess, handleApiError, ApiError } from "@/lib/auth";
 import { createOfferingSchema } from "@/lib/validation/offering";
 import { parseOrThrow } from "@/lib/validation/parse";
 import { notDeleted } from "@/lib/softDelete";
@@ -20,11 +20,17 @@ export async function GET(req: Request) {
     const requestedBaseId = (searchParams.get("baseId") ?? "").trim();
     const baseId = session.user.role === "SUPERADMIN" ? requestedBaseId : session.user.baseId;
     const type = searchParams.get("type") || undefined;
-    const from = searchParams.get("from");
-    const to = searchParams.get("to");
+    const parseDay = (v: string | null) => {
+      if (!v) return null;
+      const d = new Date(v);
+      if (Number.isNaN(d.getTime())) throw new ApiError(400, `Invalid date: ${v}`);
+      return d;
+    };
+    const from = parseDay(searchParams.get("from"));
+    const to = parseDay(searchParams.get("to"));
     const dateFilter =
       from || to
-        ? { date: { ...(from ? { gte: new Date(from) } : {}), ...(to ? { lt: new Date(new Date(to).getTime() + 24 * 60 * 60 * 1000) } : {}) } }
+        ? { date: { ...(from ? { gte: from } : {}), ...(to ? { lt: new Date(to.getTime() + 24 * 60 * 60 * 1000) } : {}) } }
         : {};
     const includeArchived = searchParams.get("includeArchived") === "true";
 

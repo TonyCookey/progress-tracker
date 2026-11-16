@@ -100,7 +100,7 @@ export default function GeneralDetailsPage() {
   if (!general) return <LoadingSpinner />;
 
   return (
-    <div className="max-w-5xl mx-auto p-6">
+    <div className="max-w-5xl mx-auto p-4 md:p-6">
       <div className="flex flex-col md:flex-row gap-6 mb-8">
         {/* Profile Card */}
         <Card className="flex-1 flex items-center gap-6">

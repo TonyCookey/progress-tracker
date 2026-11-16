@@ -7,7 +7,7 @@ import { parseOrThrow } from "@/lib/validation/parse";
 
 export async function POST(req: NextRequest, { params }: { params: { id: string } }) {
   try {
-    const session = await requireSession();
+    const session = await requireSession({ allowPendingPasswordChange: true });
     if (session.user.id !== params.id) {
       throw new ApiError(403, "Forbidden");
     }

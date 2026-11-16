@@ -1,8 +1,7 @@
 "use client";
 import { useEffect, useState } from "react";
-import { EyeIcon, ArrowPathIcon } from "@heroicons/react/24/outline";
+import { ArrowPathIcon } from "@heroicons/react/24/outline";
 import { useSession } from "next-auth/react";
-import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { formatDate } from "@/lib/formatDate";
 import { formatMoney } from "@/lib/formatMoney";
@@ -15,7 +14,6 @@ import Pagination from "@/components/ui/Pagination";
 import { useToast } from "@/components/ui/Toast";
 
 export default function OfferingsTable() {
-  const router = useRouter();
   const toast = useToast();
   const { data: session } = useSession();
   const user = session?.user;
@@ -63,10 +61,6 @@ export default function OfferingsTable() {
   const withReset = (setter: (v: string) => void) => (v: string) => {
     setter(v);
     setPage(1);
-  };
-
-  const handleView = (id: string) => {
-    router.push(`/dashboard/offerings/${id}`);
   };
 
   const handleDelete = async (id: string) => {

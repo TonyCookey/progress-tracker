@@ -2,6 +2,7 @@
 
 import { ReactNode, useState } from "react";
 import { signOut, useSession } from "next-auth/react";
+import { useRouter } from "next/navigation";
 import Card from "@/components/ui/Card";
 import Input from "@/components/ui/Input";
 import Button from "@/components/ui/Button";
@@ -10,7 +11,8 @@ import Button from "@/components/ui/Button";
 // or given a temporary password) picks its own password. Works without any email
 // provider: the admin shares the temporary password, the person signs in and lands here.
 export default function PasswordChangeGate({ children }: { children: ReactNode }) {
-  const { data: session, update } = useSession();
+  const { data: session, status, update } = useSession();
+  const router = useRouter();
   const [oldPassword, setOldPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -18,6 +20,9 @@ export default function PasswordChangeGate({ children }: { children: ReactNode }
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
 
+  // Render nothing until the session is known, so flagged accounts never get the page
+  // (or its server-rendered numbers) even for a moment.
+  if (status === "loading") return null;
   if (!session?.user?.mustChangePassword) return <>{children}</>;
 
   const submit = async (e: React.FormEvent) => {
@@ -39,6 +44,8 @@ export default function PasswordChangeGate({ children }: { children: ReactNode }
         return;
       }
       await update();
+      // The server layout withheld the page while the flag was set - re-render it now.
+      router.refresh();
     } finally {
       setSaving(false);
     }

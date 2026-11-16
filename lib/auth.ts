@@ -84,7 +84,10 @@ export function handleApiError(error: unknown) {
   return NextResponse.json({ error: "Internal Server Error", message: "Internal Server Error" }, { status: 500 });
 }
 
-export async function requireSession(): Promise<Session> {
+// `allowPendingPasswordChange` is only for the change-password route itself: every other
+// API refuses accounts that still have to replace an admin-issued/shared password, so the
+// "set your own password" screen is a real block, not just a cover over the dashboard.
+export async function requireSession({ allowPendingPasswordChange = false } = {}): Promise<Session> {
   const session = await getSession();
   if (!session?.user) {
     throw new ApiError(401, "Unauthorized");
@@ -92,9 +95,12 @@ export async function requireSession(): Promise<Session> {
 
   // A user deactivated after their JWT was issued must lose access immediately,
   // not just be blocked from signing in again — re-check on every request.
-  const user = await prisma.user.findUnique({ where: { id: session.user.id }, select: { deletedAt: true } });
+  const user = await prisma.user.findUnique({ where: { id: session.user.id }, select: { deletedAt: true, mustChangePassword: true } });
   if (!user || user.deletedAt) {
     throw new ApiError(401, "Unauthorized");
+  }
+  if (user.mustChangePassword && !allowPendingPasswordChange) {
+    throw new ApiError(403, "Please set a new password before continuing");
   }
 
   return session;

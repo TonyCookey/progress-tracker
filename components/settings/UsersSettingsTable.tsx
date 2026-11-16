@@ -32,8 +32,9 @@ export default function UsersSettingsTable() {
   const [shareInfo, setShareInfo] = useState<{ title: string; name: string; secret: string; message: string } | null>(null);
   const [bulkConfirm, setBulkConfirm] = useState(false);
 
-  const fetchGenerals = async (currentPage = 1) => {
-    setLoading(true);
+  // `silent` refreshes in place (no spinner) so open modals aren't unmounted.
+  const fetchGenerals = async (currentPage = 1, silent = false) => {
+    if (!silent) setLoading(true);
     try {
       const res = await fetch(`/api/generals?page=${currentPage}&includeArchived=true`);
       const data = await res.json();
@@ -133,7 +134,7 @@ export default function UsersSettingsTable() {
         secret: tempPassword,
         message: `Hi ${general.name.split(" ")[0]}, sign in to the DA Progress Tracker at ${loginUrl} with email ${email} and temporary password ${tempPassword}. You'll be asked to choose your own password straight away.`,
       });
-      fetchGenerals(page);
+      fetchGenerals(page, true);
     });
 
   const requireAll = async () => {
@@ -142,7 +143,7 @@ export default function UsersSettingsTable() {
     if (!res.ok) return void toast.error(await errorMessage(res));
     const { count } = await res.json();
     toast.success(`${count} people will be asked to set a new password next time they sign in`);
-    fetchGenerals(page);
+    fetchGenerals(page, true);
   };
 
   const actionButtons = (general: General, mobile = false) => {

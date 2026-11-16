@@ -9,7 +9,13 @@ export function getGroups(type: GroupType, includeArchived = false) {
     include: {
       leader: { select: safeUserSelect },
       base: true,
-      _count: { select: { teens: { where: { deletedAt: null } }, members: { where: { teen: { deletedAt: null } } } } },
+      // ACTIVE only, matching the analytics roster so "12 members" agrees everywhere.
+      _count: {
+        select: {
+          teens: { where: { deletedAt: null, status: "ACTIVE" } },
+          members: { where: { teen: { deletedAt: null, status: "ACTIVE" } } },
+        },
+      },
     },
     orderBy: { name: "asc" },
   });

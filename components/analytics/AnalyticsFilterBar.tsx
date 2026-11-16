@@ -81,6 +81,8 @@ export default function AnalyticsFilterBar({
   const [platoons, setPlatoons] = useState<GroupOption[]>([]);
   const [squads, setSquads] = useState<GroupOption[]>([]);
   const [activityTypes, setActivityTypes] = useState<{ key: string; label: string }[]>([]);
+  // Phones: platoon/squad/type filters fold away behind a toggle so charts start on screen.
+  const [moreOpen, setMoreOpen] = useState(false);
 
   useEffect(() => {
     if (!showGroups) return;
@@ -126,6 +128,7 @@ export default function AnalyticsFilterBar({
   })?.[1];
 
   const hasExtraFilters = hasGroupFilter(value) || !!value.activityType;
+  const extraCount = (value.platoonIds?.length ?? 0) + (value.squadIds?.length ?? 0) + (value.activityType ? 1 : 0);
 
   return (
     <div className="bg-white border border-neutral-200 rounded-card p-4 shadow-soft space-y-3">
@@ -166,7 +169,27 @@ export default function AnalyticsFilterBar({
       </div>
 
       {(showGroups || showActivityType) && (
-        <div className="flex flex-col gap-3 md:flex-row md:items-center md:flex-wrap border-t border-neutral-100 pt-3">
+        <button
+          type="button"
+          onClick={() => setMoreOpen((o) => !o)}
+          aria-expanded={moreOpen}
+          className="md:hidden w-full flex items-center justify-between border-t border-neutral-100 pt-3 text-sm font-medium text-neutral-700"
+        >
+          <span>
+            {showGroups ? "Platoons, squads & type" : "Activity type"}
+            {extraCount > 0 && <span className="ml-2 rounded-pill bg-accent-600 px-2 py-0.5 text-xs text-white">{extraCount}</span>}
+          </span>
+          <span className="text-neutral-400">{moreOpen ? "Hide" : "Show"}</span>
+        </button>
+      )}
+
+      {(showGroups || showActivityType) && (
+        <div
+          className={clsx(
+            "flex-col gap-3 md:flex md:flex-row md:items-center md:flex-wrap md:border-t md:border-neutral-100 md:pt-3",
+            moreOpen ? "flex" : "hidden",
+          )}
+        >
           {showActivityType && (
             <select
               value={value.activityType ?? ""}

@@ -494,7 +494,8 @@ same `lib/` functions, so there's one source of truth for each query.
   (`components/auth/PasswordChangeGate.tsx`) until the user picks a password. Set by admin account
   creation, `POST /api/generals/[id]/temp-password`, and `POST /api/generals/require-password-change`
   (bulk). `POST /api/generals/[id]/send-reset?mode=link` returns a 72h reset link for sharing by
-  hand. The gate is UX, not an authorization boundary.
+  hand. Enforced server-side: `requireSession` returns 403 for flagged accounts (except the
+  change-password route) and the dashboard layout withholds page content until they change it.
 - List APIs `GET /api/lieutenants` and `GET /api/offerings` now pin non-superadmins to their own base.
 
 ---

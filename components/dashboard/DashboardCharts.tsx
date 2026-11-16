@@ -148,9 +148,9 @@ export default function DashboardCharts() {
         <StatTile label="Avg present" value={summary.average} hint="Teens present per activity" />
         <StatTile label="Teens reached" value={summary.uniqueAttendees} hint={`Different teens who attended at least once (${summary.recordedActivities} activities)`} />
         <StatTile
-          label="Active members"
+          label="Members"
           value={currentMembers ?? "—"}
-          hint={joinedInPeriod ? `+${joinedInPeriod} joined in this period` : "No new members in this period"}
+          hint={`On the roster (not Left)${joinedInPeriod ? ` · +${joinedInPeriod} joined this period` : ""}`}
         />
       </div>
 

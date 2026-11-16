@@ -12,6 +12,7 @@ export const dynamic = "force-dynamic";
 export default async function DashboardPage() {
   const session = await getSession();
   const scopeBaseId = session?.user && session.user.role !== "SUPERADMIN" ? session.user.baseId : undefined;
+  if (session?.user?.mustChangePassword) return null; // layout shows the change-password screen
   const { headline, roles, bases } = await getDashboardSummary(scopeBaseId);
 
   return (
@@ -19,20 +20,20 @@ export default async function DashboardPage() {
       <div className="p-4 md:p-6">
         <PageHeader title="Dashboard" description="Click any number to open the matching list." />
 
-        <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-5 gap-4">
+        <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-5 gap-3 md:gap-4">
           {headline.map((card) => (
             <Link
               key={card.label}
               href={card.href}
               className="group rounded-card focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-400"
             >
-              <Card padded className="p-5 h-full transition-shadow group-hover:shadow-softHover">
+              <Card padded className="p-4 md:p-5 h-full transition-shadow group-hover:shadow-softHover">
                 <div className="flex items-start justify-between">
                   <p className="text-xs font-semibold uppercase tracking-wide text-neutral-500">{card.label}</p>
                   <ArrowUpRightIcon className="w-4 h-4 text-neutral-300 group-hover:text-accent-600 transition-colors" aria-hidden />
                 </div>
-                <p className="text-3xl font-extrabold mt-2 text-accent-700 tabular-nums">{card.value}</p>
-                {card.hint && <p className="text-xs text-neutral-400 mt-1">{card.hint}</p>}
+                <p className="text-2xl md:text-3xl font-extrabold mt-1 md:mt-2 text-accent-700 tabular-nums">{card.value}</p>
+                {card.hint && <p className="hidden sm:block text-xs text-neutral-400 mt-1">{card.hint}</p>}
               </Card>
             </Link>
           ))}
@@ -57,7 +58,7 @@ export default async function DashboardPage() {
             <h2 className="text-lg font-semibold text-neutral-900 mb-3">Bases</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {bases.map((base) => (
-                <Card key={base.id} padded className="p-5">
+                <Card key={base.id} padded className="p-4 md:p-5">
                   <div className="flex items-baseline gap-2 mb-4">
                     <h3 className="text-base font-bold text-neutral-900">{base.name}</h3>
                     {base.label && <span className="text-sm text-neutral-500">{base.label}</span>}

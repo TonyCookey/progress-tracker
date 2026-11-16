@@ -389,9 +389,8 @@ export type AttendanceByTypePoint = { type: string; average: number; activityCou
 
 // Average attendance per Activity.type for the period - types come from the data
 // itself (RefData keys are admin-editable, never hardcode a type list).
-export async function getAttendanceByType(scope: AnalyticsScope): Promise<AttendanceByTypePoint[]> {
-  const { points } = await getAttendanceTrend(scope);
-
+// Built from getAttendanceTrend's points so callers that already have them don't rerun the queries.
+export function attendanceByTypeFromPoints(points: AttendanceTrendPoint[]): AttendanceByTypePoint[] {
   const byType = new Map<string, { total: number; count: number; rates: number[] }>();
   for (const p of points) {
     if (!p.recorded) continue;
