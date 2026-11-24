@@ -6,6 +6,9 @@ import { parseOrThrow } from "@/lib/validation/parse";
 import { createRefDataSchema } from "@/lib/validation/refdata";
 import { getRefData, slugifyKey, nextSortOrder } from "@/lib/refdata";
 
+// Reads the session (headers), so it must never be prerendered at build time.
+export const dynamic = "force-dynamic";
+
 export async function GET(req: Request) {
   try {
     await requireSession();

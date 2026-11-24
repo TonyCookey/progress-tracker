@@ -5,6 +5,9 @@ import { markTeacherParticipationSchema } from "@/lib/validation/activity";
 import { parseOrThrow } from "@/lib/validation/parse";
 import { safeUserSelect } from "@/lib/users";
 
+// Reads the session (headers), so it must never be prerendered at build time.
+export const dynamic = "force-dynamic";
+
 export async function GET(req: Request, { params }: { params: { id: string } }) {
   try {
     await requireSession();

@@ -18,6 +18,7 @@ import {
   CurrencyDollarIcon,
   UserPlusIcon,
   HomeModernIcon,
+  HandRaisedIcon,
 } from "@heroicons/react/24/outline";
 import { useSession } from "next-auth/react";
 import { UploadCloud } from "lucide-react";
@@ -33,6 +34,7 @@ const links = [
   { href: "/dashboard/offerings", label: "Offerings", icon: <CurrencyDollarIcon className="h-6 w-6" /> },
   { href: "/dashboard/birthdays", label: "Birthdays", icon: <CakeIcon className="h-6 w-6" /> },
   { href: "/dashboard/new-converts", label: "New Converts", icon: <UserPlusIcon className="h-6 w-6" />, role: ["SUPERADMIN", "GENERAL"] },
+  { href: "/dashboard/first-timers", label: "First Timers", icon: <HandRaisedIcon className="h-6 w-6" />, role: ["SUPERADMIN", "GENERAL"] },
   { href: "/dashboard/reports", label: "Monthly Report", icon: <ChartPieIcon className="h-6 w-6" />, role: ["SUPERADMIN", "GENERAL"] },
   // { href: "/dashboard/lieutenants/bulk-upload", label: "Bulk Upload", icon: <UploadCloud className="h-6 w-6" />, role: "SUPERADMIN" },
   { href: "/dashboard/settings", label: "Settings", icon: <Cog6ToothIcon className="h-6 w-6" />, role: "SUPERADMIN" },

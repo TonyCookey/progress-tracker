@@ -5,6 +5,9 @@ import { saveMonthlyReportSchema } from "@/lib/validation/monthlyReport";
 import { parseOrThrow } from "@/lib/validation/parse";
 import { getMonthlyReport } from "@/lib/reports/monthly";
 
+// Reads the session (headers), so it must never be prerendered at build time.
+export const dynamic = "force-dynamic";
+
 export async function GET(req: Request) {
   try {
     const session = await requireRole(["SUPERADMIN", "GENERAL"]);

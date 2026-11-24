@@ -40,6 +40,7 @@ model Base {
   activities     Activity[]
   offerings      Offering[]
   newConverts    NewConvert[]
+  firstTimers    FirstTimer[]
   monthlyReports MonthlyReport[]
   households     Household[]
 }
@@ -234,6 +235,33 @@ model NewConvert {
 
   @@index([baseId])
   @@index([date])
+}
+
+model FirstTimer {
+  id            String    @id @default(cuid())
+  name          String
+  gender        String?
+  phone         String?
+  email         String?
+  address       String?
+  dateOfBirth   DateTime?
+  school        String?
+  guardianName  String?
+  guardianPhone String?
+  baseId        String
+  base          Base      @relation(fields: [baseId], references: [id])
+  visitDate     DateTime
+  invitedBy     String?
+  howHeard      String?
+  followedUp    Boolean   @default(false)
+  returned      Boolean   @default(false)
+  notes         String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  deletedAt     DateTime?
+
+  @@index([baseId])
+  @@index([visitDate])
 }
 
 model Household {

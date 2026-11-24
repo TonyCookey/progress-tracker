@@ -5,6 +5,9 @@ import { updateNewConvertSchema } from "@/lib/validation/newConvert";
 import { parseOrThrow } from "@/lib/validation/parse";
 import { notDeleted } from "@/lib/softDelete";
 
+// Reads the session (headers), so it must never be prerendered at build time.
+export const dynamic = "force-dynamic";
+
 export async function GET(req: Request, { params }: { params: { id: string } }) {
   try {
     await requireSession();

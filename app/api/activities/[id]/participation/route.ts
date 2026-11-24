@@ -4,6 +4,9 @@ import { requireSession, assertBaseAccess, handleApiError, ApiError } from "@/li
 import { markParticipationSchema } from "@/lib/validation/activity";
 import { parseOrThrow } from "@/lib/validation/parse";
 
+// Reads the session (headers), so it must never be prerendered at build time.
+export const dynamic = "force-dynamic";
+
 export async function GET(req: Request, { params }: { params: { id: string } }) {
   try {
     await requireSession();
