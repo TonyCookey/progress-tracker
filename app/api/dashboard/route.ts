@@ -2,6 +2,9 @@ import { NextResponse } from "next/server";
 import { getDashboardCards } from "@/lib/dashboard";
 import { requireSession, handleApiError } from "@/lib/auth";
 
+// Reads the session (headers), so it must never be prerendered at build time.
+export const dynamic = "force-dynamic";
+
 export async function GET(req: Request) {
   try {
     const session = await requireSession();

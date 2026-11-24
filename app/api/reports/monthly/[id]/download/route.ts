@@ -7,6 +7,9 @@ import { requireRole, assertBaseAccess, handleApiError } from "@/lib/auth";
 import { getMonthlyReport, type MonthlyReportData } from "@/lib/reports/monthly";
 import { buildReportBuffer, isR2Configured, PPTX_CONTENT_TYPE, reportFileName } from "@/lib/reports/buildReportFile";
 
+// Reads the session (headers), so it must never be prerendered at build time.
+export const dynamic = "force-dynamic";
+
 // Download a past report. Prefers the archived copy in R2 (exactly what was generated);
 // otherwise rebuilds it from the saved inputs, using the auto-figure snapshot taken at
 // generation time so the numbers match what was originally sent. Drafts that were never

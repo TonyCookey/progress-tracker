@@ -4,6 +4,9 @@ import { getGroupBreakdown, getTeachingRateComparison } from "@/lib/analytics";
 import { groupsQuerySchema, inclusiveEnd } from "@/lib/validation/analytics";
 import { parseOrThrow } from "@/lib/validation/parse";
 
+// Reads the session (headers), so it must never be prerendered at build time.
+export const dynamic = "force-dynamic";
+
 // Attendance-by-platoon needs a bounded window (it joins participation rows in JS);
 // default to the last 3 months rather than year-to-date if the caller omits from/to.
 function resolveGroupsRange(input: { from?: Date; to?: Date }) {

@@ -7,6 +7,9 @@ import { requireSession, requireRole, handleApiError, ApiError } from "@/lib/aut
 import { parseOrThrow } from "@/lib/validation/parse";
 import { createBaseSchema } from "@/lib/validation/base";
 
+// Reads the session (headers), so it must never be prerendered at build time.
+export const dynamic = "force-dynamic";
+
 export async function GET() {
   try {
     await requireSession();

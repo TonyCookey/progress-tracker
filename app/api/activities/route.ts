@@ -6,6 +6,9 @@ import { parseOrThrow } from "@/lib/validation/parse";
 import { notDeleted } from "@/lib/softDelete";
 import { assertGroupsInBase, assertGroupsExist } from "@/lib/validateBaseRefs";
 
+// Reads the session (headers), so it must never be prerendered at build time.
+export const dynamic = "force-dynamic";
+
 export async function POST(req: NextRequest) {
   try {
     const session = await requireSession();

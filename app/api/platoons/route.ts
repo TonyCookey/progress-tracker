@@ -7,6 +7,9 @@ import { createGroupSchema } from "@/lib/validation/group";
 import { parseOrThrow } from "@/lib/validation/parse";
 import { assertUsersInBase } from "@/lib/validateBaseRefs";
 
+// Reads the session (headers), so it must never be prerendered at build time.
+export const dynamic = "force-dynamic";
+
 export async function GET(req: Request) {
   try {
     await requireSession();

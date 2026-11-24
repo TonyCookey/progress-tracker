@@ -4,6 +4,9 @@ import { getNewConvertFunnel } from "@/lib/analytics";
 import { dateRangeSchema, resolveDateRange } from "@/lib/validation/analytics";
 import { parseOrThrow } from "@/lib/validation/parse";
 
+// Reads the session (headers), so it must never be prerendered at build time.
+export const dynamic = "force-dynamic";
+
 export async function GET(req: Request) {
   try {
     const session = await requireSession();
