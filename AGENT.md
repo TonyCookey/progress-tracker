@@ -500,6 +500,27 @@ same `lib/` functions, so there's one source of truth for each query.
 
 ---
 
+### Nov 28 2026 — S15: graduation, auth fixes, responsive shell
+- **Graduation.** `TeenStatus.GRADUATED` + `Teen.graduatedAt` / `graduationNote` (migration
+  `20261128120000_add_teen_graduation`, additive). `lib/teens.ts` holds `OFF_ROSTER_STATUSES`
+  (LEFT, GRADUATED), `onRosterWhere`, and `statusChange()` (keeps `graduatedAt` in sync on edits).
+  Graduands are excluded from dashboard teen counts, the default lieutenants list (`?status=GRADUATED`
+  shows them), group delete checks and future attendance rosters; an activity dated **before**
+  `graduatedAt` (or already marked for them) still lists them. Membership growth counts a graduand
+  until the month they graduate and reports `graduated` per month. Routes: `GET/POST /api/graduands`,
+  `POST /api/graduands/undo`, `GET /api/graduands/candidates` (SUPERADMIN/GENERAL, base-scoped).
+  UI: `/dashboard/graduands`, `components/graduands/*`, Graduate / Undo on the teen profile.
+- **Auth.** Emails are matched case-insensitively (`findUserByEmail` in `lib/users.ts`) and
+  trimmed/lower-cased on write — older rows may still contain capitals. Reset page checks the token
+  first (`GET /api/auth/reset-password?token=`: valid/used/expired/invalid), shows the account email,
+  is no longer wrapped in `GuestOnly`, and hands the email to the login page via sessionStorage.
+  Creating a new reset link marks older ones used. Forgot-password says plainly when no email
+  provider is configured. `appBaseUrl` ignores a localhost `NEXT_PUBLIC_BASE_URL` on a real host.
+  New-password minimum is 8 everywhere except the admin-chosen temp password on register.
+- **Shell/UI.** Sidebar fixed from `lg`; `Modal` z-50 with sticky header; new `ui/ActionMenu`,
+  `ui/PasswordInput`, `auth/AuthShell`. Follow-up briefs: S16 attendance, S17 offerings↔activities,
+  S18 UI system pass.
+
 ## 10. Conventions & style
 
 - **Match the surrounding code.** This is a young codebase with some inconsistency; prefer the

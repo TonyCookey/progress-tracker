@@ -101,7 +101,7 @@ export async function PUT(req: Request, { params }: { params: { id: string } }) 
     }
 
     const duplicate = await prisma.user.findFirst({
-      where: { id: { not: params.id }, OR: [{ email: data.email }, { username: data.username }] },
+      where: { id: { not: params.id }, OR: [{ email: { equals: data.email, mode: "insensitive" } }, { username: data.username }] },
     });
     if (duplicate) {
       return NextResponse.json({ message: "Email or username already in use" }, { status: 400 });

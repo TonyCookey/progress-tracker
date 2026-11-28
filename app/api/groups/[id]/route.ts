@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { onRosterWhere } from "@/lib/teens";
 import { NextResponse } from "next/server";
 import { requireSession, requireRole, assertBaseAccess, handleApiError } from "@/lib/auth";
 import { updateGroupSchema } from "@/lib/validation/group";
@@ -110,7 +111,7 @@ export async function DELETE(_req: Request, { params }: { params: { id: string }
 
     const activeMemberCount =
       group.type === "PLATOON"
-        ? await prisma.teen.count({ where: { groupId: params.id, deletedAt: null } })
+        ? await prisma.teen.count({ where: { groupId: params.id, ...onRosterWhere } })
         : await prisma.groupMember.count({ where: { groupId: params.id, teen: { deletedAt: null } } });
 
     if (activeMemberCount > 0) {

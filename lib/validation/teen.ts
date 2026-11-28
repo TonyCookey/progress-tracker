@@ -33,6 +33,6 @@ export const updateTeenSchema = z.object({
   squadIds: z.array(z.string()).optional().default([]),
   // No .default() here: omitting `status` on an update must leave the existing value
   // alone (Prisma treats `undefined` as "don't touch this field"), not silently reset it.
-  status: z.enum(["ACTIVE", "INACTIVE", "LEFT"]).optional(),
+  status: z.enum(["ACTIVE", "INACTIVE", "LEFT", "GRADUATED"]).optional(),
   ...pastoralFields,
 });

@@ -27,3 +27,17 @@ export function getUsers(includeArchived = false) {
     select: safeUserSelect,
   });
 }
+
+// Emails are stored as typed (older rows may have capitals or stray spaces), and phone
+// keyboards often auto-capitalise the first letter. Normalise on write, and match
+// case-insensitively on read so sign-in / reset never fail over letter case.
+export function normalizeEmail(email: string) {
+  return email.trim().toLowerCase();
+}
+
+export function findUserByEmail(email: string) {
+  return prisma.user.findFirst({
+    where: { email: { equals: email.trim(), mode: "insensitive" } },
+    orderBy: { createdAt: "asc" },
+  });
+}

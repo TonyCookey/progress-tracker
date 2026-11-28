@@ -4,7 +4,7 @@ import { optionalDate } from "./parse";
 export const updateGeneralSchema = z.object({
   name: z.string().min(1, "Name is required"),
   username: z.string().min(1, "Username is required"),
-  email: z.string().email("Invalid email"),
+  email: z.string().trim().toLowerCase().email("Invalid email"),
   dateOfBirth: optionalDate(),
   anniversaryDate: optionalDate(),
   gender: z.string().optional().nullable(),

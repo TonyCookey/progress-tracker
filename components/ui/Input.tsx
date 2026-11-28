@@ -1,4 +1,4 @@
-import { InputHTMLAttributes, forwardRef } from "react";
+import { InputHTMLAttributes, ReactNode, forwardRef } from "react";
 import clsx from "clsx";
 
 export interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
@@ -6,9 +6,11 @@ export interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
   error?: string;
   hint?: string;
   pill?: boolean;
+  /** Element pinned inside the right edge of the field (e.g. a show-password button). */
+  trailing?: ReactNode;
 }
 
-const Input = forwardRef<HTMLInputElement, InputProps>(({ label, error, hint, pill, className, id, ...props }, ref) => {
+const Input = forwardRef<HTMLInputElement, InputProps>(({ label, error, hint, pill, trailing, className, id, ...props }, ref) => {
   const inputId = id ?? props.name;
   return (
     <div className="w-full">
@@ -17,6 +19,7 @@ const Input = forwardRef<HTMLInputElement, InputProps>(({ label, error, hint, pi
           {label}
         </label>
       )}
+      <div className="relative">
       <input
         ref={ref}
         id={inputId}
@@ -29,6 +32,8 @@ const Input = forwardRef<HTMLInputElement, InputProps>(({ label, error, hint, pi
         aria-invalid={!!error}
         {...props}
       />
+      {trailing && <div className="absolute inset-y-0 right-0 flex items-center">{trailing}</div>}
+      </div>
       {error ? (
         <p className="mt-1 text-xs text-danger-500">{error}</p>
       ) : (

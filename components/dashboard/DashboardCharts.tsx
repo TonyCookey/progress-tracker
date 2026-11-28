@@ -18,7 +18,7 @@ type OfferingsTrendPoint = { month: string; cash: number; online: number; total:
 type OfferingsByBasePoint = { baseId: string; baseName: string; month: string; cash: number; online: number; total: number };
 type AttendancePoint = { activityId: string; name: string; type: string; date: string; attended: number; expected: number; recorded: boolean; rate: number | null };
 type AttendanceSummary = { average: number; total: number; averageRate: number | null; recordedActivities: number; uniqueAttendees: number };
-type GrowthPoint = { month: string; added: number; total: number };
+type GrowthPoint = { month: string; added: number; graduated: number; total: number };
 type Engagement = { buckets: { bucket: string; count: number }[]; totalActive: number; notSeen: { id: string; name: string }[] };
 type Dropoff = { droppedOffCount: number; droppedOffTeens: { id: string; name: string; lastAttended: string | null; missed: number }[]; minMissed: number };
 
@@ -190,7 +190,7 @@ export default function DashboardCharts() {
         <ChartCard
           className="lg:col-span-2"
           title="Membership growth"
-          description="Line: members on the books at the end of each month (teens marked Left aren't counted). Bars: how many joined that month. Both use the same scale."
+          description="Line: members on the books at the end of each month (teens marked Left aren't counted; graduands count until the month they graduate). Bars: joiners and graduates each month."
         >
           <LineTrendChart
             title="Total members and new joiners by month"
@@ -198,6 +198,7 @@ export default function DashboardCharts() {
             series={[
               { name: "Total members", data: growth.map((p) => p.total) },
               { name: "Joined that month", kind: "bar", data: growth.map((p) => p.added) },
+              ...(growth.some((p) => p.graduated > 0) ? [{ name: "Graduated that month", kind: "bar" as const, data: growth.map((p) => p.graduated) }] : []),
             ]}
             yTitle="Teens"
           />

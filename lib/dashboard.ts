@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { onRosterWhere } from "@/lib/teens";
 
 export type DashboardStat = { label: string; value: number; href: string; hint?: string };
 export type DashboardBaseSummary = {
@@ -28,17 +29,18 @@ export async function getDashboardSummary(scopeBaseId?: string): Promise<Dashboa
   const bases = await prisma.base.findMany({ where: scopeBaseId ? { id: scopeBaseId } : {}, orderBy: { name: "asc" } });
   const base = scopeBaseId ? { baseId: scopeBaseId } : {};
 
-  const [teensCount, usersCount, activitiesCount, squadsCount, platoonsCount, roleCounts, teensByBase, groupsByBase, usersByBase] =
+  const [teensCount, usersCount, activitiesCount, squadsCount, platoonsCount, roleCounts, teensByBase, groupsByBase, usersByBase, graduatedCount] =
     await Promise.all([
-      prisma.teen.count({ where: { deletedAt: null, ...base } }),
+      prisma.teen.count({ where: { ...onRosterWhere, ...base } }),
       prisma.user.count({ where: { deletedAt: null, ...base } }),
       prisma.activity.count({ where: { deletedAt: null, ...base } }),
       prisma.group.count({ where: { type: "SQUAD", deletedAt: null, ...base } }),
       prisma.group.count({ where: { type: "PLATOON", deletedAt: null, ...base } }),
       prisma.user.groupBy({ by: ["role"], where: { deletedAt: null, ...base }, _count: { _all: true } }),
-      prisma.teen.groupBy({ by: ["baseId"], where: { deletedAt: null }, _count: { _all: true } }),
+      prisma.teen.groupBy({ by: ["baseId"], where: onRosterWhere, _count: { _all: true } }),
       prisma.group.groupBy({ by: ["baseId", "type"], where: { deletedAt: null }, _count: { _all: true } }),
       prisma.user.groupBy({ by: ["baseId"], where: { deletedAt: null }, _count: { _all: true } }),
+      prisma.teen.count({ where: { deletedAt: null, status: "GRADUATED", ...base } }),
     ]);
 
   const roleCount = (role: string) => roleCounts.find((r) => r.role === role)?._count._all ?? 0;
@@ -55,6 +57,7 @@ export async function getDashboardSummary(scopeBaseId?: string): Promise<Dashboa
       { label: "Activities", value: activitiesCount, href: "/dashboard/activities", hint: "All time" },
       { label: "Squads", value: squadsCount, href: scopeBaseId ? `/dashboard/squads?baseId=${scopeBaseId}` : "/dashboard/squads" },
       { label: "Platoons", value: platoonsCount, href: scopeBaseId ? `/dashboard/platoons?baseId=${scopeBaseId}` : "/dashboard/platoons" },
+      { label: "Graduands", value: graduatedCount, href: "/dashboard/graduands", hint: "All time" },
     ],
     roles: ROLES.map(({ role, label }) => ({
       label,

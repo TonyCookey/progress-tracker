@@ -1,4 +1,5 @@
 import { Prisma } from "@prisma/client";
+import { OFF_ROSTER_STATUSES } from "@/lib/teens";
 import { prisma } from "@/lib/prisma";
 import { notDeleted } from "@/lib/softDelete";
 import { normalizeGender } from "@/lib/normalizeGender";
@@ -536,18 +537,20 @@ export async function getEngagement(scope: AnalyticsScope & { activityType?: str
 }
 
 export type MembershipGrowth = {
-  trend: { month: string; added: number; total: number }[];
+  trend: { month: string; added: number; graduated: number; total: number }[];
   statusSnapshot: { status: string; count: number }[];
 };
 
-// `added` = teens who joined in the month; `total` = members on the books at the end
-// of that month (joined by then, not deleted, not LEFT). Join date falls back to the
-// record's creation date for teens imported without a dateJoined.
+// `added` = teens who joined in the month; `graduated` = teens who graduated in it;
+// `total` = members on the books at the end of that month (joined by then, not deleted,
+// not LEFT, and not yet graduated). Graduates therefore still count in the months before
+// they graduated. Join date falls back to the record's creation date for teens imported
+// without a dateJoined.
 export async function getMembershipGrowth({ baseId, from, to, ...f }: AnalyticsScope): Promise<MembershipGrowth> {
   const [teens, statusGroups] = await Promise.all([
     prisma.teen.findMany({
       where: { baseId: baseId ?? undefined, status: { not: "LEFT" }, ...notDeleted(false), ...teenGroupWhere(f) },
-      select: { dateJoined: true, createdAt: true },
+      select: { dateJoined: true, createdAt: true, status: true, graduatedAt: true },
     }),
     prisma.teen.groupBy({
       by: ["status"],
@@ -556,15 +559,21 @@ export async function getMembershipGrowth({ baseId, from, to, ...f }: AnalyticsS
     }),
   ]);
 
-  const joinDates = teens.map((t) => t.dateJoined ?? t.createdAt);
+  const members = teens.map((t) => ({
+    joined: t.dateJoined ?? t.createdAt,
+    // A GRADUATED teen with no recorded date is treated as already off the roster.
+    leftAt: t.status === "GRADUATED" ? (t.graduatedAt ?? new Date(0)) : null,
+  }));
   const trend = enumerateMonths(from, to).map((month) => {
     const [y, m] = month.split("-").map(Number);
     const monthStart = new Date(Date.UTC(y, m - 1, 1));
     const monthEnd = new Date(Date.UTC(y, m, 1));
+    const inWindow = (d: Date) => d >= monthStart && d < monthEnd && d >= from && d < to;
     return {
       month,
-      added: joinDates.filter((d) => d >= monthStart && d < monthEnd && d >= from && d < to).length,
-      total: joinDates.filter((d) => d < monthEnd).length,
+      added: members.filter((t) => inWindow(t.joined)).length,
+      graduated: members.filter((t) => t.leftAt && inWindow(t.leftAt)).length,
+      total: members.filter((t) => t.joined < monthEnd && (!t.leftAt || t.leftAt >= monthEnd)).length,
     };
   });
   const statusSnapshot = statusGroups.map((g) => ({ status: g.status, count: g._count._all }));

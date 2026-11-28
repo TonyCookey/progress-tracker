@@ -4,7 +4,7 @@ import { ReactNode, useState } from "react";
 import { signOut, useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import Card from "@/components/ui/Card";
-import Input from "@/components/ui/Input";
+import PasswordInput from "@/components/ui/PasswordInput";
 import Button from "@/components/ui/Button";
 
 // Blocks the dashboard until an account flagged `mustChangePassword` (admin-created,
@@ -60,38 +60,37 @@ export default function PasswordChangeGate({ children }: { children: ReactNode }
           know to continue.
         </p>
         <form onSubmit={submit} className="space-y-4">
-          <Input
+          <PasswordInput
             id="gate-old"
             label="Current (temporary) password"
-            type={show ? "text" : "password"}
+            revealed={show}
+            onRevealedChange={setShow}
             value={oldPassword}
             onChange={(e) => setOldPassword(e.target.value)}
             autoComplete="current-password"
             required
           />
-          <Input
+          <PasswordInput
             id="gate-new"
             label="New password"
             hint="At least 8 characters"
-            type={show ? "text" : "password"}
+            revealed={show}
+            onRevealedChange={setShow}
             value={newPassword}
             onChange={(e) => setNewPassword(e.target.value)}
             autoComplete="new-password"
             required
           />
-          <Input
+          <PasswordInput
             id="gate-confirm"
             label="Confirm new password"
-            type={show ? "text" : "password"}
+            revealed={show}
+            onRevealedChange={setShow}
             value={confirmPassword}
             onChange={(e) => setConfirmPassword(e.target.value)}
             autoComplete="new-password"
             required
           />
-          <label className="flex items-center gap-2 text-sm text-neutral-600">
-            <input type="checkbox" checked={show} onChange={(e) => setShow(e.target.checked)} />
-            Show passwords
-          </label>
           {error && <p className="text-sm text-danger-500">{error}</p>}
           <Button type="submit" className="w-full" isLoading={saving} disabled={saving}>
             Save and continue

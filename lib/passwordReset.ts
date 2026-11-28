@@ -40,6 +40,22 @@ export async function invalidatePasswordResetToken(rawToken: string) {
   });
 }
 
+export type ResetTokenState = "valid" | "used" | "expired" | "invalid";
+
+// Read-only check so the reset page can tell the person up front (before they type a
+// new password) whether the link still works, and which email it's for.
+export async function inspectPasswordResetToken(rawToken: string) {
+  const record = await prisma.passwordResetToken.findUnique({
+    where: { tokenHash: hashToken(rawToken) },
+    include: { user: { select: { email: true, name: true, deletedAt: true } } },
+  });
+  let state: ResetTokenState = "valid";
+  if (!record || record.user.deletedAt) state = "invalid";
+  else if (record.usedAt) state = "used";
+  else if (record.expiresAt < new Date()) state = "expired";
+  return { state, email: state === "valid" ? record!.user.email : null, name: state === "valid" ? record!.user.name : null };
+}
+
 export async function consumePasswordResetToken(rawToken: string) {
   const tokenHash = hashToken(rawToken);
   const record = await prisma.passwordResetToken.findUnique({ where: { tokenHash } });

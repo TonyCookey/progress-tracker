@@ -10,7 +10,7 @@ import Pagination from "@/components/ui/Pagination";
 import Avatar from "@/components/ui/Avatar";
 import Card from "@/components/ui/Card";
 
-const STATUS_LABEL: Record<string, string> = { ACTIVE: "Active", INACTIVE: "Inactive", LEFT: "Left" };
+const STATUS_LABEL: Record<string, string> = { ACTIVE: "Active", INACTIVE: "Inactive", LEFT: "Left", GRADUATED: "Graduated" };
 
 const filterClass =
   "border border-neutral-300 rounded-lg px-3 py-2 w-full sm:w-auto text-sm text-neutral-900 focus:outline-none focus:ring-2 focus:ring-accent-400 focus:border-accent-500 transition-colors bg-white";
@@ -109,10 +109,11 @@ export default function LieutenantTable({ initialBaseId = "", initialStatus = ""
               setPage(1);
             }}
           >
-            <option value="">Any status</option>
+            <option value="">Current roster</option>
             <option value="ACTIVE">Active</option>
             <option value="INACTIVE">Inactive</option>
             <option value="LEFT">Left</option>
+            <option value="GRADUATED">Graduated</option>
           </select>
         </div>
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center w-full sm:w-auto">

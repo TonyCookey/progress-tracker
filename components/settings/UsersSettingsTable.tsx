@@ -10,6 +10,8 @@ import { Table, TableCell, TableContainer, TableHead, TableHeaderCell, TableRow 
 import { useToast } from "@/components/ui/Toast";
 import Modal from "@/components/ui/Modal";
 import Button from "@/components/ui/Button";
+import ActionMenu from "@/components/ui/ActionMenu";
+import { ArrowPathIcon, EnvelopeIcon, KeyIcon, LinkIcon, NoSymbolIcon } from "@heroicons/react/24/outline";
 
 interface General {
   id: string;
@@ -20,6 +22,8 @@ interface General {
   mustChangePassword?: boolean;
   base: { name: string };
 }
+
+const roleLabel = (role: string) => role.charAt(0) + role.slice(1).toLowerCase();
 
 export default function UsersSettingsTable() {
   const toast = useToast();
@@ -146,31 +150,49 @@ export default function UsersSettingsTable() {
     fetchGenerals(page, true);
   };
 
-  const actionButtons = (general: General, mobile = false) => {
-    const cls = `${mobile ? "min-h-11 md:min-h-0 " : ""}px-3 py-1 rounded-pill text-sm disabled:opacity-50`;
-    const busy = actioningId === general.id;
-    return (
-      <>
-        <EditGeneralModal general={general} onSuccess={() => fetchGenerals(page)} />
-        <button onClick={() => toggleActive(general)} disabled={busy} className={`${cls} bg-warning-50 text-warning-700 hover:bg-warning-50/70`}>
-          {general.deletedAt ? "Activate" : "Deactivate"}
-        </button>
-        {!general.deletedAt && (
-          <>
-            <button onClick={() => tempPassword(general)} disabled={busy} className={`${cls} bg-accent-50 text-accent-700 hover:bg-accent-100`} title="Create a one-time password to share; they must change it at sign-in">
-              Temp password
-            </button>
-            <button onClick={() => resetLink(general)} disabled={busy} className={`${cls} bg-accent-50 text-accent-700 hover:bg-accent-100`} title="Get a 72-hour link to share on WhatsApp/SMS">
-              Copy reset link
-            </button>
-            <button onClick={() => emailReset(general)} disabled={busy} className={`${cls} text-neutral-600 hover:bg-neutral-100`} title="Needs an email provider (Resend) configured">
-              Email reset
-            </button>
-          </>
-        )}
-      </>
-    );
-  };
+  const actionMenu = (general: General) => (
+    <ActionMenu
+      label={`Actions for ${general.name}`}
+      disabled={actioningId === general.id}
+      items={[
+        {
+          label: "Temporary password",
+          description: "One-time password to share; they choose their own at sign-in",
+          icon: KeyIcon,
+          onClick: () => tempPassword(general),
+          hidden: !!general.deletedAt,
+        },
+        {
+          label: "Copy reset link",
+          description: "72-hour link for WhatsApp/SMS. Cancels older links.",
+          icon: LinkIcon,
+          onClick: () => resetLink(general),
+          hidden: !!general.deletedAt,
+        },
+        {
+          label: "Email reset link",
+          description: "Needs an email provider (Resend)",
+          icon: EnvelopeIcon,
+          onClick: () => emailReset(general),
+          hidden: !!general.deletedAt,
+        },
+        {
+          label: general.deletedAt ? "Reactivate account" : "Deactivate account",
+          icon: general.deletedAt ? ArrowPathIcon : NoSymbolIcon,
+          tone: general.deletedAt ? "default" : "warning",
+          onClick: () => toggleActive(general),
+          separated: !general.deletedAt,
+        },
+      ]}
+    />
+  );
+
+  const rowActions = (general: General) => (
+    <div className="flex items-center justify-end gap-2">
+      <EditGeneralModal general={general} onSuccess={() => fetchGenerals(page)} />
+      {actionMenu(general)}
+    </div>
+  );
 
   const statusBadge = (general: General) => (
     <div className="flex flex-wrap gap-1">
@@ -188,17 +210,16 @@ export default function UsersSettingsTable() {
           No email provider? Use <strong>Temp password</strong> or <strong>Copy reset link</strong> and send it on WhatsApp. People with a temporary password
           are asked to choose their own the moment they sign in.
         </p>
-        <Button variant="secondary" size="sm" onClick={() => setBulkConfirm(true)}>
+        <Button variant="secondary" size="sm" className="shrink-0" onClick={() => setBulkConfirm(true)}>
           Ask everyone to set a new password
         </Button>
       </div>
       {/* Desktop Table */}
-      <TableContainer className="hidden md:block border-0 shadow-none">
+      <TableContainer className="hidden lg:block border-0 shadow-none">
         <Table>
           <TableHead>
             <TableRow>
               <TableHeaderCell>Name</TableHeaderCell>
-              <TableHeaderCell>Email</TableHeaderCell>
               <TableHeaderCell>Base</TableHeaderCell>
               <TableHeaderCell>Role</TableHeaderCell>
               <TableHeaderCell>Status</TableHeaderCell>
@@ -208,13 +229,17 @@ export default function UsersSettingsTable() {
           <tbody>
             {generals.map((general) => (
               <TableRow key={general.id}>
-                <TableCell className="font-medium text-neutral-900">{general.name}</TableCell>
-                <TableCell>{general.email}</TableCell>
+                <TableCell className="max-w-[18rem]">
+                  <div className="font-medium text-neutral-900 truncate">{general.name}</div>
+                  <div className="text-xs text-neutral-500 truncate" title={general.email}>
+                    {general.email}
+                  </div>
+                </TableCell>
                 <TableCell>{general.base?.name ?? "-"}</TableCell>
-                <TableCell>{general.role}</TableCell>
+                <TableCell className="whitespace-nowrap">{roleLabel(general.role)}</TableCell>
                 <TableCell>{statusBadge(general)}</TableCell>
-                <TableCell className="text-right whitespace-nowrap">
-                  <div className="inline-flex flex-wrap justify-end gap-2">{actionButtons(general)}</div>
+                <TableCell className="text-right whitespace-nowrap w-px">
+                  {rowActions(general)}
                 </TableCell>
               </TableRow>
             ))}
@@ -222,25 +247,19 @@ export default function UsersSettingsTable() {
         </Table>
       </TableContainer>
       {/* Mobile Cards */}
-      <div className="md:hidden space-y-4">
+      <div className="lg:hidden grid gap-3 sm:grid-cols-2">
         {generals.map((general) => (
           <Card key={general.id} padded className="p-4 flex flex-col gap-2">
             <div className="flex items-center justify-between gap-2 mb-1">
               <span className="font-medium text-sm break-words leading-snug text-neutral-900">{general.name}</span>
               {statusBadge(general)}
             </div>
-            <div className="flex flex-wrap gap-4 text-sm mb-2 text-neutral-600">
-              <div>
-                <span className="font-semibold text-neutral-700">Email:</span> {general.email}
-              </div>
-              <div>
-                <span className="font-semibold text-neutral-700">Base:</span> {general.base?.name ?? "-"}
-              </div>
-              <div>
-                <span className="font-semibold text-neutral-700">Role:</span> {general.role}
-              </div>
+            <div className="text-sm text-neutral-500 break-all">{general.email}</div>
+            <div className="flex flex-wrap gap-x-4 gap-y-1 text-sm text-neutral-600">
+              <span>{general.base?.name ?? "No base"}</span>
+              <span>{roleLabel(general.role)}</span>
             </div>
-            <div className="flex flex-wrap items-center gap-2 mt-2">{actionButtons(general, true)}</div>
+            <div className="mt-1 flex justify-end">{rowActions(general)}</div>
           </Card>
         ))}
       </div>
@@ -251,6 +270,7 @@ export default function UsersSettingsTable() {
           <div className="space-y-4">
             <p className="text-sm text-neutral-600">
               For <strong>{shareInfo.name}</strong>. This is shown only once - copy it now.
+              {shareInfo.title === "Password reset link" && " Creating another link later cancels this one, so send only the newest."}
             </p>
             <div className="flex items-center gap-2">
               <code className="flex-1 rounded-lg bg-neutral-100 px-3 py-2 text-sm break-all">{shareInfo.secret}</code>

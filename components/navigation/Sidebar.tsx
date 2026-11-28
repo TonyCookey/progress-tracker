@@ -19,24 +19,26 @@ import {
   UserPlusIcon,
   HomeModernIcon,
   HandRaisedIcon,
+  AcademicCapIcon,
 } from "@heroicons/react/24/outline";
 import { useSession } from "next-auth/react";
 import { UploadCloud } from "lucide-react";
 
 const links = [
-  { href: "/dashboard", label: "Dashboard", icon: <HomeIcon className="h-6 w-6" /> },
-  { href: "/dashboard/lieutenants", label: "Lieutenants", icon: <UsersIcon className="h-6 w-6" /> },
-  { href: "/dashboard/generals", label: "Generals", icon: <UserCircleIcon className="h-6 w-6" />, role: "SUPERADMIN" },
-  { href: "/dashboard/squads", label: "Squads", icon: <UserGroupIcon className="h-6 w-6" /> },
-  { href: "/dashboard/platoons", label: "Platoons", icon: <ShieldCheckIcon className="h-6 w-6" /> },
-  { href: "/dashboard/households", label: "Households", icon: <HomeModernIcon className="h-6 w-6" /> },
-  { href: "/dashboard/activities", label: "Activities", icon: <CalendarDaysIcon className="h-6 w-6" /> },
-  { href: "/dashboard/offerings", label: "Offerings", icon: <CurrencyDollarIcon className="h-6 w-6" /> },
-  { href: "/dashboard/birthdays", label: "Birthdays", icon: <CakeIcon className="h-6 w-6" /> },
-  { href: "/dashboard/new-converts", label: "New Converts", icon: <UserPlusIcon className="h-6 w-6" />, role: ["SUPERADMIN", "GENERAL"] },
-  { href: "/dashboard/first-timers", label: "First Timers", icon: <HandRaisedIcon className="h-6 w-6" />, role: ["SUPERADMIN", "GENERAL"] },
-  { href: "/dashboard/reports", label: "Monthly Report", icon: <ChartPieIcon className="h-6 w-6" />, role: ["SUPERADMIN", "GENERAL"] },
-  // { href: "/dashboard/lieutenants/bulk-upload", label: "Bulk Upload", icon: <UploadCloud className="h-6 w-6" />, role: "SUPERADMIN" },
+  { href: "/dashboard", label: "Dashboard", icon: <HomeIcon className="h-5 w-5" /> },
+  { href: "/dashboard/lieutenants", label: "Lieutenants", icon: <UsersIcon className="h-5 w-5" /> },
+  { href: "/dashboard/generals", label: "Generals", icon: <UserCircleIcon className="h-5 w-5" />, role: "SUPERADMIN" },
+  { href: "/dashboard/squads", label: "Squads", icon: <UserGroupIcon className="h-5 w-5" /> },
+  { href: "/dashboard/platoons", label: "Platoons", icon: <ShieldCheckIcon className="h-5 w-5" /> },
+  { href: "/dashboard/graduands", label: "Graduands", icon: <AcademicCapIcon className="h-5 w-5" /> },
+  { href: "/dashboard/households", label: "Households", icon: <HomeModernIcon className="h-5 w-5" /> },
+  { href: "/dashboard/activities", label: "Activities", icon: <CalendarDaysIcon className="h-5 w-5" /> },
+  { href: "/dashboard/offerings", label: "Offerings", icon: <CurrencyDollarIcon className="h-5 w-5" /> },
+  { href: "/dashboard/birthdays", label: "Birthdays", icon: <CakeIcon className="h-5 w-5" /> },
+  { href: "/dashboard/new-converts", label: "New Converts", icon: <UserPlusIcon className="h-5 w-5" />, role: ["SUPERADMIN", "GENERAL"] },
+  { href: "/dashboard/first-timers", label: "First Timers", icon: <HandRaisedIcon className="h-5 w-5" />, role: ["SUPERADMIN", "GENERAL"] },
+  { href: "/dashboard/reports", label: "Monthly Report", icon: <ChartPieIcon className="h-5 w-5" />, role: ["SUPERADMIN", "GENERAL"] },
+  // { href: "/dashboard/lieutenants/bulk-upload", label: "Bulk Upload", icon: <UploadCloud className="h-5 w-5" />, role: "SUPERADMIN" },
   { href: "/dashboard/settings", label: "Settings", icon: <Cog6ToothIcon className="h-6 w-6" />, role: "SUPERADMIN" },
 ];
 
@@ -53,20 +55,23 @@ export default function Sidebar() {
     return Array.isArray(link.role) ? link.role.includes(userRole as string) : link.role === userRole;
   });
 
+  // Highlight the section for nested pages too (e.g. a teen's detail page).
+  const isActive = (href: string) => (href === "/dashboard" ? pathname === href : pathname === href || pathname.startsWith(`${href}/`));
+
   // Sidebar content
   const sidebarContent = (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col h-full w-full min-h-0">
       <div className="px-6 py-6 text-lg font-extrabold text-neutral-900">DA Church Tracker</div>
       <div className="border-t border-neutral-200 mx-6 mb-2" />
-      <nav className="mt-2 flex-1">
+      <nav className="mt-2 flex-1 overflow-y-auto pb-4">
         {visibleLinks.map(({ href, label, icon }) => (
           <Link
             key={href}
             href={href}
             onClick={() => setOpen(false)}
             className={clsx(
-              "flex items-center space-x-4 px-6 py-3 mx-3 rounded-lg transition-all duration-150 cursor-pointer",
-              pathname === href
+              "flex items-center space-x-3 px-4 py-2.5 mx-3 rounded-lg transition-all duration-150 cursor-pointer",
+              isActive(href)
                 ? "bg-accent-50 text-accent-700 border-l-4 border-accent-500 font-semibold"
                 : "text-neutral-600 border-l-4 border-transparent hover:bg-neutral-50 hover:text-neutral-900",
             )}
@@ -83,7 +88,7 @@ export default function Sidebar() {
     <>
       {/* Hamburger button for mobile */}
       <button
-        className="md:hidden fixed top-4 left-4 z-40 bg-white border border-neutral-200 p-2 rounded-lg text-neutral-700 focus:outline-none shadow-soft"
+        className="lg:hidden fixed top-3 left-3 z-40 bg-white border border-neutral-200 p-2 rounded-lg text-neutral-700 focus:outline-none shadow-soft"
         onClick={() => setOpen(true)}
         aria-label="Open sidebar"
       >
@@ -93,13 +98,13 @@ export default function Sidebar() {
       </button>
 
       {/* Sidebar for desktop */}
-      <aside className="hidden md:flex w-64 h-screen bg-white border-r border-neutral-200 fixed top-0 left-0 z-30">
+      <aside className="hidden lg:flex w-64 h-screen bg-white border-r border-neutral-200 fixed top-0 left-0 z-30">
         {sidebarContent}
       </aside>
 
       {/* Sidebar drawer for mobile */}
       <Transition show={open} as={Fragment}>
-        <Dialog as="div" className="relative z-50 md:hidden" onClose={() => setOpen(false)}>
+        <Dialog as="div" className="relative z-50 lg:hidden" onClose={() => setOpen(false)}>
           <TransitionChild
             as={Fragment}
             enter="ease-out duration-200"

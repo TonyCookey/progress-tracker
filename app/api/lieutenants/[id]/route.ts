@@ -5,6 +5,7 @@ import { updateTeenSchema } from "@/lib/validation/teen";
 import { parseOrThrow } from "@/lib/validation/parse";
 import { notDeleted } from "@/lib/softDelete";
 import { assertGroupsInBase } from "@/lib/validateBaseRefs";
+import { statusChange } from "@/lib/teens";
 
 // Reads the session (headers), so it must never be prerendered at build time.
 export const dynamic = "force-dynamic";
@@ -104,7 +105,7 @@ export async function PUT(req: Request, { params }: { params: { id: string } }) 
         guardianName: data.guardianName,
         guardianPhone: data.guardianPhone,
         dateJoined: data.dateJoined,
-        status: data.status,
+        ...statusChange(data.status, existingTeen),
         householdId: data.householdId || null,
         squadMemberships: {
           deleteMany: {}, // Clear previous

@@ -22,7 +22,7 @@ export default function Topbar() {
   }, []);
 
   return (
-    <div className="fixed top-0 left-0 md:left-64 right-0 h-16 bg-white border-b border-neutral-200 pl-16 pr-4 md:px-6 flex items-center justify-between z-20 transition-all">
+    <div className="fixed top-0 left-0 lg:left-64 right-0 h-16 bg-white/90 backdrop-blur border-b border-neutral-200 pl-16 pr-4 lg:px-6 flex items-center justify-between z-20 transition-all">
       <div className="flex-1 flex items-center min-w-0 h-full">
         <h1 className="text-sm md:text-base font-semibold text-neutral-900 truncate">David&apos;s Army - Raising Giant Killers!</h1>
       </div>

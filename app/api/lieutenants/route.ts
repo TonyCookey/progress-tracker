@@ -66,7 +66,9 @@ export async function GET(req: Request) {
     const baseId = session.user.role === "SUPERADMIN" ? requestedBaseId : session.user.baseId;
     const rank = searchParams.get("rank");
     const statusParam = searchParams.get("status");
-    const status = statusParam === "ACTIVE" || statusParam === "INACTIVE" || statusParam === "LEFT" ? (statusParam as "ACTIVE" | "INACTIVE" | "LEFT") : undefined;
+    const STATUSES = ["ACTIVE", "INACTIVE", "LEFT", "GRADUATED"] as const;
+    // Default list = the current roster; graduands live on their own page (or ?status=GRADUATED).
+    const status: (typeof STATUSES)[number] | { not: "GRADUATED" } = STATUSES.find((s) => s === statusParam) ?? { not: "GRADUATED" };
     const includeArchived = searchParams.get("includeArchived") === "true";
 
     const skip = (page - 1) * limit;

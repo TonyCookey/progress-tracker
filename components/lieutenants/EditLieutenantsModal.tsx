@@ -10,7 +10,7 @@ export default function EditLieutenantModal({ lieutenant, onSuccess }: { lieuten
 
   return (
     <>
-      <Button variant="primary" onClick={() => setIsOpen(true)}>
+      <Button variant="primary" size="sm" onClick={() => setIsOpen(true)}>
         Edit
       </Button>
 

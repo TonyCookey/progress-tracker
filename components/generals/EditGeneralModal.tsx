@@ -10,7 +10,7 @@ export default function EditGeneralModal({ general, onSuccess }: { general: any;
 
   return (
     <>
-      <Button variant="primary" onClick={() => setIsOpen(true)}>
+      <Button variant="secondary" size="sm" onClick={() => setIsOpen(true)}>
         Edit
       </Button>
 

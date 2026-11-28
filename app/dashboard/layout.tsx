@@ -11,11 +11,11 @@ export default async function DashboardLayout({ children }: { children: ReactNod
   const mustChangePassword = !!session?.user?.mustChangePassword;
 
   return (
-    <div className="flex">
+    <div className="flex min-h-screen">
       <Sidebar />
-      <main className="w-full min-h-screen bg-neutral-50 pt-16 md:ml-64 transition-all">
+      <main className="w-full min-w-0 min-h-screen bg-neutral-50 pt-16 lg:ml-64 transition-all">
         <Topbar />
-        <div className="md:px-6 mt-2 md:mt-6">
+        <div className="mx-auto w-full max-w-[1600px] md:px-6 xl:px-8 mt-2 md:mt-6 pb-10">
           <PasswordChangeGate>{mustChangePassword ? null : children}</PasswordChangeGate>
         </div>
       </main>

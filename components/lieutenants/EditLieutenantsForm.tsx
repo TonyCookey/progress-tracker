@@ -235,6 +235,9 @@ export default function EditLieutenantForm({ lieutenant, onSuccess }: { lieutena
           <option value="ACTIVE">Active</option>
           <option value="INACTIVE">Inactive</option>
           <option value="LEFT">Left</option>
+          {/* Graduation is done from the Graduands page / teen profile (it records a date);
+              the option is listed here only so editing a graduand doesn't reset them. */}
+          {lieutenant.status === "GRADUATED" && <option value="GRADUATED">Graduated</option>}
         </UISelect>
 
         <div className="md:col-span-2">

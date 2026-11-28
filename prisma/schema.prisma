@@ -28,6 +28,7 @@ enum TeenStatus {
   ACTIVE
   INACTIVE
   LEFT
+  GRADUATED
 }
 
 model Base {
@@ -91,12 +92,16 @@ model Teen {
   guardianPhone         String?
   dateJoined            DateTime?
   status                TeenStatus              @default(ACTIVE)
+  // Set when status becomes GRADUATED; cleared again if the graduation is undone.
+  graduatedAt           DateTime?
+  graduationNote        String?
   householdId           String?
   household             Household?              @relation(fields: [householdId], references: [id])
 
   @@index([baseId])
   @@index([groupId])
   @@index([householdId])
+  @@index([status, graduatedAt])
 }
 
 model Group {

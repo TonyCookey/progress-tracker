@@ -1,10 +1,10 @@
 import { NextResponse } from "next/server";
-import { prisma } from "@/lib/prisma";
+import { findUserByEmail } from "@/lib/users";
 import { handleApiError } from "@/lib/auth";
 import { parseOrThrow } from "@/lib/validation/parse";
 import { forgotPasswordSchema } from "@/lib/validation/passwordReset";
 import { issuePasswordResetToken, invalidatePasswordResetToken } from "@/lib/passwordReset";
-import { sendPasswordResetEmail, appBaseUrl } from "@/lib/email";
+import { sendPasswordResetEmail, appBaseUrl, isEmailConfigured } from "@/lib/email";
 
 const GENERIC_MESSAGE = "If that email exists, a reset link has been sent.";
 
@@ -12,7 +12,13 @@ export async function POST(req: Request) {
   try {
     const { email } = parseOrThrow(forgotPasswordSchema, await req.json());
 
-    const user = await prisma.user.findUnique({ where: { email } });
+    // Without an email provider nothing can be sent - say so (for every address alike,
+    // so this still doesn't reveal which accounts exist) instead of a false "sent".
+    if (!isEmailConfigured()) {
+      return NextResponse.json({ emailConfigured: false, message: "Email isn't set up for this app yet. Ask your admin to send you a reset link." });
+    }
+
+    const user = await findUserByEmail(email);
     if (user && !user.deletedAt) {
       const rawToken = await issuePasswordResetToken(user.id);
       const resetUrl = `${appBaseUrl(req)}/auth/reset-password/${rawToken}`;
@@ -24,7 +30,7 @@ export async function POST(req: Request) {
       });
     }
 
-    return NextResponse.json({ message: GENERIC_MESSAGE });
+    return NextResponse.json({ emailConfigured: true, message: GENERIC_MESSAGE });
   } catch (error) {
     return handleApiError(error);
   }

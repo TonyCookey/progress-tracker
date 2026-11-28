@@ -3,6 +3,8 @@ import { NextResponse } from "next/server";
 import { requireSession, assertBaseAccess, handleApiError, ApiError } from "@/lib/auth";
 import { markParticipationSchema } from "@/lib/validation/activity";
 import { parseOrThrow } from "@/lib/validation/parse";
+import { Prisma } from "@prisma/client";
+import { OFF_ROSTER_STATUSES } from "@/lib/teens";
 
 // Reads the session (headers), so it must never be prerendered at build time.
 export const dynamic = "force-dynamic";
@@ -22,18 +24,25 @@ export async function GET(req: Request, { params }: { params: { id: string } }) 
       return NextResponse.json({ error: "Activity not found" }, { status: 404 });
     }
 
-    const activeTeenFilter = { deletedAt: null, status: { not: "LEFT" as const } };
-    let teenWhere: any = { ...activeTeenFilter };
+    // On the roster for this activity: not Left; graduands only if they graduated after
+    // the activity (or were already marked for it), so past registers stay complete.
+    const activeTeenFilter: Prisma.TeenWhereInput = {
+      deletedAt: null,
+      OR: [
+        { status: { notIn: OFF_ROSTER_STATUSES } },
+        { status: "GRADUATED", OR: [{ graduatedAt: { gt: activity.date } }, { activityParticipation: { some: { activityId } } }] },
+      ],
+    };
+    let teenWhere: Prisma.TeenWhereInput = activeTeenFilter;
 
     if (activity.groups && activity.groups.length > 0) {
       // Teens in the specified squads/platoons
       const groupIds = activity.groups.map((g) => g.id);
       teenWhere = {
-        ...activeTeenFilter,
-        OR: [{ platoon: { id: { in: groupIds } } }, { squadMemberships: { some: { groupId: { in: groupIds } } } }],
+        AND: [activeTeenFilter, { OR: [{ platoon: { id: { in: groupIds } } }, { squadMemberships: { some: { groupId: { in: groupIds } } } }] }],
       };
     } else if (activity.baseId) {
-      teenWhere = { ...activeTeenFilter, baseId: activity.baseId };
+      teenWhere = { AND: [activeTeenFilter, { baseId: activity.baseId }] };
     }
 
     // Fetch teens with their participation for this activity
@@ -82,7 +91,9 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
 
     // Only block *new* attendance records for an inactive teen; allow correcting
     // an already-recorded entry for a teen who has since left/been removed.
-    if (!existing && (!teen || teen.deletedAt || teen.status === "LEFT")) {
+    const offRoster =
+      !teen || teen.deletedAt || teen.status === "LEFT" || (teen.status === "GRADUATED" && (!teen.graduatedAt || teen.graduatedAt <= activity.date));
+    if (!existing && offRoster) {
       throw new ApiError(400, "Teen is not active", { teenId: ["Teen is not active"] });
     }
 

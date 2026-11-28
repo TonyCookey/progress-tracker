@@ -18,6 +18,11 @@ import Button from "@/components/ui/Button";
 import Avatar from "@/components/ui/Avatar";
 import type { BadgeTone } from "@/components/ui/Badge";
 import { useToast } from "@/components/ui/Toast";
+import { useSession } from "next-auth/react";
+import ActionMenu from "@/components/ui/ActionMenu";
+import GraduateTeensModal from "@/components/graduands/GraduateTeensModal";
+import { AcademicCapIcon, ArrowLeftIcon, TrashIcon, ArrowUturnLeftIcon } from "@heroicons/react/24/outline";
+import { TEEN_STATUS_LABEL } from "@/lib/teens";
 
 type AttendanceRecord = {
   activityId: string;
@@ -48,7 +53,9 @@ type Teen = {
   guardianName?: string | null;
   guardianPhone?: string | null;
   dateJoined?: string | null;
-  status?: string;
+  status?: "ACTIVE" | "INACTIVE" | "LEFT" | "GRADUATED";
+  graduatedAt?: string | null;
+  graduationNote?: string | null;
   attendance: AttendanceRecord[];
   attendanceRate: number | null;
 };
@@ -79,6 +86,22 @@ export default function TeenDetailsPage() {
   const { id } = useParams();
   const toast = useToast();
   const [teen, setTeen] = useState(null as Teen | null);
+  const { data: session } = useSession();
+  const role = session?.user?.role;
+  const canGraduate = role === "SUPERADMIN" || role === "GENERAL";
+  const [graduateOpen, setGraduateOpen] = useState(false);
+
+  const undoGraduation = async () => {
+    if (!teen) return;
+    const res = await fetch("/api/graduands/undo", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ teenIds: [teen.id] }),
+    });
+    if (!res.ok) return void toast.error("Couldn't undo the graduation");
+    toast.success(`${teen.name} is back on the roster`);
+    fetchTeen();
+  };
 
   async function fetchTeen() {
     const res = await fetch(`/api/lieutenants/${id}`, { cache: "no-store" });
@@ -122,10 +145,46 @@ export default function TeenDetailsPage() {
   if (!teen) return <LoadingSpinner />;
 
   const color = getColorClasses(teen.gender);
-  const statusTone: BadgeTone = teen.status === "LEFT" ? "neutral" : teen.status === "INACTIVE" ? "warning" : "success";
+  const statusTone: BadgeTone =
+    teen.status === "LEFT" ? "neutral" : teen.status === "INACTIVE" ? "warning" : teen.status === "GRADUATED" ? "accent" : "success";
+  const isGraduated = teen.status === "GRADUATED";
 
   return (
     <div className="max-w-5xl mx-auto p-4 md:p-6">
+      <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+        <Link href="/dashboard/lieutenants" className="inline-flex items-center gap-1.5 text-sm text-neutral-500 hover:text-neutral-900">
+          <ArrowLeftIcon className="h-4 w-4" /> Lieutenants
+        </Link>
+        <div className="flex items-center gap-2">
+          <EditLieutenantModal lieutenant={teen} onSuccess={fetchTeen} />
+          {canGraduate && !isGraduated && (
+            <Button variant="secondary" size="sm" leftIcon={<AcademicCapIcon className="h-4 w-4" />} onClick={() => setGraduateOpen(true)}>
+              Graduate
+            </Button>
+          )}
+          <ActionMenu
+            label="More actions"
+            items={[
+              { label: "Undo graduation", icon: ArrowUturnLeftIcon, onClick: undoGraduation, hidden: !(canGraduate && isGraduated) },
+              { label: "Delete lieutenant", icon: TrashIcon, tone: "danger", onClick: () => handleDelete(teen.id), hidden: role !== "SUPERADMIN", separated: canGraduate && isGraduated },
+            ]}
+          />
+        </div>
+      </div>
+
+      {isGraduated && (
+        <div className="mb-6 flex items-start gap-3 rounded-card border border-accent-200 bg-accent-50 p-4">
+          <AcademicCapIcon className="mt-0.5 h-6 w-6 shrink-0 text-accent-600" />
+          <div className="text-sm">
+            <p className="font-semibold text-accent-800">
+              Graduated{teen.graduatedAt ? ` on ${formatDate(teen.graduatedAt)}` : ""}
+            </p>
+            <p className="text-accent-700">
+              {teen.graduationNote || "No longer counted on the active roster. Their attendance history is kept below."}
+            </p>
+          </div>
+        </div>
+      )}
       <div className="flex flex-col md:flex-row gap-6 mb-8">
         {/* Profile Card */}
         <Card className={`flex-1 ${color.gradient} flex items-center gap-6`}>
@@ -205,7 +264,7 @@ export default function TeenDetailsPage() {
       <Card className="mb-8">
         <div className="flex items-center justify-between mb-4">
           <h3 className={`text-lg font-semibold ${color.header}`}>Pastoral Info</h3>
-          <Badge tone={statusTone}>{teen.status ?? "ACTIVE"}</Badge>
+          <Badge tone={statusTone}>{TEEN_STATUS_LABEL[teen.status ?? "ACTIVE"]}</Badge>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-y-1">
           <p className="text-neutral-700 mb-1">
@@ -306,12 +365,12 @@ export default function TeenDetailsPage() {
         )}
       </Card>
 
-      <div className="flex gap-4 justify-end">
-        <EditLieutenantModal lieutenant={teen} onSuccess={fetchTeen} />
-        <Button variant="danger" onClick={() => handleDelete(teen.id)}>
-          Delete
-        </Button>
-      </div>
+      <GraduateTeensModal
+        isOpen={graduateOpen}
+        onClose={() => setGraduateOpen(false)}
+        onDone={fetchTeen}
+        preselected={{ id: teen.id, name: teen.name }}
+      />
     </div>
   );
 }
